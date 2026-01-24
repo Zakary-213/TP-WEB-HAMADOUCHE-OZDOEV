@@ -1,23 +1,297 @@
 
 
 body {
-    background-image: url("../assets/img/fond.jpg");
+    background: linear-gradient(180deg, 
+        #0a0e27 0%, 
+        #1a0033 20%,
+        #330055 40%,
+        #1a0033 60%,
+        #0a0e27 80%,
+        #000000 100%);
+    background-attachment: fixed;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Effet néon arcade en arrière-plan */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        repeating-linear-gradient(
+            0deg,
+            rgba(255, 0, 110, 0.05) 0px,
+            rgba(255, 0, 110, 0.05) 1px,
+            transparent 1px,
+            transparent 2px
+        ),
+        repeating-linear-gradient(
+            90deg,
+            rgba(0, 212, 255, 0.03) 0px,
+            rgba(0, 212, 255, 0.03) 1px,
+            transparent 1px,
+            transparent 2px
+        );
+    pointer-events: none;
+    z-index: 1;
+    animation: arcade-scanlines 0.1s linear infinite;
+}
+
+/* Lueur d'arcade */
+body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(ellipse at center, transparent 0%, rgba(0, 0, 0, 0.4) 100%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+@keyframes arcade-scanlines {
+    0% {
+        transform: translateY(0);
+    }
+    100% {
+        transform: translateY(10px);
+    }
 }
 
 h1 {
-    color: white;
     margin-bottom: 30px;
-    font-size: 2.5em;
-    letter-spacing: 2px;
+    font-size: 3.5em;
+    letter-spacing: 4px;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-family: 'Arial Black', sans-serif;
+    text-align: center;
+    word-break: break-word;
+    
+    /* Dégradé arcade coloré */
+    background: linear-gradient(45deg, #ff006e, #8338ec, #00d4ff, #ff006e);
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    
+    /* Ombre rétro classique */
+    filter: drop-shadow(3px 3px 0px #1a1a2e) drop-shadow(6px 6px 0px rgba(0, 0, 0, 0.5));
+    
+    /* Animation brillance arcade */
+    animation: arcade-glow 2s ease-in-out infinite;
 }
 
+@keyframes arcade-glow {
+    0%, 100% {
+        text-shadow: 
+            3px 3px 0px #1a1a2e,
+            0 0 20px rgba(255, 0, 110, 0.6),
+            0 0 40px rgba(131, 56, 236, 0.4);
+    }
+    50% {
+        text-shadow: 
+            3px 3px 0px #1a1a2e,
+            0 0 30px rgba(255, 0, 110, 0.8),
+            0 0 60px rgba(131, 56, 236, 0.6),
+            0 0 80px rgba(0, 212, 255, 0.4);
+    }
+}
+
+
 canvas {
+    display: none;
     border-radius: 10px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
 }
 
+canvas.game-active {
+    display: block;
+}
+
+/* Conteneur des boutons */
+.boutton {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 30px;
+    width: 300px;
+}
+
+/* Style des boutons */
+button {
+    padding: 15px 30px;
+    font-size: 1.3em;
+    font-weight: bold;
+    letter-spacing: 2px;
+    border: none;
+    border-radius: 0;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s ease;
+    width: 100%;
+    
+    /* Thème arcade - dégradé coloré */
+    background: linear-gradient(135deg, #ff006e, #8338ec);
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    
+    /* Bordure rétro */
+    box-shadow: 0 4px 0 #1a1a2e, inset 0 -2px 0 rgba(0, 0, 0, 0.3);
+    
+    font-family: 'Arial Black', sans-serif;
+}
+
+/* Effet survol avec brillance rétro */
+button:hover {
+    background: linear-gradient(135deg, #ff3366, #a855ff);
+    transform: translateY(-2px);
+    box-shadow: 
+        0 6px 0 #1a1a2e,
+        inset 0 -2px 0 rgba(0, 0, 0, 0.3),
+        0 0 20px rgba(255, 0, 110, 0.8),
+        inset 0 0 15px rgba(255, 255, 255, 0.3);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8), 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+/* Effet au clic */
+button:active {
+    transform: translateY(2px);
+    box-shadow: 
+        0 2px 0 #1a1a2e,
+        inset 0 -2px 0 rgba(0, 0, 0, 0.3),
+        0 0 15px rgba(255, 0, 110, 0.6);
+}
+
+/* Couleurs différentes pour chaque bouton */
+.startBoutton {
+    background: linear-gradient(135deg, #00d4ff, #0099ff);
+}
+
+.startBoutton:hover {
+    background: linear-gradient(135deg, #00e8ff, #00b3ff);
+    box-shadow: 
+        0 6px 0 #1a1a2e,
+        inset 0 -2px 0 rgba(0, 0, 0, 0.3),
+        0 0 20px rgba(0, 212, 255, 0.8),
+        inset 0 0 15px rgba(255, 255, 255, 0.3);
+}
+
+.Score {
+    background: linear-gradient(135deg, #ffb300, #ff9500);
+}
+
+.Score:hover {
+    background: linear-gradient(135deg, #ffcc00, #ffb300);
+    box-shadow: 
+        0 6px 0 #1a1a2e,
+        inset 0 -2px 0 rgba(0, 0, 0, 0.3),
+        0 0 20px rgba(255, 179, 0, 0.8),
+        inset 0 0 15px rgba(255, 255, 255, 0.3);
+}
+
+.Réglage {
+    background: linear-gradient(135deg, #00ff88, #00cc66);
+}
+
+.Réglage:hover {
+    background: linear-gradient(135deg, #00ffaa, #00dd77);
+    box-shadow: 
+        0 6px 0 #1a1a2e,
+        inset 0 -2px 0 rgba(0, 0, 0, 0.3),
+        0 0 20px rgba(0, 255, 136, 0.8),
+        inset 0 0 15px rgba(255, 255, 255, 0.3);
+}
+
+.Quitter {
+    background: linear-gradient(135deg, #ff6b6b, #ff4444);
+}
+
+.Quitter:hover {
+    background: linear-gradient(135deg, #ff8888, #ff5555);
+    box-shadow: 
+        0 6px 0 #1a1a2e,
+        inset 0 -2px 0 rgba(0, 0, 0, 0.3),
+        0 0 20px rgba(255, 107, 107, 0.8),
+        inset 0 0 15px rgba(255, 255, 255, 0.3);
+}
+
+/* RESPONSIF - Tablettes */
+@media (max-width: 768px) {
+    h1 {
+        font-size: 2.5em;
+        letter-spacing: 2px;
+        margin-bottom: 20px;
+    }
+    
+    .boutton {
+        width: 90%;
+        max-width: 280px;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+    
+    button {
+        padding: 12px 20px;
+        font-size: 1.1em;
+        letter-spacing: 1px;
+    }
+    
+    canvas {
+        max-width: 90%;
+        height: auto;
+    }
+}
+
+/* RESPONSIF - Mobiles */
+@media (max-width: 480px) {
+    body {
+        padding: 10px;
+    }
+    
+    h1 {
+        font-size: 1.8em;
+        letter-spacing: 1px;
+        margin-bottom: 15px;
+        filter: drop-shadow(2px 2px 0px #1a1a2e) drop-shadow(4px 4px 0px rgba(0, 0, 0, 0.5));
+    }
+    
+    .boutton {
+        width: 100%;
+        max-width: 250px;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+    
+    button {
+        padding: 10px 15px;
+        font-size: 0.95em;
+        letter-spacing: 0.5px;
+        box-shadow: 0 3px 0 #1a1a2e, inset 0 -2px 0 rgba(0, 0, 0, 0.3);
+    }
+    
+    button:hover {
+        box-shadow: 
+            0 4px 0 #1a1a2e,
+            inset 0 -2px 0 rgba(0, 0, 0, 0.3),
+            0 0 15px rgba(255, 0, 110, 0.6),
+            inset 0 0 10px rgba(255, 255, 255, 0.2);
+    }
+    
+    canvas {
+        width: 100%;
+        max-width: 500px;
+        height: auto;
+        max-height: 600px;
+    }
+}

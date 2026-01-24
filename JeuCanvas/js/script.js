@@ -5,6 +5,21 @@ let canvas;
 let ctx;
 let monVaisseau;
 let meteorites = [];
+let gameStarted = false;
+
+document.querySelector('.startBoutton').addEventListener('click', () => {
+    if (!gameStarted) {
+        gameStarted = true;
+        document.querySelector('div.boutton').style.display = 'none';
+        document.getElementById('monCanvas').classList.add('game-active');
+        init();
+    }
+});
+
+// Bouton Options - Redirection vers page réglages
+document.querySelector('.Réglage').addEventListener('click', () => {
+    window.location.href = 'html/reglage.html';
+});
 
 // Gestion des touches pressées
 let keys = {};
@@ -82,5 +97,3 @@ function gameLoop() {
     // Relancer la boucle
     requestAnimationFrame(gameLoop);
 }
-
-window.onload = init;

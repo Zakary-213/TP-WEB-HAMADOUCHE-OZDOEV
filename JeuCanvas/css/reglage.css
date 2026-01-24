@@ -1,0 +1,134 @@
+body {
+    background: linear-gradient(180deg, 
+        #0a0e27 0%, 
+        #1a0033 20%,
+        #330055 40%,
+        #1a0033 60%,
+        #0a0e27 80%,
+        #000000 100%);
+    background-attachment: fixed;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    position: relative;
+    overflow: hidden;
+    margin: 0;
+    padding: 20px;
+}
+
+/* Effet néon arcade en arrière-plan */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        repeating-linear-gradient(
+            0deg,
+            rgba(255, 0, 110, 0.05) 0px,
+            rgba(255, 0, 110, 0.05) 1px,
+            transparent 1px,
+            transparent 2px
+        ),
+        repeating-linear-gradient(
+            90deg,
+            rgba(0, 212, 255, 0.03) 0px,
+            rgba(0, 212, 255, 0.03) 1px,
+            transparent 1px,
+            transparent 2px
+        );
+    pointer-events: none;
+    z-index: 1;
+    animation: arcade-scanlines 0.1s linear infinite;
+}
+
+/* Lueur d'arcade */
+body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(ellipse at center, transparent 0%, rgba(0, 0, 0, 0.4) 100%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+@keyframes arcade-scanlines {
+    0% {
+        transform: translateY(0);
+    }
+    100% {
+        transform: translateY(10px);
+    }
+}
+
+h1 {
+    margin-bottom: 30px;
+    font-size: 3.5em;
+    letter-spacing: 4px;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-family: 'Arial Black', sans-serif;
+    text-align: center;
+    word-break: break-word;
+    position: relative;
+    z-index: 10;
+    
+    /* Dégradé arcade coloré */
+    background: linear-gradient(45deg, #ff006e, #8338ec, #00d4ff, #ff006e);
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    
+    /* Ombre rétro classique */
+    filter: drop-shadow(3px 3px 0px #1a1a2e) drop-shadow(6px 6px 0px rgba(0, 0, 0, 0.5));
+    
+    /* Animation brillance arcade */
+    animation: arcade-glow 2s ease-in-out infinite;
+}
+
+@keyframes arcade-glow {
+    0%, 100% {
+        text-shadow: 
+            3px 3px 0px #1a1a2e,
+            0 0 20px rgba(255, 0, 110, 0.6),
+            0 0 40px rgba(131, 56, 236, 0.4);
+    }
+    50% {
+        text-shadow: 
+            3px 3px 0px #1a1a2e,
+            0 0 30px rgba(255, 0, 110, 0.8),
+            0 0 60px rgba(131, 56, 236, 0.6),
+            0 0 80px rgba(0, 212, 255, 0.4);
+    }
+}
+
+/* RESPONSIF - Tablettes */
+@media (max-width: 768px) {
+    h1 {
+        font-size: 2.5em;
+        letter-spacing: 2px;
+        margin-bottom: 20px;
+    }
+}
+
+/* RESPONSIF - Mobiles */
+@media (max-width: 480px) {
+    body {
+        padding: 10px;
+    }
+    
+    h1 {
+        font-size: 1.8em;
+        letter-spacing: 1px;
+        margin-bottom: 15px;
+        filter: drop-shadow(2px 2px 0px #1a1a2e) drop-shadow(4px 4px 0px rgba(0, 0, 0, 0.5));
+    }
+}
