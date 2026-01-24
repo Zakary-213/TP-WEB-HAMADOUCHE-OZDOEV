@@ -5,7 +5,7 @@ export default class ObjetGraphique {
     largeur = 40;
     hauteur = 40;
     vitesse = 3;
-    hitbox = 15;
+    //hitbox = 80;
     angle = 0;
 
     constructor(x, y, imagePath, largeur, hauteur, vitesse) {
