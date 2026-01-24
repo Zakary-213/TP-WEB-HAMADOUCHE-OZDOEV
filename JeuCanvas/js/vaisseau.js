@@ -5,6 +5,10 @@ export default class Vaisseau extends ObjetGraphique {
 
     constructor(x, y, imagePath, largeur, hauteur, vitesse) {
         super(x, y, imagePath, largeur, hauteur, vitesse);
+        
+        // --- Partie tremblement --- 
+        this.isShaking = false;
+        this.shakeIntensity = 8;
     }
 
     moveInDirection(dx, dy) {
@@ -23,4 +27,38 @@ export default class Vaisseau extends ObjetGraphique {
             this.y += ny * this.vitesse;
         }
     }
+
+    // --- Fonctions tremblement --- 
+    startShake() { // Démarrer le tremblement
+        this.isShaking = true;
+    }
+
+    stopShake() { // Arrêter le tremblement
+        this.isShaking = false;
+    }
+
+    draw(ctx) {
+        ctx.save();
+
+        // --- tremblement visuel (On a adapter le code du cours de la classe "EnnemiQuiTremble") ---
+        if (this.isShaking) {
+            const tremblementX = (Math.random() - 0.5) * this.shakeIntensity;
+            const tremblementY = (Math.random() - 0.5) * this.shakeIntensity;
+            ctx.translate(tremblementX, tremblementY);
+        }
+
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.angle);
+
+        ctx.drawImage(
+            this.image,
+            -this.largeur / 2,
+            -this.hauteur / 2,
+            this.largeur,
+            this.hauteur
+        );
+
+        ctx.restore();
+    }
+
 }

@@ -9,6 +9,8 @@ let monVaisseau;
 let meteorites = [];
 let gameStarted = false;
 const collisionUtils = new CollisionUtils();
+let gameState = "playing";
+const HIT_DURATION = 600; // Durée du choc en ms
 
 document.querySelector('.startBoutton').addEventListener('click', () => {
     if (!gameStarted) {
@@ -64,6 +66,11 @@ function init() {
 }
 
 function gameLoop() {
+    if (gameState === "hit") {
+        monVaisseau.draw(ctx);
+        requestAnimationFrame(gameLoop);
+        return;
+    }
     ctx.fillStyle = '#1a1a2e';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -100,9 +107,19 @@ function gameLoop() {
             meteorite.largeur / 2  // rayon de la météorite
         );
 
-        if (collision) 
+        if (collision && gameState === "playing") 
         {
             console.log("💥 COLLISION DÉTECTÉE");
+            gameState = "hit";
+            monVaisseau.startShake();
+            meteorites.splice(index, 1);
+            console.log("État du jeu :", gameState);
+
+            setTimeout(() => {
+                monVaisseau.stopShake();
+                gameState = "playing";
+                console.log("État du jeu :", gameState);
+            }, HIT_DURATION);
         }
 
         // Supprimer si sortie du canvas
