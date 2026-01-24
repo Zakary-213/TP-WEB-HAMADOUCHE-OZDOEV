@@ -7,8 +7,9 @@ export default class ObjetGraphique {
     vitesse = 3;
     //hitbox = 80;
     angle = 0;
+    pointsDeVie = 1;
 
-    constructor(x, y, imagePath, largeur, hauteur, vitesse) {
+    constructor(x, y, imagePath, largeur, hauteur, vitesse, pointsDeVie = 1) {
         this.x = x;
         this.y = y;
 
@@ -18,8 +19,18 @@ export default class ObjetGraphique {
 
         this.image = new Image();
         this.image.src = imagePath;
+
+        this.pointsDeVie = pointsDeVie;
     }
 
+    perdreVie(valeur = 1) {
+        this.pointsDeVie -= valeur;
+    }
+
+    estMort(){
+        return this.pointsDeVie <= 0;
+    }
+    
     draw(ctx) {
         ctx.save();
         
@@ -44,4 +55,6 @@ export default class ObjetGraphique {
         this.x += dx * this.vitesse;
         this.y += dy * this.vitesse;
     }
+
+    
 }

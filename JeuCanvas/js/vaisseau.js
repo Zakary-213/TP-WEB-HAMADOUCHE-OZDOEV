@@ -3,8 +3,8 @@ import ObjetGraphique from './objetGraphique.js';
 export default class Vaisseau extends ObjetGraphique {
     minDist = 10;
 
-    constructor(x, y, imagePath, largeur, hauteur, vitesse) {
-        super(x, y, imagePath, largeur, hauteur, vitesse);
+    constructor(x, y, imagePath, largeur, hauteur, vitesse, pointsDeVie = 1) {
+        super(x, y, imagePath, largeur, hauteur, vitesse, pointsDeVie);
         
         // --- Partie tremblement --- 
         this.isShaking = false;

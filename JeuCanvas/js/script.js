@@ -11,6 +11,7 @@ let gameStarted = false;
 const collisionUtils = new CollisionUtils();
 let gameState = "playing";
 const HIT_DURATION = 600; // Durée du choc en ms
+let vies = 3; // Nombre de vies du joueur (vaisseau)
 
 document.querySelector('.startBoutton').addEventListener('click', () => {
     if (!gameStarted) {
@@ -26,6 +27,9 @@ document.querySelector('.Réglage').addEventListener('click', () => {
     window.location.href = 'html/reglage.html';
 });
 
+// Tableau des cœurs pour la barre de vie
+const coeurs = document.querySelectorAll('.barreDeVie img');
+
 // Gestion des touches pressées
 let keys = {};
 
@@ -38,8 +42,11 @@ function init() {
         canvas.height / 2,
         './assets/img/vaisseau.png',  
         50,  
-        50   
+        50, 
+        3, // Vitesse du vaisseau
+        3 // Points de vie du vaisseau
     );
+    updateBarreDeVie();
 
     // Créer une météorite qui part du haut
     let meteorite = new Meteorite(
@@ -107,6 +114,7 @@ function gameLoop() {
             meteorite.largeur / 2  // rayon de la météorite
         );
 
+        /* Gestion de la collision */
         if (collision && gameState === "playing") 
         {
             console.log("💥 COLLISION DÉTECTÉE");
@@ -114,12 +122,22 @@ function gameLoop() {
             monVaisseau.startShake();
             meteorites.splice(index, 1);
             console.log("État du jeu :", gameState);
-
+            monVaisseau.perdreVie(1);
+            updateBarreDeVie();
+            console.log("Vies restantes :", monVaisseau.pointsDeVie);
+            
             setTimeout(() => {
                 monVaisseau.stopShake();
                 gameState = "playing";
                 console.log("État du jeu :", gameState);
             }, HIT_DURATION);
+
+        }
+
+        if (monVaisseau.estMort()) {
+            gameState = "gameover";
+            console.log("Game Over !");
+            alert("Game Over !");
         }
 
         // Supprimer si sortie du canvas
@@ -187,3 +205,14 @@ function drawMeteoriteHitbox(ctx, meteorite) {
 
     ctx.restore();
 }
+
+function updateBarreDeVie() {
+    for (let i = 0; i < coeurs.length; i++) {
+        if (i < monVaisseau.pointsDeVie) {
+            coeurs[i].style.visibility = "visible";
+        } else {
+            coeurs[i].style.visibility = "hidden";
+        }
+    }
+}
+
