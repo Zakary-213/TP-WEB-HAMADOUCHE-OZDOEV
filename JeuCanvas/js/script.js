@@ -24,6 +24,35 @@ document.querySelector('.Réglage').addEventListener('click', () => {
 // Gestion des touches pressées
 let keys = {};
 
+// Charger les touches personnalisées depuis localStorage
+let customKeys = {
+    up: localStorage.getItem('key_up') || '↑',
+    left: localStorage.getItem('key_left') || '←',
+    down: localStorage.getItem('key_down') || '↓',
+    right: localStorage.getItem('key_right') || '→',
+    shoot: localStorage.getItem('key_shoot') || 'Entrée'
+};
+
+// Convertir les symboles de flèches en touches réelles
+function getActualKey(savedKey) {
+    const keyMap = {
+        '↑': 'ArrowUp',
+        '↓': 'ArrowDown',
+        '←': 'ArrowLeft',
+        '→': 'ArrowRight',
+        'Entrée': 'Enter',
+        'Espace': ' '
+    };
+    return keyMap[savedKey] || savedKey.toLowerCase();
+}
+
+// Convertir toutes les touches personnalisées
+customKeys.up = getActualKey(customKeys.up);
+customKeys.left = getActualKey(customKeys.left);
+customKeys.down = getActualKey(customKeys.down);
+customKeys.right = getActualKey(customKeys.right);
+customKeys.shoot = getActualKey(customKeys.shoot);
+
 function init() {
     canvas = document.getElementById('monCanvas');
     ctx = canvas.getContext('2d');
@@ -64,14 +93,14 @@ function gameLoop() {
     ctx.fillStyle = '#1a1a2e';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Calculer la direction basée sur les touches flèches
+    // Calculer la direction basée sur les touches personnalisées
     let dx = 0;
     let dy = 0;
 
-    if (keys['ArrowUp']) dy = -1;
-    if (keys['ArrowDown']) dy = 1;
-    if (keys['ArrowLeft']) dx = -1;
-    if (keys['ArrowRight']) dx = 1;
+    if (keys[customKeys.up]) dy = -1;
+    if (keys[customKeys.down]) dy = 1;
+    if (keys[customKeys.left]) dx = -1;
+    if (keys[customKeys.right]) dx = 1;
 
     monVaisseau.moveInDirection(dx, dy);
 

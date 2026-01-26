@@ -132,3 +132,268 @@ h1 {
         filter: drop-shadow(2px 2px 0px #1a1a2e) drop-shadow(4px 4px 0px rgba(0, 0, 0, 0.5));
     }
 }
+
+/* CONTENEUR PRINCIPAL */
+.settings-container {
+    background: rgba(26, 26, 46, 0.8);
+    border: 3px solid #00ff88;
+    border-radius: 5px;
+    padding: 20px;
+    max-width: 550px;
+    width: 100%;
+    position: relative;
+    z-index: 10;
+    box-shadow: 
+        0 0 20px rgba(0, 255, 136, 0.5),
+        inset 0 0 20px rgba(0, 255, 136, 0.1);
+}
+
+/* GRILLE CONTRÔLES ZQSD */
+.controls-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin: 12px 0;
+    width: 100%;
+}
+
+.control-empty {
+    /* Cellule vide pour la grille */
+}
+
+.control-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.control-button button {
+    margin: 0 !important;
+}
+
+.control-label {
+    font-size: 0.8em;
+    color: #00ff88;
+    margin-top: 4px;
+    text-align: center;
+    font-weight: bold;
+    font-family: 'Arial Black', sans-serif;
+}
+
+/* SECTION DE RÉGLAGE */
+.setting-group {
+    margin-bottom: 15px;
+    padding: 12px;
+    background: rgba(0, 255, 136, 0.05);
+    border-left: 4px solid #00ff88;
+    border-radius: 3px;
+}
+
+.setting-group:last-child {
+    margin-bottom: 0;
+}
+
+/* HEADER VOLUME AVEC INDICATEUR */
+.volume-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+/* INDICATEUR ROND */
+.volume-indicator {
+    font-family: 'Arial Black', sans-serif;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #00ff88, #00cc66);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9em;
+    font-weight: bold;
+    color: #000;
+    box-shadow: 0 0 15px rgba(0, 255, 136, 0.6);
+    transition: all 0.3s ease;
+}
+
+/* LABELS */
+.setting-group p,
+.setting-group label {
+    color: #00ff88;
+    font-size: 1.1em;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 8px 0;
+    font-family: 'Arial Black', sans-serif;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+/* INPUT RANGE */
+input[type="range"] {
+    width: 100%;
+    height: 8px;
+    margin: 8px 0;
+    background: linear-gradient(90deg, #00ff88, #00cc66);
+    border-radius: 5px;
+    outline: none;
+    cursor: pointer;
+    box-shadow: 0 0 15px rgba(0, 255, 136, 0.5);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: linear-gradient(135deg, #00ff88, #00cc66);
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 15px rgba(0, 255, 136, 0.8);
+    transition: all 0.2s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+    width: 23px;
+    height: 23px;
+    box-shadow: 0 0 25px rgba(0, 255, 136, 1);
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: linear-gradient(135deg, #00ff88, #00cc66);
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 15px rgba(0, 255, 136, 0.8);
+    transition: all 0.2s ease;
+}
+
+input[type="range"]::-moz-range-thumb:hover {
+    width: 23px;
+    height: 23px;
+    box-shadow: 0 0 25px rgba(0, 255, 136, 1);
+}
+
+/* ICÔNES FONT AWESOME */
+i[class*="fa-"] {
+    color: #00ff88;
+    margin-right: 12px;
+    font-size: 1.3em;
+    text-shadow: 0 0 10px rgba(0, 255, 136, 0.6);
+}
+
+/* BOUTONS TOUCHES CLAVIER */
+button {
+    display: inline-block;
+    background: linear-gradient(135deg, #ff006e, #8338ec);
+    color: white;
+    border: 2px solid #00d4ff;
+    padding: 10px 20px;
+    margin: 5px 8px 5px 0;
+    font-size: 1em;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-radius: 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 0 #1a1a2e, 0 0 15px rgba(255, 0, 110, 0.5);
+    font-family: 'Arial Black', sans-serif;
+}
+
+button:hover {
+    background: linear-gradient(135deg, #ff3366, #a855ff);
+    transform: translateY(-2px);
+    box-shadow: 
+        0 6px 0 #1a1a2e,
+        0 0 25px rgba(255, 0, 110, 0.8),
+        inset 0 0 15px rgba(255, 255, 255, 0.2);
+}
+
+button:active {
+    transform: translateY(2px);
+    box-shadow: 
+        0 2px 0 #1a1a2e,
+        0 0 15px rgba(255, 0, 110, 0.6);
+}
+
+/* BOUTON RETOUR */
+.btn-return {
+    margin-top: 20px;
+    background: linear-gradient(135deg, #00ff88, #00cc66);
+    border: 2px solid #00ffaa;
+    width: auto;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.btn-return:hover {
+    background: linear-gradient(135deg, #00ffaa, #00dd77);
+    box-shadow: 
+        0 6px 0 #1a1a2e,
+        0 0 25px rgba(0, 255, 136, 0.8),
+        inset 0 0 15px rgba(255, 255, 255, 0.2);
+}
+
+/* RESPONSIF - Tablettes */
+@media (max-width: 768px) {
+    .settings-container {
+        padding: 20px;
+        max-width: 90%;
+    }
+    
+    .setting-group {
+        padding: 12px;
+    }
+    
+    .setting-group p,
+    .setting-group label {
+        font-size: 1em;
+    }
+    
+    button {
+        padding: 8px 15px;
+        font-size: 0.95em;
+    }
+}
+
+/* RESPONSIF - Mobiles */
+@media (max-width: 480px) {
+    .settings-container {
+        padding: 15px;
+        border: 2px solid #00d4ff;
+    }
+    
+    .setting-group {
+        padding: 10px;
+        margin-bottom: 15px;
+    }
+    
+    .setting-group p,
+    .setting-group label {
+        font-size: 0.95em;
+    }
+    
+    i[class*="fa-"] {
+        font-size: 1.1em;
+        margin-right: 8px;
+    }
+    
+    button {
+        padding: 8px 12px;
+        font-size: 0.85em;
+        margin: 5px 5px 5px 0;
+    }
+    
+    .btn-return {
+        margin-top: 20px;
+    }
+}
+
