@@ -1,7 +1,11 @@
 import ObjetGraphique from './objetGraphique.js';
+import Bullet from './bullet.js';
 
 export default class Vaisseau extends ObjetGraphique {
     minDist = 10;
+    bullets = [];
+    delayMinBetweenBullets = 500; // Temps minimum entre tirs en millisecondes
+    lastBulletTime = undefined;
 
     constructor(x, y, imagePath, largeur, hauteur, vitesse, pointsDeVie = 1) {
         super(x, y, imagePath, largeur, hauteur, vitesse, pointsDeVie);
@@ -25,6 +29,23 @@ export default class Vaisseau extends ObjetGraphique {
             // Déplacement avec vitesse
             this.x += nx * this.vitesse;
             this.y += ny * this.vitesse;
+        }
+    }
+
+    addBullet(time) {
+        // Calculer le temps écoulé depuis le dernier tir
+        let tempEcoule = 0;
+        
+        if (this.lastBulletTime !== undefined) {
+            tempEcoule = time - this.lastBulletTime;
+        }
+        
+        // Tirer seulement si le délai minimum est écoulé
+        if ((this.lastBulletTime === undefined) || (tempEcoule > this.delayMinBetweenBullets)) {
+            // Créer une bullet avec l'angle corrigé (enlever le décalage de π/2)
+            let shootAngle = this.angle - Math.PI / 2;
+            this.bullets.push(new Bullet({x: this.x, y: this.y, angle: shootAngle}));
+            this.lastBulletTime = time;
         }
     }
 

@@ -1,17 +1,10 @@
 import Vaisseau from './vaisseau.js';
-import Meteorite from './meteorite.js';
-import CollisionUtils from './collisionUtils.js';
-
-
+import GameManager from './gameManager.js';
 let canvas;
 let ctx;
 let monVaisseau;
-let meteorites = [];
+let gameManager;
 let gameStarted = false;
-const collisionUtils = new CollisionUtils();
-let gameState = "playing";
-const HIT_DURATION = 600; // Durée du choc en ms
-let vies = 3; // Nombre de vies du joueur (vaisseau)
 
 document.querySelector('.startBoutton').addEventListener('click', () => {
     if (!gameStarted) {
@@ -29,6 +22,9 @@ document.querySelector('.Réglage').addEventListener('click', () => {
 
 // Tableau des cœurs pour la barre de vie
 const coeurs = document.querySelectorAll('.barreDeVie img');
+
+// Cacher les cœurs au départ
+coeurs.forEach(coeur => coeur.style.visibility = "hidden");
 
 // Gestion des touches pressées
 let keys = {};
@@ -66,6 +62,8 @@ function init() {
     canvas = document.getElementById('monCanvas');
     ctx = canvas.getContext('2d');
 
+    gameManager = new GameManager(canvas);
+
     monVaisseau = new Vaisseau(
         canvas.width / 2,
         canvas.height / 2,
@@ -77,20 +75,14 @@ function init() {
     );
     updateBarreDeVie();
 
-    // Créer une météorite qui part du haut
-    let meteorite = new Meteorite(
-        Math.random() * canvas.width,  // Position X aléatoire
-        -50,  // En haut du canvas (hors écran)
-        './assets/img/meteorite.png',  // Image de la météorite
-        40,
-        40,
-        0.2  // Vitesse de descente
-    );
-    meteorites.push(meteorite);
+    // Spawn la première météorite
+    gameManager.spawnMeteorrite();
 
-    // Écouter les touches clavier
     document.addEventListener('keydown', (e) => {
         keys[e.key] = true;
+        if(e.key == customKeys.shoot) {
+            monVaisseau.addBullet(performance.now());
+        }
     });
 
     document.addEventListener('keyup', (e) => {
@@ -102,13 +94,15 @@ function init() {
 }
 
 function gameLoop() {
-    if (gameState === "hit") {
+    // Effacer le canvas à chaque frame
+    ctx.fillStyle = '#1a1a2e';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    if (gameManager.gameState === "hit") {
         monVaisseau.draw(ctx);
         requestAnimationFrame(gameLoop);
         return;
     }
-    ctx.fillStyle = '#1a1a2e';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Calculer la direction basée sur les touches personnalisées
     let dx = 0;
@@ -126,113 +120,35 @@ function gameLoop() {
     monVaisseau.x = Math.max(margin, Math.min(monVaisseau.x, canvas.width - margin));
     monVaisseau.y = Math.max(margin, Math.min(monVaisseau.y, canvas.height - margin));
 
-    // Déplacer et dessiner les météorites
-    meteorites.forEach((meteorite, index) => {
-        meteorite.descendre();
-        meteorite.draw(ctx);
+    // Mettre à jour les collisions via GameManager
+    gameManager.update(monVaisseau);
+    updateBarreDeVie();
 
-        // Test de collision avec le vaisseau (central)
-        const collision = collisionUtils.rectCircleFromCenter(
-            monVaisseau.x,         // centre X du vaisseau
-            monVaisseau.y,         // centre Y du vaisseau
-            monVaisseau.largeur,   // largeur du vaisseau
-            monVaisseau.hauteur,   // hauteur du vaisseau
+    // Vérifier si le vaisseau est mort
+    if (monVaisseau.estMort()) {
+        gameManager.setGameOver();
+        alert("Game Over !");
+    }
 
-            meteorite.x,           // centre X de la météorite
-            meteorite.y,           // centre Y de la météorite
-            meteorite.largeur / 2  // rayon de la météorite
-        );
-
-        /* Gestion de la collision */
-        if (collision && gameState === "playing") 
-        {
-            console.log("💥 COLLISION DÉTECTÉE");
-            gameState = "hit";
-            monVaisseau.startShake();
-            meteorites.splice(index, 1);
-            console.log("État du jeu :", gameState);
-            monVaisseau.perdreVie(1);
-            updateBarreDeVie();
-            console.log("Vies restantes :", monVaisseau.pointsDeVie);
-            
-            setTimeout(() => {
-                monVaisseau.stopShake();
-                gameState = "playing";
-                console.log("État du jeu :", gameState);
-            }, HIT_DURATION);
-
-        }
-
-        if (monVaisseau.estMort()) {
-            gameState = "gameover";
-            console.log("Game Over !");
-            alert("Game Over !");
-        }
-
-        // Supprimer si sortie du canvas
-        if (meteorite.estHorsCanvas(canvas.height)) {
-            meteorites.splice(index, 1);
-        }
-    });
+    // Dessiner les météorites
+    gameManager.draw(ctx);
 
     // Dessiner le vaisseau
     monVaisseau.draw(ctx);
 
-    /**********            **************/
-    // 🔍 DEBUG : hitbox du vaisseau
-    drawVaisseauHitbox(ctx, monVaisseau);
+    // Mettre à jour et dessiner les bullets
+    for(let i = monVaisseau.bullets.length - 1; i >= 0; i--) {        
+        const bullet = monVaisseau.bullets[i];
+        bullet.move();
+        bullet.draw(ctx);
 
-    // Déplacer et dessiner les météorites
-    meteorites.forEach((meteorite) => {
-        meteorite.descendre();
-        meteorite.draw(ctx);
-
-        // 🔍 DEBUG : hitbox de la météorite
-        drawMeteoriteHitbox(ctx, meteorite);
-    });
-    /**********            **************/
+        if(bullet.estHorsCanvas(canvas.width, canvas.height)) {
+            monVaisseau.bullets.splice(i, 1);
+        }
+    }
 
     // Relancer la boucle
     requestAnimationFrame(gameLoop);
-}
-
-function drawVaisseauHitbox(ctx, vaisseau) {
-    ctx.save();
-
-    ctx.strokeStyle = 'red';
-    ctx.lineWidth = 2;
-
-    // conversion centre → coin supérieur gauche
-    const x = vaisseau.x - vaisseau.largeur / 2;
-    const y = vaisseau.y - vaisseau.hauteur / 2;
-
-    ctx.strokeRect(
-        x,
-        y,
-        vaisseau.largeur,
-        vaisseau.hauteur
-    );
-
-    ctx.restore();
-}
-
-function drawMeteoriteHitbox(ctx, meteorite) {
-    ctx.save();
-
-    ctx.strokeStyle = 'cyan';
-    ctx.lineWidth = 2;
-
-    ctx.beginPath();
-    ctx.arc(
-        meteorite.x,                  // centre X
-        meteorite.y,                  // centre Y
-        meteorite.largeur / 2,         // rayon
-        0,
-        Math.PI * 2
-    );
-    ctx.stroke();
-
-    ctx.restore();
 }
 
 function updateBarreDeVie() {
@@ -244,4 +160,3 @@ function updateBarreDeVie() {
         }
     }
 }
-
