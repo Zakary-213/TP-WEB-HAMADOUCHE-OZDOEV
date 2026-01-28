@@ -7,6 +7,10 @@ export default class Vaisseau extends ObjetGraphique {
     delayMinBetweenBullets = 500; // Temps minimum entre tirs en millisecondes
     lastBulletTime = undefined;
 
+    isDashing = false;
+    dashSpeed = 5;
+    dashDuration = 150; 
+
     constructor(x, y, imagePath, largeur, hauteur, vitesse, pointsDeVie = 1) {
         super(x, y, imagePath, largeur, hauteur, vitesse, pointsDeVie);
         
@@ -81,5 +85,30 @@ export default class Vaisseau extends ObjetGraphique {
 
         ctx.restore();
     }
+
+    startDash(dx, dy) {
+    if (this.isDashing) return;
+
+    this.isDashing = true;
+
+    const dist = Math.hypot(dx, dy);
+    const nx = dx / dist;
+    const ny = dy / dist;
+
+    const dashStart = performance.now();
+
+    const dashLoop = (time) => {
+        if (time - dashStart < this.dashDuration) {
+            this.x += nx * this.dashSpeed;
+            this.y += ny * this.dashSpeed;
+            requestAnimationFrame(dashLoop);
+        } else {
+            this.isDashing = false;
+        }
+    };
+
+    requestAnimationFrame(dashLoop);
+}
+
 
 }

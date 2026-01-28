@@ -5,6 +5,8 @@ let ctx;
 let monVaisseau;
 let gameManager;
 let gameStarted = false;
+const lastKeyPress = {};
+const DOUBLE_TAP_DELAY = 250; // ms
 
 document.querySelector('.startBoutton').addEventListener('click', () => {
     if (!gameStarted) {
@@ -70,7 +72,7 @@ function init() {
         './assets/img/vaisseau.png',  
         50,  
         50, 
-        3, // Vitesse du vaisseau
+        1.5, // Vitesse du vaisseau
         3 // Points de vie du vaisseau
     );
     updateBarreDeVie();
@@ -79,6 +81,28 @@ function init() {
     gameManager.spawnMeteorrite();
 
     document.addEventListener('keydown', (e) => {
+
+        if(e.repeat) return; 
+
+        const now = performance.now();
+        if (lastKeyPress[e.key] && now - lastKeyPress[e.key] < DOUBLE_TAP_DELAY) {
+
+            let dx = 0;
+            let dy = 0;
+
+            if (e.key === customKeys.up) dy = -1;
+            if (e.key === customKeys.down) dy = 1;
+            if (e.key === customKeys.left) dx = -1;
+            if (e.key === customKeys.right) dx = 1;
+
+            if (dx !== 0 || dy !== 0) {
+                monVaisseau.startDash(dx, dy);
+            }
+        }
+        // on mémorise le moment de l’appui
+        lastKeyPress[e.key] = now;
+
+
         keys[e.key] = true;
         if(e.key == customKeys.shoot) {
             monVaisseau.addBullet(performance.now());
