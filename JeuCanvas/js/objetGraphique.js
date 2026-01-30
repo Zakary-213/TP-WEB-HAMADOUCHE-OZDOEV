@@ -17,8 +17,14 @@ export default class ObjetGraphique {
         if (hauteur) this.hauteur = hauteur;
         if (vitesse) this.vitesse = vitesse;
 
-        this.image = new Image();
-        this.image.src = imagePath;
+        // Si c'est déjà un objet Image, on l'utilise directement
+        if (imagePath instanceof HTMLImageElement) {
+            this.image = imagePath;
+        } else {
+            // Sinon, on crée une nouvelle image avec le path
+            this.image = new Image();
+            this.image.src = imagePath;
+        }
 
         this.pointsDeVie = pointsDeVie;
     }

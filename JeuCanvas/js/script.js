@@ -1,32 +1,42 @@
 import Vaisseau from './vaisseau.js';
 import GameManager from './gameManager.js';
+import { loadAssets } from './assetLoader.js';
+
 let canvas;
 let ctx;
 let monVaisseau;
 let gameManager;
 let gameStarted = false;
+let loadedAssets; // Déclaration de la variable
 const lastKeyPress = {};
 const DOUBLE_TAP_DELAY = 250; // ms
 
-document.querySelector('.startBoutton').addEventListener('click', () => {
-    if (!gameStarted) {
-        gameStarted = true;
-        document.querySelector('div.boutton').style.display = 'none';
-        document.getElementById('monCanvas').classList.add('game-active');
-        init();
-    }
+let coeurs;
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelector('.startBoutton').addEventListener('click', async () => {
+        if (!gameStarted) {
+            gameStarted = true;
+            document.querySelector('div.boutton').style.display = 'none';
+            document.getElementById('monCanvas').classList.add('game-active');
+            startGame();
+        }
+    });
+
+    // Bouton Options - Redirection vers page réglages
+    document.querySelector('.Réglage').addEventListener('click', () => {
+        window.location.href = 'html/reglage.html';
+    });
+
+    // Tableau des cœurs pour la barre de vie
+    coeurs = document.querySelectorAll('.barreDeVie img');
+
+    // Cacher les cœurs au départ
+    coeurs.forEach(coeur => coeur.style.visibility = "hidden");
+    
+    // Charger les assets dès le démarrage
+    loadAssetsOnStart();
 });
-
-// Bouton Options - Redirection vers page réglages
-document.querySelector('.Réglage').addEventListener('click', () => {
-    window.location.href = 'html/reglage.html';
-});
-
-// Tableau des cœurs pour la barre de vie
-const coeurs = document.querySelectorAll('.barreDeVie img');
-
-// Cacher les cœurs au départ
-coeurs.forEach(coeur => coeur.style.visibility = "hidden");
 
 // Gestion des touches pressées
 let keys = {};
@@ -60,7 +70,20 @@ customKeys.down = getActualKey(customKeys.down);
 customKeys.right = getActualKey(customKeys.right);
 customKeys.shoot = getActualKey(customKeys.shoot);
 
-function init() {
+// Définis les assets à charger
+var assetsToLoadURLs = {
+    vaisseau: { url: './assets/img/vaisseau.png' },
+    meteorite: { url: './assets/img/meteorite.png' },
+    vie: { url: './assets/img/vie.png' },
+    gameMusic: { url: './assets/audio/ingame.mp3', buffer: true, loop: true, volume: 0.5 }
+};
+
+// Charger les assets au démarrage (avant le jeu)
+async function loadAssetsOnStart() {
+    loadedAssets = await loadAssets(assetsToLoadURLs);
+}
+
+function startGame() {
     canvas = document.getElementById('monCanvas');
     ctx = canvas.getContext('2d');
 
@@ -69,7 +92,66 @@ function init() {
     monVaisseau = new Vaisseau(
         canvas.width / 2,
         canvas.height / 2,
-        './assets/img/vaisseau.png',  
+        loadedAssets.vaisseau,  
+        50,  
+        50, 
+        1.5, // Vitesse du vaisseau
+        3 // Points de vie du vaisseau
+    );
+    updateBarreDeVie();
+
+    // Spawn la première météorite
+    gameManager.spawnMeteorrite();
+
+    document.addEventListener('keydown', (e) => {
+
+        if(e.repeat) return; 
+
+        const now = performance.now();
+        if (lastKeyPress[e.key] && now - lastKeyPress[e.key] < DOUBLE_TAP_DELAY) {
+
+            let dx = 0;
+            let dy = 0;
+
+            if (e.key === customKeys.up) dy = -1;
+            if (e.key === customKeys.down) dy = 1;
+            if (e.key === customKeys.left) dx = -1;
+            if (e.key === customKeys.right) dx = 1;
+
+            if (dx !== 0 || dy !== 0) {
+                monVaisseau.startDash(dx, dy);
+            }
+        }
+        // on mémorise le moment de l'appui
+        lastKeyPress[e.key] = now;
+
+
+        keys[e.key] = true;
+        if(e.key == customKeys.shoot) {
+            monVaisseau.addBullet(performance.now());
+        }
+    });
+
+    document.addEventListener('keyup', (e) => {
+        keys[e.key] = false;
+    });
+
+    // Lancer la boucle de jeu
+    gameLoop();
+}
+
+async function init() {
+    canvas = document.getElementById('monCanvas');
+    ctx = canvas.getContext('2d');
+
+    loadedAssets = await loadAssets(assetsToLoadURLs);
+
+    gameManager = new GameManager(canvas);
+
+    monVaisseau = new Vaisseau(
+        canvas.width / 2,
+        canvas.height / 2,
+        loadedAssets.vaisseau,  
         50,  
         50, 
         1.5, // Vitesse du vaisseau
