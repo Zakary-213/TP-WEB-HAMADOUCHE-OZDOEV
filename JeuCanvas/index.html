@@ -17,7 +17,19 @@
     <button class="Réglage">Options</button>
     <button class="Quitter">Quitter</button>
     </div>
-    <canvas id="monCanvas" width="500" height="600"></canvas>
+
+    <div class="canvas-wrapper">
+        <canvas id="monCanvas" width="500" height="600"></canvas>
+
+        <div class="gameover-overlay" aria-hidden="true">
+            <div class="gameover-container" role="dialog" aria-label="Game Over">
+                <div class="gameover-title">GAME OVER</div>
+                <div class="gameover-subtitle">Revenir à l’accueil</div>
+                <div class="gameover-hint">Clique sur le canvas pour revenir</div>
+            </div>
+        </div>
+    </div>
+
     <div class="settings-overlay" aria-hidden="true">
         <div class="settings-container">
             <h2>Options</h2>

@@ -17,18 +17,20 @@ let coeurs;
 let settingsOverlay;
 let settingsClose;
 let menuButtons;
+let gameOverOverlay;
 
 document.addEventListener('DOMContentLoaded', () => {
     canvas = document.getElementById('monCanvas');
     ctx = canvas.getContext('2d');
     settingsOverlay = document.querySelector('.settings-overlay');
+    gameOverOverlay = document.querySelector('.gameover-overlay');
     settingsClose = document.getElementById('close-settings');
     menuButtons = document.querySelector('div.boutton');
 
     setAppState('menu');
 
     document.querySelector('.startBoutton').addEventListener('click', async () => {
-        if (appState !== 'menu') return;
+        if (appState !== 'menu' && appState !== 'gameover') return;
 
         startGame();
         setAppState('playing');
@@ -59,6 +61,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Centraliser les écouteurs clavier
     bindKeyboardListeners();
+
+    // Rejouer au clic sur le canvas (écran game over)
+    canvas.addEventListener('click', () => {
+        if (appState !== 'gameover') return;
+        setAppState('menu');
+    });
 
     // Lancer la boucle d'animation dès le menu
     requestAnimationFrame(gameLoop);
@@ -137,16 +145,10 @@ function startGame() {
 }
 
 function gameLoop() {
-    // Effacer le canvas à chaque frame
-    ctx.fillStyle = '#1a1a2e';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Dessiner en fonction de l'état
-    if (appState === "menu") {
-        drawMenu();
-    } else if (appState === "settings") {
-        drawSettings();
-    } else {
+    // Ne dessiner le canvas que quand il est visible
+    if (appState === 'playing' || appState === 'gameover') {
+        ctx.fillStyle = '#1a1a2e';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
         drawPlaying();
     }
 
@@ -159,7 +161,7 @@ function gameLoop() {
 
 function updateGameState() {
     if (appState !== "playing") return;
-    if (gameManager.gameState === "hit") return;
+    if (gameManager.isHit()) return;
 
     // Calculer la direction basée sur les touches personnalisées
     let dx = 0;
@@ -172,30 +174,15 @@ function updateGameState() {
 
     monVaisseau.moveInDirection(dx, dy);
 
-    // Garder le vaisseau dans les limites du canvas
-    const margin = monVaisseau.largeur / 2;
-    monVaisseau.x = Math.max(margin, Math.min(monVaisseau.x, canvas.width - margin));
-    monVaisseau.y = Math.max(margin, Math.min(monVaisseau.y, canvas.height - margin));
-
     // Mettre à jour les collisions via GameManager
     gameManager.update(monVaisseau);
     updateBarreDeVie();
 
-    // Vérifier si le vaisseau est mort
-    if (monVaisseau.estMort()) {
-        gameManager.setGameOver();
-        setAppState('menu');
+    // Si le GameManager vient de passer en gameover pendant l'update
+    if (gameManager.isGameOver()) {
+        setAppState('gameover');
+        console.log("Game Over détecté");
         return;
-    }
-
-    // Mettre à jour les bullets
-    for(let i = monVaisseau.bullets.length - 1; i >= 0; i--) {        
-        const bullet = monVaisseau.bullets[i];
-        bullet.move();
-
-        if(bullet.estHorsCanvas(canvas.width, canvas.height)) {
-            monVaisseau.bullets.splice(i, 1);
-        }
     }
 }
 
@@ -231,6 +218,10 @@ function setAppState(nextState) {
             settingsOverlay.classList.add('active');
             settingsOverlay.setAttribute('aria-hidden', 'false');
         }
+        if (gameOverOverlay) {
+            gameOverOverlay.classList.remove('active');
+            gameOverOverlay.setAttribute('aria-hidden', 'true');
+        }
         if (menuButtons) {
             menuButtons.style.display = 'none';
         }
@@ -243,6 +234,11 @@ function setAppState(nextState) {
         settingsOverlay.setAttribute('aria-hidden', 'true');
     }
 
+    if (gameOverOverlay) {
+        gameOverOverlay.classList.remove('active');
+        gameOverOverlay.setAttribute('aria-hidden', 'true');
+    }
+
     if (appState === 'playing') {
         canvasEl.classList.add('game-active');
         if (menuButtons) {
@@ -251,7 +247,20 @@ function setAppState(nextState) {
         return;
     }
 
-    // menu
+    if (appState === 'gameover') {
+        // Game over : afficher le canvas, sans les boutons
+        canvasEl.classList.add('game-active');
+        if (gameOverOverlay) {
+            gameOverOverlay.classList.add('active');
+            gameOverOverlay.setAttribute('aria-hidden', 'false');
+        }
+        if (menuButtons) {
+            menuButtons.style.display = 'none';
+        }
+        return;
+    }
+
+    // menu : cacher le canvas (CSS: display:none), garder les boutons
     canvasEl.classList.remove('game-active');
     if (menuButtons) {
         menuButtons.style.display = 'flex';
@@ -304,28 +313,8 @@ function bindKeyboardListeners() {
     });
 }
 
-function drawMenu() {
-    ctx.save();
-    ctx.fillStyle = '#ffffff';
-    ctx.font = '28px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('Météorite canvas', canvas.width / 2, canvas.height / 2 - 20);
-    ctx.font = '16px sans-serif';
-    ctx.fillText('Cliquez sur Jouer pour démarrer', canvas.width / 2, canvas.height / 2 + 20);
-    ctx.restore();
-}
-
-function drawSettings() {
-    ctx.save();
-    ctx.fillStyle = '#ffffff';
-    ctx.font = '20px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('Réglages', canvas.width / 2, canvas.height / 2);
-    ctx.restore();
-}
-
 function drawPlaying() {
-    if (gameManager.gameState === "hit") {
+    if (gameManager.isHit()) {
         monVaisseau.draw(ctx);
         return;
     }

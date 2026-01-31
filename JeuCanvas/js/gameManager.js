@@ -11,7 +11,48 @@ export default class GameManager {
         this.nextMeteoriteSpawn = 0;
     }
 
+    isHit() {
+        return this.gameState === "hit";
+    }
+
+    isGameOver() {
+        return this.gameState === "gameover";
+    }
+
+    setGameOver() {
+        this.gameState = "gameover";
+    }
+
+    clampVaisseauToCanvas(vaisseau) {
+        const marginX = vaisseau.largeur / 2;
+        const marginY = vaisseau.hauteur / 2;
+        vaisseau.x = Math.max(marginX, Math.min(vaisseau.x, this.canvas.width - marginX));
+        vaisseau.y = Math.max(marginY, Math.min(vaisseau.y, this.canvas.height - marginY));
+    }
+
+    updateBullets(vaisseau) {
+        for (let i = vaisseau.bullets.length - 1; i >= 0; i--) {
+            const bullet = vaisseau.bullets[i];
+            bullet.move();
+
+            if (bullet.estHorsCanvas(this.canvas.width, this.canvas.height)) {
+                vaisseau.bullets.splice(i, 1);
+            }
+        }
+    }
+
     update(vaisseau) {
+        if (this.isGameOver()) return;
+
+        // Si le vaisseau est déjà mort, on stoppe tout
+        if (vaisseau.estMort()) {
+            this.setGameOver();
+            return;
+        }
+
+        // S'assurer que le vaisseau reste dans le canvas
+        this.clampVaisseauToCanvas(vaisseau);
+
         // Mettre à jour les météorites
         this.meteorites.forEach((meteorite, index) => {
             meteorite.descendre();
@@ -32,10 +73,17 @@ export default class GameManager {
                 vaisseau.startShake();
                 this.meteorites.splice(index, 1);
                 vaisseau.perdreVie(1);
-                
+
+                if (vaisseau.estMort()) {
+                    this.setGameOver();
+                    return;
+                }
+
                 setTimeout(() => {
                     vaisseau.stopShake();
-                    this.gameState = "playing";
+                    if (!this.isGameOver()) {
+                        this.gameState = "playing";
+                    }
                 }, this.HIT_DURATION);
             }
 
@@ -70,6 +118,15 @@ export default class GameManager {
             }
         }
 
+        // Mettre à jour les bullets
+        this.updateBullets(vaisseau);
+
+        // Vérifier Game Over après tous les dégâts possibles
+        if (vaisseau.estMort()) {
+            this.setGameOver();
+            return;
+        }
+
         // Spawner des météorites
         if (Date.now() > this.nextMeteoriteSpawn) {
             this.spawnMeteorrite();
@@ -95,11 +152,4 @@ export default class GameManager {
         });
     }
 
-    isGameOver() {
-        return this.gameState === "gameover";
-    }
-
-    setGameOver() {
-        this.gameState = "gameover";
-    }
 }
