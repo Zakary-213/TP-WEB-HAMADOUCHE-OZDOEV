@@ -6,7 +6,6 @@ let canvas;
 let ctx;
 let monVaisseau;
 let gameManager;
-let gameStarted = false;
 let appState = "menu";
 let previousAppState = "menu";
 let loadedAssets; // Déclaration de la variable
@@ -15,54 +14,35 @@ const DOUBLE_TAP_DELAY = 250; // ms
 
 let coeurs;
 
+let settingsOverlay;
+let settingsClose;
+let menuButtons;
+
 document.addEventListener('DOMContentLoaded', () => {
     canvas = document.getElementById('monCanvas');
     ctx = canvas.getContext('2d');
-    const settingsOverlay = document.querySelector('.settings-overlay');
-    const settingsClose = document.getElementById('close-settings');
-    const menuButtons = document.querySelector('div.boutton');
+    settingsOverlay = document.querySelector('.settings-overlay');
+    settingsClose = document.getElementById('close-settings');
+    menuButtons = document.querySelector('div.boutton');
 
-    document.getElementById('monCanvas').classList.remove('game-active');
+    setAppState('menu');
 
     document.querySelector('.startBoutton').addEventListener('click', async () => {
-        if (!gameStarted) {
-            gameStarted = true;
-            appState = "playing";
-            document.querySelector('div.boutton').style.display = 'none';
-            document.getElementById('monCanvas').classList.add('game-active');
-            startGame();
-        }
+        if (appState !== 'menu') return;
+
+        startGame();
+        setAppState('playing');
     });
 
     // Bouton Options - Redirection vers page réglages
     document.querySelector('.Réglage').addEventListener('click', () => {
         previousAppState = appState;
-        appState = "settings";
-        document.getElementById('monCanvas').classList.remove('game-active');
-        if (settingsOverlay) {
-            settingsOverlay.classList.add('active');
-            settingsOverlay.setAttribute('aria-hidden', 'false');
-        }
-        if (menuButtons) {
-            menuButtons.style.display = 'none';
-        }
+        setAppState('settings');
     });
 
     if (settingsClose) {
         settingsClose.addEventListener('click', () => {
-            appState = previousAppState === "playing" && gameStarted ? "playing" : "menu";
-            if (settingsOverlay) {
-                settingsOverlay.classList.remove('active');
-                settingsOverlay.setAttribute('aria-hidden', 'true');
-            }
-            if (appState === "playing") {
-                document.getElementById('monCanvas').classList.add('game-active');
-            } else {
-                document.getElementById('monCanvas').classList.remove('game-active');
-            }
-            if (!gameStarted && menuButtons) {
-                menuButtons.style.display = 'flex';
-            }
+            setAppState(previousAppState);
         });
     }
 
@@ -198,7 +178,8 @@ function updateGameState() {
     // Vérifier si le vaisseau est mort
     if (monVaisseau.estMort()) {
         gameManager.setGameOver();
-        alert("Game Over !");
+        setAppState('menu');
+        return;
     }
 
     // Mettre à jour les bullets
@@ -228,9 +209,57 @@ function applyMusicVolume(value) {
     }
 }
 
+function setAppState(nextState) {
+    appState = nextState;
+
+    // Toujours éviter les touches "collées" en changeant d'écran
+    for (const key of Object.keys(keys)) {
+        keys[key] = false;
+    }
+
+    const canvasEl = document.getElementById('monCanvas');
+
+    if (appState === 'settings') {
+        canvasEl.classList.remove('game-active');
+        if (settingsOverlay) {
+            settingsOverlay.classList.add('active');
+            settingsOverlay.setAttribute('aria-hidden', 'false');
+        }
+        if (menuButtons) {
+            menuButtons.style.display = 'none';
+        }
+        return;
+    }
+
+    // Par défaut, on ferme l'overlay des réglages si on n'est pas en settings
+    if (settingsOverlay) {
+        settingsOverlay.classList.remove('active');
+        settingsOverlay.setAttribute('aria-hidden', 'true');
+    }
+
+    if (appState === 'playing') {
+        canvasEl.classList.add('game-active');
+        if (menuButtons) {
+            menuButtons.style.display = 'none';
+        }
+        return;
+    }
+
+    // menu
+    canvasEl.classList.remove('game-active');
+    if (menuButtons) {
+        menuButtons.style.display = 'flex';
+    }
+}
+
 function bindKeyboardListeners() {
     document.addEventListener('keydown', (e) => {
         if (e.repeat) return;
+
+        keys[e.key] = true;
+
+        // Aucune action de jeu hors de l'état playing
+        if (appState !== 'playing') return;
 
         const now = performance.now();
         if (lastKeyPress[e.key] && now - lastKeyPress[e.key] < DOUBLE_TAP_DELAY) {
@@ -248,7 +277,6 @@ function bindKeyboardListeners() {
         }
         lastKeyPress[e.key] = now;
 
-        keys[e.key] = true;
         if (e.key == customKeys.shoot && monVaisseau) {
             monVaisseau.addBullet(performance.now());
         }
