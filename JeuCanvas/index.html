@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Météorite</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 
 <body>
@@ -17,8 +18,62 @@
     <button class="Quitter">Quitter</button>
     </div>
     <canvas id="monCanvas" width="500" height="600"></canvas>
+    <div class="settings-overlay" aria-hidden="true">
+        <div class="settings-container">
+            <h2>Options</h2>
+
+            <div class="setting-group">
+                <div class="volume-header">
+                    <label><i class="fa-solid fa-music"></i>Musique</label>
+                    <div class="volume-indicator" id="music-value">50%</div>
+                </div>
+                <input type="range" id="music-slider" min="0" max="100" value="50">
+            </div>
+
+            <div class="setting-group">
+                <div class="volume-header">
+                    <label><i class="fa-solid fa-volume-high"></i>Volume</label>
+                    <div class="volume-indicator" id="volume-value">50%</div>
+                </div>
+                <input type="range" id="volume-slider" min="0" max="100" value="50">
+            </div>
+
+            <div class="setting-group">
+                <p>Contrôles</p>
+                <div class="controls-grid">
+                    <div class="control-empty"></div>
+                    <div class="control-button">
+                        <button class="btn-up">↑</button>
+                        <span class="control-label">Avancer</span>
+                    </div>
+                    <div class="control-empty"></div>
+
+                    <div class="control-button">
+                        <button class="btn-left">←</button>
+                        <span class="control-label">Gauche</span>
+                    </div>
+                    <div class="control-button">
+                        <button class="btn-down">↓</button>
+                        <span class="control-label">Descendre</span>
+                    </div>
+                    <div class="control-button">
+                        <button class="btn-right">→</button>
+                        <span class="control-label">Droite</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <p>Tirer</p>
+                <button class="btn-shoot" style="width: 100%; margin: 10px 0 !important;">Entrée</button>
+            </div>
+
+            <button class="btn-return" id="close-settings">← Retour</button>
+        </div>
+    </div>
     <!-- Charger la librairie Howler.js pour les sons -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
+    <script src="js/reglage.js"></script>
     <script type="module" src="js/script.js"></script>
     <div class="barreDeVie">
         <img src="assets/img/Vie.png" alt="Vie"/>

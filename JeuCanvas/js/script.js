@@ -8,6 +8,7 @@ let monVaisseau;
 let gameManager;
 let gameStarted = false;
 let appState = "menu";
+let previousAppState = "menu";
 let loadedAssets; // Déclaration de la variable
 const lastKeyPress = {};
 const DOUBLE_TAP_DELAY = 250; // ms
@@ -17,6 +18,11 @@ let coeurs;
 document.addEventListener('DOMContentLoaded', () => {
     canvas = document.getElementById('monCanvas');
     ctx = canvas.getContext('2d');
+    const settingsOverlay = document.querySelector('.settings-overlay');
+    const settingsClose = document.getElementById('close-settings');
+    const menuButtons = document.querySelector('div.boutton');
+
+    document.getElementById('monCanvas').classList.remove('game-active');
 
     document.querySelector('.startBoutton').addEventListener('click', async () => {
         if (!gameStarted) {
@@ -30,8 +36,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Bouton Options - Redirection vers page réglages
     document.querySelector('.Réglage').addEventListener('click', () => {
-        window.location.href = 'html/reglage.html';
+        previousAppState = appState;
+        appState = "settings";
+        document.getElementById('monCanvas').classList.remove('game-active');
+        if (settingsOverlay) {
+            settingsOverlay.classList.add('active');
+            settingsOverlay.setAttribute('aria-hidden', 'false');
+        }
+        if (menuButtons) {
+            menuButtons.style.display = 'none';
+        }
     });
+
+    if (settingsClose) {
+        settingsClose.addEventListener('click', () => {
+            appState = previousAppState === "playing" && gameStarted ? "playing" : "menu";
+            if (settingsOverlay) {
+                settingsOverlay.classList.remove('active');
+                settingsOverlay.setAttribute('aria-hidden', 'true');
+            }
+            if (appState === "playing") {
+                document.getElementById('monCanvas').classList.add('game-active');
+            } else {
+                document.getElementById('monCanvas').classList.remove('game-active');
+            }
+            if (!gameStarted && menuButtons) {
+                menuButtons.style.display = 'flex';
+            }
+        });
+    }
 
     // Tableau des cœurs pour la barre de vie
     coeurs = document.querySelectorAll('.barreDeVie img');
@@ -89,6 +122,11 @@ var assetsToLoadURLs = {
 // Charger les assets au démarrage (avant le jeu)
 async function loadAssetsOnStart() {
     loadedAssets = await loadAssets(assetsToLoadURLs);
+    window.applyMusicVolume = applyMusicVolume;
+    const savedMusicVolume = localStorage.getItem('music_volume');
+    if (savedMusicVolume !== null) {
+        applyMusicVolume(Number(savedMusicVolume));
+    }
 }
 
 function startGame() {
@@ -155,6 +193,11 @@ function gameLoop() {
         ctx.fillText('Météorite canvas', canvas.width / 2, canvas.height / 2 - 20);
         ctx.font = '16px sans-serif';
         ctx.fillText('Cliquez sur Jouer pour démarrer', canvas.width / 2, canvas.height / 2 + 20);
+    } else if (appState === "settings") {
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '20px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Réglages', canvas.width / 2, canvas.height / 2);
     } else if (gameManager.gameState === "hit") {
         monVaisseau.draw(ctx);
     } else {
@@ -226,5 +269,11 @@ function updateBarreDeVie() {
         } else {
             coeurs[i].style.visibility = "hidden";
         }
+    }
+}
+
+function applyMusicVolume(value) {
+    if (loadedAssets && loadedAssets.gameMusic && typeof loadedAssets.gameMusic.volume === 'function') {
+        loadedAssets.gameMusic.volume(value / 100);
     }
 }

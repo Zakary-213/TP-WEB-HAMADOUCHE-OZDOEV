@@ -38,7 +38,10 @@ let isListeningForKey = false;
 let currentButton = null;
 
 // INITIALISATION
-window.addEventListener('DOMContentLoaded', loadSavedKeys);
+window.addEventListener('DOMContentLoaded', () => {
+    loadSavedKeys();
+    initVolumeControls();
+});
 
 // Attacher les écouteurs aux boutons
 Object.entries(BUTTONS).forEach(([keyType, button]) => {
@@ -140,4 +143,38 @@ function stopListening() {
     document.removeEventListener('keydown', handleKeyPress);
     isListeningForKey = false;
     currentButton = null;
+}
+
+function initVolumeControls() {
+    const musicSlider = document.getElementById('music-slider');
+    const volumeSlider = document.getElementById('volume-slider');
+    const musicValue = document.getElementById('music-value');
+    const volumeValue = document.getElementById('volume-value');
+
+    if (musicSlider && musicValue) {
+        const savedMusicVolume = localStorage.getItem('music_volume');
+        const initialMusic = savedMusicVolume !== null ? Number(savedMusicVolume) : Number(musicSlider.value);
+        musicSlider.value = initialMusic;
+        musicValue.textContent = initialMusic + '%';
+        musicSlider.addEventListener('input', (e) => {
+            const val = Number(e.target.value);
+            musicValue.textContent = val + '%';
+            localStorage.setItem('music_volume', String(val));
+            if (window.applyMusicVolume) {
+                window.applyMusicVolume(val);
+            }
+        });
+    }
+
+    if (volumeSlider && volumeValue) {
+        const savedVolume = localStorage.getItem('sfx_volume');
+        const initialSfx = savedVolume !== null ? Number(savedVolume) : Number(volumeSlider.value);
+        volumeSlider.value = initialSfx;
+        volumeValue.textContent = initialSfx + '%';
+        volumeSlider.addEventListener('input', (e) => {
+            const val = Number(e.target.value);
+            volumeValue.textContent = val + '%';
+            localStorage.setItem('sfx_volume', String(val));
+        });
+    }
 }
