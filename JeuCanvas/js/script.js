@@ -42,6 +42,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (settingsClose) {
         settingsClose.addEventListener('click', () => {
+            // Les touches peuvent avoir été modifiées dans l'overlay
+            reloadCustomKeysFromStorage();
             setAppState(previousAppState);
         });
     }
@@ -87,12 +89,16 @@ function getActualKey(savedKey) {
     return keyMap[savedKey] || savedKey.toLowerCase();
 }
 
-// Convertir toutes les touches personnalisées
-customKeys.up = getActualKey(customKeys.up);
-customKeys.left = getActualKey(customKeys.left);
-customKeys.down = getActualKey(customKeys.down);
-customKeys.right = getActualKey(customKeys.right);
-customKeys.shoot = getActualKey(customKeys.shoot);
+function reloadCustomKeysFromStorage() {
+    customKeys.up = getActualKey(localStorage.getItem('key_up') || '↑');
+    customKeys.left = getActualKey(localStorage.getItem('key_left') || '←');
+    customKeys.down = getActualKey(localStorage.getItem('key_down') || '↓');
+    customKeys.right = getActualKey(localStorage.getItem('key_right') || '→');
+    customKeys.shoot = getActualKey(localStorage.getItem('key_shoot') || 'Entrée');
+}
+
+// Convertir toutes les touches personnalisées au démarrage
+reloadCustomKeysFromStorage();
 
 // Définis les assets à charger
 var assetsToLoadURLs = {
@@ -256,34 +262,45 @@ function bindKeyboardListeners() {
     document.addEventListener('keydown', (e) => {
         if (e.repeat) return;
 
-        keys[e.key] = true;
+        const rawKey = e.key;
+        const normalizedKey = rawKey.length === 1 ? rawKey.toLowerCase() : rawKey;
+
+        keys[rawKey] = true;
+        if (rawKey.length === 1) {
+            keys[normalizedKey] = true;
+        }
 
         // Aucune action de jeu hors de l'état playing
         if (appState !== 'playing') return;
 
         const now = performance.now();
-        if (lastKeyPress[e.key] && now - lastKeyPress[e.key] < DOUBLE_TAP_DELAY) {
+        if (lastKeyPress[normalizedKey] && now - lastKeyPress[normalizedKey] < DOUBLE_TAP_DELAY) {
             let dx = 0;
             let dy = 0;
 
-            if (e.key === customKeys.up) dy = -1;
-            if (e.key === customKeys.down) dy = 1;
-            if (e.key === customKeys.left) dx = -1;
-            if (e.key === customKeys.right) dx = 1;
+            if (normalizedKey === customKeys.up) dy = -1;
+            if (normalizedKey === customKeys.down) dy = 1;
+            if (normalizedKey === customKeys.left) dx = -1;
+            if (normalizedKey === customKeys.right) dx = 1;
 
             if ((dx !== 0 || dy !== 0) && monVaisseau) {
                 monVaisseau.startDash(dx, dy);
             }
         }
-        lastKeyPress[e.key] = now;
+        lastKeyPress[normalizedKey] = now;
 
-        if (e.key == customKeys.shoot && monVaisseau) {
+        if (normalizedKey == customKeys.shoot && monVaisseau) {
             monVaisseau.addBullet(performance.now());
         }
     });
 
     document.addEventListener('keyup', (e) => {
-        keys[e.key] = false;
+        const rawKey = e.key;
+        const normalizedKey = rawKey.length === 1 ? rawKey.toLowerCase() : rawKey;
+        keys[rawKey] = false;
+        if (rawKey.length === 1) {
+            keys[normalizedKey] = false;
+        }
     });
 }
 
