@@ -1,6 +1,7 @@
 import Vaisseau from './vaisseau.js';
 import GameManager from './gameManager.js';
 import { loadAssets } from './assetLoader.js';
+import { TYPE_VAISSEAU } from './typeVaisseau.js';
 
 let canvas;
 let ctx;
@@ -136,8 +137,12 @@ function startGame() {
         50,  
         50, 
         1.5, // Vitesse du vaisseau
-        3 // Points de vie du vaisseau
+        3, // Points de vie du vaisseau
+        TYPE_VAISSEAU.PHASE  // Type du vaisseau
     );
+
+    console.log("Type du vaisseau :", monVaisseau.type);
+
     updateBarreDeVie();
 
     // Spawn la première météorite

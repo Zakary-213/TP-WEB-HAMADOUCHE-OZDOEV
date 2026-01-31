@@ -1,5 +1,7 @@
 import Meteorite from './meteorite.js';
 import CollisionUtils from './collisionUtils.js';
+import { TYPE_VAISSEAU } from './typeVaisseau.js';
+import Bullet from './bullet.js';
 
 export default class GameManager {
     constructor(canvas) {
@@ -33,11 +35,13 @@ export default class GameManager {
     updateBullets(vaisseau) {
         for (let i = vaisseau.bullets.length - 1; i >= 0; i--) {
             const bullet = vaisseau.bullets[i];
-            bullet.move();
+            bullet.move(this.canvas.width, this.canvas.height);
 
-            if (bullet.estHorsCanvas(this.canvas.width, this.canvas.height)) {
+            if (bullet.estHorsCanvas(this.canvas.width, this.canvas.height) && bullet.bounces === 0) 
+            {
                 vaisseau.bullets.splice(i, 1);
             }
+
         }
     }
 
@@ -69,6 +73,11 @@ export default class GameManager {
             );
 
             if (collision && this.gameState === "playing") {
+
+                if (vaisseau.type === TYPE_VAISSEAU.PHASE && vaisseau.isDashing) {
+                    // On ignore la collision
+                    return;
+                }
                 this.gameState = "hit";
                 vaisseau.startShake();
                 this.meteorites.splice(index, 1);
@@ -111,8 +120,50 @@ export default class GameManager {
                 );
                 
                 if (collision) {
-                    vaisseau.bullets.splice(b, 1);
                     this.meteorites.splice(m, 1);
+
+                    if (vaisseau.type === TYPE_VAISSEAU.PHASE) {
+                        continue;
+                    }
+
+                    if (vaisseau.type === TYPE_VAISSEAU.SPLIT && !bullet.hasSplit) {
+                        
+
+                        const baseAngle = bullet.angle;
+                        const splitAngle = Math.PI / 6; // 30°
+                        const spawnOffset = 8;
+                        const dirX = Math.cos(baseAngle);
+                        const dirY = Math.sin(baseAngle);
+
+                        bullet.hasSplit = true;
+
+                        const bullet1 = new Bullet({
+                            x: bullet.x + dirX * spawnOffset,
+                            y: bullet.y + dirY * spawnOffset,
+                            angle: baseAngle + splitAngle
+                        });
+
+                        const bullet2 = new Bullet({
+                            x: bullet.x + dirX * spawnOffset,
+                            y: bullet.y + dirY * spawnOffset,
+                            angle: baseAngle - splitAngle
+                        });
+
+                        bullet1.hasSplit = true;
+                        bullet2.hasSplit = true;
+
+
+                        vaisseau.bullets.push(bullet1, bullet2);
+                        
+                        // Supprimer la bullet d'origine
+                        vaisseau.bullets.splice(b, 1);
+                        
+                        break;
+                    }
+
+                    if(vaisseau.type !== TYPE_VAISSEAU.PIERCE) {
+                        vaisseau.bullets.splice(b, 1);
+                    }
                     break;
                 }
             }

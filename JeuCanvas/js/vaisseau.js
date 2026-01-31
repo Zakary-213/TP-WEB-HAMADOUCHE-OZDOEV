@@ -1,5 +1,6 @@
 import ObjetGraphique from './objetGraphique.js';
 import Bullet from './bullet.js';
+import { TYPE_VAISSEAU } from './typeVaisseau.js';
 
 export default class Vaisseau extends ObjetGraphique {
     minDist = 10;
@@ -11,8 +12,9 @@ export default class Vaisseau extends ObjetGraphique {
     dashSpeed = 5;
     dashDuration = 150; 
 
-    constructor(x, y, imagePath, largeur, hauteur, vitesse, pointsDeVie = 1) {
+    constructor(x, y, imagePath, largeur, hauteur, vitesse, pointsDeVie = 1, type = TYPE_VAISSEAU.NORMAL) {
         super(x, y, imagePath, largeur, hauteur, vitesse, pointsDeVie);
+        this.type = type;
         
         // --- Partie tremblement --- 
         this.isShaking = false;
@@ -48,8 +50,44 @@ export default class Vaisseau extends ObjetGraphique {
         if ((this.lastBulletTime === undefined) || (tempEcoule > this.delayMinBetweenBullets)) {
             // Créer une bullet avec l'angle corrigé (enlever le décalage de π/2)
             let shootAngle = this.angle - Math.PI / 2;
-            this.bullets.push(new Bullet({x: this.x, y: this.y, angle: shootAngle}));
-            this.lastBulletTime = time;
+            //this.bullets.push(new Bullet({x: this.x, y: this.y, angle: shootAngle}));
+            //this.lastBulletTime = time;
+            const offset = 30;
+            if (this.type === TYPE_VAISSEAU.SPREAD) 
+            {
+                // vecteur perpendiculaire à la direction du tir
+                const perpX = -Math.sin(shootAngle);
+                const perpY =  Math.cos(shootAngle);
+
+                this.bullets.push(
+                    new Bullet({
+                        x: this.x + perpX * offset,
+                        y: this.y + perpY * offset,  
+                        angle: shootAngle
+                    }),
+                    new Bullet({
+                        x: this.x - perpX * offset,
+                        y: this.y - perpY * offset,
+                        angle: shootAngle
+                    })
+                );
+                this.lastBulletTime = time;
+                return;
+            }
+
+            if (this.type === TYPE_VAISSEAU.RICOCHET) {
+                const bullet = new Bullet({ x: this.x, y: this.y, angle: shootAngle });
+                bullet.bounces = 3; 
+                this.bullets.push(bullet);
+                this.lastBulletTime = time;
+                return;
+            }
+
+
+            else {
+                this.bullets.push(new Bullet({ x: this.x, y: this.y, angle: shootAngle }));
+                this.lastBulletTime = time;
+            }
         }
     }
 
