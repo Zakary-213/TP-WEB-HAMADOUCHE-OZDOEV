@@ -7,6 +7,7 @@ let ctx;
 let monVaisseau;
 let gameManager;
 let gameStarted = false;
+let appState = "menu";
 let loadedAssets; // Déclaration de la variable
 const lastKeyPress = {};
 const DOUBLE_TAP_DELAY = 250; // ms
@@ -14,9 +15,13 @@ const DOUBLE_TAP_DELAY = 250; // ms
 let coeurs;
 
 document.addEventListener('DOMContentLoaded', () => {
+    canvas = document.getElementById('monCanvas');
+    ctx = canvas.getContext('2d');
+
     document.querySelector('.startBoutton').addEventListener('click', async () => {
         if (!gameStarted) {
             gameStarted = true;
+            appState = "playing";
             document.querySelector('div.boutton').style.display = 'none';
             document.getElementById('monCanvas').classList.add('game-active');
             startGame();
@@ -36,6 +41,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Charger les assets dès le démarrage
     loadAssetsOnStart();
+
+    // Lancer la boucle d'animation dès le menu
+    requestAnimationFrame(gameLoop);
 });
 
 // Gestion des touches pressées
@@ -84,9 +92,6 @@ async function loadAssetsOnStart() {
 }
 
 function startGame() {
-    canvas = document.getElementById('monCanvas');
-    ctx = canvas.getContext('2d');
-
     gameManager = new GameManager(canvas);
 
     monVaisseau = new Vaisseau(
@@ -136,67 +141,6 @@ function startGame() {
         keys[e.key] = false;
     });
 
-    // Lancer la boucle de jeu
-    gameLoop();
-}
-
-async function init() {
-    canvas = document.getElementById('monCanvas');
-    ctx = canvas.getContext('2d');
-
-    loadedAssets = await loadAssets(assetsToLoadURLs);
-
-    gameManager = new GameManager(canvas);
-
-    monVaisseau = new Vaisseau(
-        canvas.width / 2,
-        canvas.height / 2,
-        loadedAssets.vaisseau,  
-        50,  
-        50, 
-        1.5, // Vitesse du vaisseau
-        3 // Points de vie du vaisseau
-    );
-    updateBarreDeVie();
-
-    // Spawn la première météorite
-    gameManager.spawnMeteorrite();
-
-    document.addEventListener('keydown', (e) => {
-
-        if(e.repeat) return; 
-
-        const now = performance.now();
-        if (lastKeyPress[e.key] && now - lastKeyPress[e.key] < DOUBLE_TAP_DELAY) {
-
-            let dx = 0;
-            let dy = 0;
-
-            if (e.key === customKeys.up) dy = -1;
-            if (e.key === customKeys.down) dy = 1;
-            if (e.key === customKeys.left) dx = -1;
-            if (e.key === customKeys.right) dx = 1;
-
-            if (dx !== 0 || dy !== 0) {
-                monVaisseau.startDash(dx, dy);
-            }
-        }
-        // on mémorise le moment de l’appui
-        lastKeyPress[e.key] = now;
-
-
-        keys[e.key] = true;
-        if(e.key == customKeys.shoot) {
-            monVaisseau.addBullet(performance.now());
-        }
-    });
-
-    document.addEventListener('keyup', (e) => {
-        keys[e.key] = false;
-    });
-
-    // Lancer la boucle de jeu
-    gameLoop();
 }
 
 function gameLoop() {
@@ -204,11 +148,39 @@ function gameLoop() {
     ctx.fillStyle = '#1a1a2e';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    if (gameManager.gameState === "hit") {
+    if (appState === "menu") {
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '28px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Météorite canvas', canvas.width / 2, canvas.height / 2 - 20);
+        ctx.font = '16px sans-serif';
+        ctx.fillText('Cliquez sur Jouer pour démarrer', canvas.width / 2, canvas.height / 2 + 20);
+    } else if (gameManager.gameState === "hit") {
         monVaisseau.draw(ctx);
-        requestAnimationFrame(gameLoop);
-        return;
+    } else {
+        // Dessiner les météorites
+        gameManager.draw(ctx);
+
+        // Dessiner le vaisseau
+        monVaisseau.draw(ctx);
+
+        // Dessiner les bullets
+        for(let i = monVaisseau.bullets.length - 1; i >= 0; i--) {        
+            const bullet = monVaisseau.bullets[i];
+            bullet.draw(ctx);
+        }
     }
+
+    // Mettre à jour l'état du jeu
+    updateGameState();
+
+    // Relancer la boucle
+    requestAnimationFrame(gameLoop);
+}
+
+function updateGameState() {
+    if (appState !== "playing") return;
+    if (gameManager.gameState === "hit") return;
 
     // Calculer la direction basée sur les touches personnalisées
     let dx = 0;
@@ -236,25 +208,15 @@ function gameLoop() {
         alert("Game Over !");
     }
 
-    // Dessiner les météorites
-    gameManager.draw(ctx);
-
-    // Dessiner le vaisseau
-    monVaisseau.draw(ctx);
-
-    // Mettre à jour et dessiner les bullets
+    // Mettre à jour les bullets
     for(let i = monVaisseau.bullets.length - 1; i >= 0; i--) {        
         const bullet = monVaisseau.bullets[i];
         bullet.move();
-        bullet.draw(ctx);
 
         if(bullet.estHorsCanvas(canvas.width, canvas.height)) {
             monVaisseau.bullets.splice(i, 1);
         }
     }
-
-    // Relancer la boucle
-    requestAnimationFrame(gameLoop);
 }
 
 function updateBarreDeVie() {
