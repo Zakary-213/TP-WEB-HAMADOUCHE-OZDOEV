@@ -138,7 +138,7 @@ function startGame() {
         50, 
         1.5, // Vitesse du vaisseau
         3, // Points de vie du vaisseau
-        TYPE_VAISSEAU.PHASE  // Type du vaisseau
+        TYPE_VAISSEAU.SPREAD  // Type du vaisseau
     );
 
     console.log("Type du vaisseau :", monVaisseau.type);

@@ -120,10 +120,12 @@ export default class GameManager {
                 );
                 
                 if (collision) {
-                    this.meteorites.splice(m, 1);
 
+                    
                     if (vaisseau.type === TYPE_VAISSEAU.PHASE) {
-                        continue;
+                        this.meteorites.splice(m, 1);
+                        vaisseau.bullets.splice(b, 1);
+                        break;
                     }
 
                     if (vaisseau.type === TYPE_VAISSEAU.SPLIT && !bullet.hasSplit) {
@@ -161,9 +163,12 @@ export default class GameManager {
                         break;
                     }
 
+                    this.meteorites.splice(m, 1);
+
                     if(vaisseau.type !== TYPE_VAISSEAU.PIERCE) {
                         vaisseau.bullets.splice(b, 1);
                     }
+                    
                     break;
                 }
             }

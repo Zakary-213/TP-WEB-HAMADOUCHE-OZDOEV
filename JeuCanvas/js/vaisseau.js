@@ -52,7 +52,7 @@ export default class Vaisseau extends ObjetGraphique {
             let shootAngle = this.angle - Math.PI / 2;
             //this.bullets.push(new Bullet({x: this.x, y: this.y, angle: shootAngle}));
             //this.lastBulletTime = time;
-            const offset = 30;
+            const offset = 10;
             if (this.type === TYPE_VAISSEAU.SPREAD) 
             {
                 // vecteur perpendiculaire à la direction du tir
