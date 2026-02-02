@@ -3,13 +3,16 @@ import CollisionUtils from './collisionUtils.js';
 import { TYPE_VAISSEAU } from './typeVaisseau.js';
 import Bullet from './bullet.js';
 import { METEORITE_CONFIG, TYPE_METEORITE } from './typeMeteorite.js';
+import ParticleManager from './particles.js';
 
 export default class GameManager {
-    constructor(canvas, player) {
+    constructor(canvas, player, assets = {}) {
         this.canvas = canvas;
         this.player = player;
+        this.assets = assets;
         this.meteorites = [];
         this.cloudZones = [];
+        this.particles = new ParticleManager();
         this.gameState = "playing";
         this.collisionUtils = new CollisionUtils();
         this.HIT_DURATION = 600;
@@ -142,8 +145,19 @@ export default class GameManager {
             const meteorite = this.meteorites[i];
             meteorite.descendre();
 
+            // DYNAMITE : déclencher un tremblement juste avant explosion
+            if (meteorite.type === TYPE_METEORITE.DYNAMITE && meteorite.explodeAfterMs !== null) {
+                const elapsed = Date.now() - meteorite.spawnedAt;
+                const remaining = meteorite.explodeAfterMs - elapsed;
+                if (remaining > 0 && remaining <= this.HIT_DURATION) {
+                    meteorite.startShake();
+                }
+            }
+
             // Explosion (DYNAMITE) après X ms
             if (meteorite.shouldExplode()) {
+                // Particules d'explosion (palette arcade selon type)
+                this.spawnExplosionParticles(meteorite);
                 this.meteorites.splice(i, 1);
 
                 // Dégâts en zone si le vaisseau est proche
@@ -192,6 +206,9 @@ export default class GameManager {
         const now = Date.now();
         this.cloudZones = this.cloudZones.filter(z => z.expiresAt > now);
 
+        // Mettre à jour les particules
+        this.particles.update();
+
         // Collision bullets/meteorites
         for(let b = vaisseau.bullets.length - 1; b >= 0; b--) {
             const bullet = vaisseau.bullets[b];
@@ -213,6 +230,8 @@ export default class GameManager {
 
                     
                     if (vaisseau.type === TYPE_VAISSEAU.PHASE) {
+                        // Impact visuel même si phase (optionnel)
+                        this.spawnImpactParticles(meteorite);
                         this.meteorites.splice(m, 1);
                         vaisseau.bullets.splice(b, 1);
                         break;
@@ -221,6 +240,8 @@ export default class GameManager {
                     // NUAGE : crée une zone de flou puis disparaît
                     if (meteorite.type === TYPE_METEORITE.NUAGE) {
                         this.spawnCloudZone(meteorite);
+                        // Un léger impact visuel pour l'effet
+                        this.spawnImpactParticles(meteorite);
                         this.meteorites.splice(m, 1);
                         if (vaisseau.type !== TYPE_VAISSEAU.PIERCE) {
                             vaisseau.bullets.splice(b, 1);
@@ -265,6 +286,7 @@ export default class GameManager {
 
                     // ECLATS : se découpe en 2 morceaux au premier tir
                     if (meteorite.type === TYPE_METEORITE.ECLATS && meteorite.canSplit) {
+                        this.spawnImpactParticles(meteorite);
                         this.meteorites.splice(m, 1);
                         this.spawnEclatsPieces(meteorite);
 
@@ -275,14 +297,19 @@ export default class GameManager {
                         break;
                     }
 
+                    // Particules d'impact par défaut
+                    this.spawnImpactParticles(meteorite);
                     // Dégâts sur la météorite (ex: COSTAUD a pv=5)
                     meteorite.pv -= 1;
 
                     if (meteorite.pv <= 0) {
+                        // Petit burst d'explosion à la destruction (arcade)
+                        this.spawnExplosionParticles(meteorite);
                         this.meteorites.splice(m, 1);
                         const goldEarned = this.getGoldForMeteorite(meteorite.type);
                         this.player.addGold(goldEarned);
-                        console.log(`💥 ${meteorite.type} détruite → +${goldEarned} gold`);                    }
+                        console.log(`💥 ${meteorite.type} détruite → +${goldEarned} gold`);
+                    }
 
                     if(vaisseau.type !== TYPE_VAISSEAU.PIERCE) {
                         vaisseau.bullets.splice(b, 1);
@@ -310,12 +337,15 @@ export default class GameManager {
     }
 
     spawnMeteorrite() {
-        const type = TYPE_METEORITE.NORMAL; // Pour l'instant, on spawn toujours des nuages
+        const type = TYPE_METEORITE.ECLATS; // Exemple: dynamite
 
         const x = Math.random() * this.canvas.width;
         const y = -50;
 
         let meteorite = null;
+
+        const imageForType = this.getMeteoriteImageForType(type);
+
 
         if (type === TYPE_METEORITE.LANCER && this.lastVaisseauX !== null && this.lastVaisseauY !== null) {
             const dx = this.lastVaisseauX - x;
@@ -335,9 +365,9 @@ export default class GameManager {
             if (config && config.vitesse !== undefined) {
                 speed = config.vitesse;
             }
-            meteorite = new Meteorite(x, y, type, { vx: vx * speed, vy: vy * speed });
+            meteorite = new Meteorite(x, y, type, { imagePath: imageForType, vx: vx * speed, vy: vy * speed });
         } else {
-            meteorite = new Meteorite(x, y, type);
+            meteorite = new Meteorite(x, y, type, { imagePath: imageForType });
         }
 
         this.meteorites.push(meteorite);
@@ -350,6 +380,9 @@ export default class GameManager {
 
         // Dessiner les zones de nuage (flou/masque) au-dessus des météorites
         this.drawCloudZones(ctx);
+
+        // Dessiner les particules (au-dessus pour bien voir)
+        this.particles.draw(ctx);
     }
 
     drawCloudZones(ctx) {
@@ -380,3 +413,58 @@ export default class GameManager {
 
 
 }
+
+// Image asset mapping per meteorite type
+GameManager.prototype.getMeteoriteImageForType = function(type) {
+    // Prefer specific assets; fallback to generic meteorite
+    switch (type) {
+        case TYPE_METEORITE.DYNAMITE:
+            return this.assets.dyna || this.assets.meteorite;
+        case TYPE_METEORITE.NUAGE:
+            return this.assets.nuage || this.assets.meteorite;
+        case TYPE_METEORITE.LANCER:
+            return this.assets.lancer || this.assets.meteorite;
+        default:
+            return this.assets.meteorite;
+    }
+};
+// --- Particles helpers ---
+GameManager.prototype.getPaletteForMeteorite = function(type, kind = 'impact') {
+    // Violet neon palettes per meteor type (arcade theme)
+    const baseImpact = ['#9D4EDD', '#C77DFF', '#7B2CBF', '#B5179E'];
+    const baseExplosion = ['#E0AAFF', '#C77DFF', '#9D4EDD', '#F72585', '#7209B7'];
+    const palettes = {
+        [TYPE_METEORITE.DYNAMITE]: {
+            impact: baseImpact,
+            explosion: [...baseExplosion, '#FF1493'] // add hot pink pop for dynamite
+        },
+        [TYPE_METEORITE.NORMAL]: {
+            impact: baseImpact,
+            explosion: baseExplosion
+        },
+        [TYPE_METEORITE.ECLATS]: {
+            impact: ['#C77DFF', '#A06CD5', '#E0AAFF'],
+            explosion: ['#E0AAFF', '#C77DFF', '#9D4EDD']
+        },
+        [TYPE_METEORITE.COSTAUD]: {
+            impact: ['#7B2CBF', '#7209B7', '#9D4EDD'],
+            explosion: ['#B5179E', '#9D4EDD', '#7209B7']
+        },
+        [TYPE_METEORITE.NUAGE]: {
+            impact: ['#8A2BE2', '#7B2CBF', '#6C63FF'],
+            explosion: ['#957FEF', '#B197FC', '#6C63FF']
+        }
+    };
+    const entry = palettes[type] || palettes[TYPE_METEORITE.NORMAL];
+    return (entry && entry[kind]) ? entry[kind] : ['#FFFFFF'];
+};
+
+GameManager.prototype.spawnImpactParticles = function(meteorite) {
+    const palette = this.getPaletteForMeteorite(meteorite.type, 'impact');
+    this.particles.spawnImpact({ x: meteorite.x, y: meteorite.y, palette });
+};
+
+GameManager.prototype.spawnExplosionParticles = function(meteorite) {
+    const palette = this.getPaletteForMeteorite(meteorite.type, 'explosion');
+    this.particles.spawnExplosion({ x: meteorite.x, y: meteorite.y, palette });
+};

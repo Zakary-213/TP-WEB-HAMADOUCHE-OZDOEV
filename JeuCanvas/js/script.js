@@ -138,6 +138,9 @@ reloadCustomKeysFromStorage();
 var assetsToLoadURLs = {
     vaisseau: { url: './assets/img/vaisseau.png' },
     meteorite: { url: './assets/img/meteorite.png' },
+    dyna: { url: './assets/img/dyna.png' },
+    nuage: { url: './assets/img/nuage.png' },
+    lancer: { url: './assets/img/drone.png' },
     vie: { url: './assets/img/vie.png' },
     gameMusic: { url: './assets/audio/ingame.mp3', buffer: true, loop: true, volume: 0.5 }
 };
@@ -153,7 +156,7 @@ async function loadAssetsOnStart() {
 }
 
 function startGame() {
-    gameManager = new GameManager(canvas, player);
+    gameManager = new GameManager(canvas, player, loadedAssets);
     let shipType = player.getEquippedShip();
     
     monVaisseau = new Vaisseau(

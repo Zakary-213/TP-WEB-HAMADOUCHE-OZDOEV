@@ -58,7 +58,12 @@ export default class Meteorite extends ObjetGraphique {
         if (options.explosionRadius !== undefined) {
             this.explosionRadius = options.explosionRadius;
         }
-        this.rotationSpeed = (Math.random() - 0.5) * 0.1; // Vitesse de rotation aléatoire
+        // Rotation: désactivée pour LANCER, aléatoire sinon
+        this.rotationSpeed = (this.type === TYPE_METEORITE.LANCER) ? 0 : (Math.random() - 0.5) * 0.1;
+
+        // --- tremblement comme le vaisseau ---
+        this.isShaking = false;
+        this.shakeIntensity = 8;
     }
 
     shouldExplode(now = Date.now()) {
@@ -75,5 +80,39 @@ export default class Meteorite extends ObjetGraphique {
     // Vérifier si la météorite est sortie du canvas
     estHorsCanvas(canvasHeight) {
         return this.y - this.hauteur / 2 > canvasHeight;
+    }
+
+    // --- contrôle tremblement ---
+    startShake() {
+        this.isShaking = true;
+    }
+
+    stopShake() {
+        this.isShaking = false;
+    }
+
+    draw(ctx) {
+        ctx.save();
+
+        // Appliquer tremblement visuel (même logique que vaisseau)
+        if (this.isShaking) {
+            const tremblementX = (Math.random() - 0.5) * this.shakeIntensity;
+            const tremblementY = (Math.random() - 0.5) * this.shakeIntensity;
+            ctx.translate(tremblementX, tremblementY);
+        }
+
+        if (this.image.complete && this.image.naturalWidth > 0) {
+            ctx.translate(this.x, this.y);
+            ctx.rotate(this.angle);
+            ctx.drawImage(
+                this.image,
+                -this.largeur / 2,
+                -this.hauteur / 2,
+                this.largeur,
+                this.hauteur
+            );
+        }
+
+        ctx.restore();
     }
 }

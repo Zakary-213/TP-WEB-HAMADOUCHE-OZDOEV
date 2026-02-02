@@ -17,7 +17,7 @@ export const METEORITE_CONFIG = {
   },
 
   [TYPE_METEORITE.DYNAMITE]: {
-    imagePath: './assets/img/meteorite.png',
+    imagePath: './assets/img/dyna.png',
     largeur: 40,
     hauteur: 40,
     vitesse: 0.5,
@@ -35,9 +35,9 @@ export const METEORITE_CONFIG = {
   },
 
   [TYPE_METEORITE.LANCER]: {
-    imagePath: './assets/img/meteorite.png',
-    largeur: 40,
-    hauteur: 40,
+    imagePath: './assets/img/drone.png',
+    largeur: 45,
+    hauteur: 45,
     vitesse: 0.7,
     pv: 1,
   },
@@ -52,7 +52,7 @@ export const METEORITE_CONFIG = {
 
 
   [TYPE_METEORITE.NUAGE]: {
-    imagePath: './assets/img/meteorite.png',
+    imagePath: './assets/img/nuage.png',
     largeur: 50,
     hauteur: 50,
     vitesse: 0.2,
