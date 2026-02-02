@@ -2,6 +2,9 @@ import Vaisseau from './vaisseau.js';
 import GameManager from './gameManager.js';
 import { loadAssets } from './assetLoader.js';
 import { TYPE_VAISSEAU } from './typeVaisseau.js';
+import Player from './player.js';
+import Boutique, { BoutiqueUI } from './boutique.js';
+
 
 let canvas;
 let ctx;
@@ -13,6 +16,9 @@ let loadedAssets; // Déclaration de la variable
 const lastKeyPress = {};
 const DOUBLE_TAP_DELAY = 250; // ms
 
+window.TYPE_VAISSEAU = TYPE_VAISSEAU;
+window.player = new Player(); // Pour tester le player dans la console
+window.shop = new Boutique(player); // Pour tester la boutique dans la console
 let coeurs;
 
 let settingsOverlay;
@@ -22,7 +28,7 @@ let gameOverOverlay;
 let shopOverlay;
 let shopClose;
 let btnBoutique;
-
+let boutiqueUI = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     canvas = document.getElementById('monCanvas');
@@ -147,8 +153,9 @@ async function loadAssetsOnStart() {
 }
 
 function startGame() {
-    gameManager = new GameManager(canvas);
-
+    gameManager = new GameManager(canvas, player);
+    let shipType = player.getEquippedShip();
+    
     monVaisseau = new Vaisseau(
         canvas.width / 2,
         canvas.height / 2,
@@ -157,7 +164,7 @@ function startGame() {
         50, 
         1.5, // Vitesse du vaisseau
         3, // Points de vie du vaisseau
-        TYPE_VAISSEAU.NORMAL  // Type du vaisseau
+        shipType  // Type du vaisseau équippé par le joueur
     );
 
     console.log("Type du vaisseau :", monVaisseau.type);
@@ -262,6 +269,13 @@ function setAppState(nextState) {
 
         if (menuButtons) {
             menuButtons.style.display = 'none';
+        }
+
+        if(!boutiqueUI){
+            boutiqueUI = new BoutiqueUI(player);
+        }
+        else {
+            boutiqueUI.updateGold();
         }
         return;
     }

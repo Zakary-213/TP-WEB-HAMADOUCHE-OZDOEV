@@ -5,8 +5,9 @@ import Bullet from './bullet.js';
 import { METEORITE_CONFIG, TYPE_METEORITE } from './typeMeteorite.js';
 
 export default class GameManager {
-    constructor(canvas) {
+    constructor(canvas, player) {
         this.canvas = canvas;
+        this.player = player;
         this.meteorites = [];
         this.cloudZones = [];
         this.gameState = "playing";
@@ -279,7 +280,9 @@ export default class GameManager {
 
                     if (meteorite.pv <= 0) {
                         this.meteorites.splice(m, 1);
-                    }
+                        const goldEarned = this.getGoldForMeteorite(meteorite.type);
+                        this.player.addGold(goldEarned);
+                        console.log(`💥 ${meteorite.type} détruite → +${goldEarned} gold`);                    }
 
                     if(vaisseau.type !== TYPE_VAISSEAU.PIERCE) {
                         vaisseau.bullets.splice(b, 1);
@@ -307,7 +310,7 @@ export default class GameManager {
     }
 
     spawnMeteorrite() {
-        const type = TYPE_METEORITE.NUAGE; // Pour l'instant, on spawn toujours des nuages
+        const type = TYPE_METEORITE.NORMAL; // Pour l'instant, on spawn toujours des nuages
 
         const x = Math.random() * this.canvas.width;
         const y = -50;
@@ -364,5 +367,16 @@ export default class GameManager {
         });
         ctx.restore();
     }
+
+    getGoldForMeteorite(type) {
+    switch (type) {
+        case TYPE_METEORITE.NUAGE: return 5;
+        case TYPE_METEORITE.ECLATS: return 10;
+        case TYPE_METEORITE.NORMAL: return 15;
+        case TYPE_METEORITE.COSTAUD: return 30;
+        default: return 0;
+    }
+}
+
 
 }
