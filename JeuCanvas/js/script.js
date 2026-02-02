@@ -19,6 +19,10 @@ let settingsOverlay;
 let settingsClose;
 let menuButtons;
 let gameOverOverlay;
+let shopOverlay;
+let shopClose;
+let btnBoutique;
+
 
 document.addEventListener('DOMContentLoaded', () => {
     canvas = document.getElementById('monCanvas');
@@ -27,6 +31,10 @@ document.addEventListener('DOMContentLoaded', () => {
     gameOverOverlay = document.querySelector('.gameover-overlay');
     settingsClose = document.getElementById('close-settings');
     menuButtons = document.querySelector('div.boutton');
+    shopOverlay = document.querySelector('.shop-overlay');
+    btnBoutique = document.querySelector('.Boutique');
+    shopClose = shopOverlay.querySelector('.btn-return');
+
 
     setAppState('menu');
 
@@ -50,6 +58,17 @@ document.addEventListener('DOMContentLoaded', () => {
             setAppState(previousAppState);
         });
     }
+
+    // Bouton Boutique - Redirection vers page boutique
+    btnBoutique.addEventListener('click', () => {
+        previousAppState = appState;
+        setAppState('shop');
+    });
+
+    shopClose.addEventListener('click', () => {
+        setAppState('menu');
+    });
+
 
     // Tableau des cœurs pour la barre de vie
     coeurs = document.querySelectorAll('.barreDeVie img');
@@ -233,11 +252,31 @@ function setAppState(nextState) {
         return;
     }
 
+    if (appState === 'shop') {
+        canvasEl.classList.remove('game-active');
+
+        if (shopOverlay) {
+            shopOverlay.classList.add('active');
+            shopOverlay.setAttribute('aria-hidden', 'false');
+        }
+
+        if (menuButtons) {
+            menuButtons.style.display = 'none';
+        }
+        return;
+    }
+
     // Par défaut, on ferme l'overlay des réglages si on n'est pas en settings
     if (settingsOverlay) {
         settingsOverlay.classList.remove('active');
         settingsOverlay.setAttribute('aria-hidden', 'true');
     }
+
+    if (shopOverlay) {
+        shopOverlay.classList.remove('active');
+        shopOverlay.setAttribute('aria-hidden', 'true');
+    }
+
 
     if (gameOverOverlay) {
         gameOverOverlay.classList.remove('active');

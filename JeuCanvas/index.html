@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Météorite</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/boutique.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 
@@ -13,6 +14,7 @@
     <h1>Météorite canvas</h1>
     <div class="boutton">
     <button class="startBoutton">Jouer</button>
+    <button class="Boutique">Boutique</button>
     <button class="Score">Score</button>
     <button class="Réglage">Options</button>
     <button class="Quitter">Quitter</button>
@@ -83,6 +85,48 @@
             <button class="btn-return" id="close-settings">← Retour</button>
         </div>
     </div>
+
+    <div class="shop-overlay" aria-hidden="true">
+        <div class="shop-container">
+
+            <h2 class="shop-title">Hangar</h2>
+
+            <div class="shop-gold">
+                💰 0 
+            </div>
+
+            <div class="shop-carousel">
+
+                <button class="shop-arrow left">◀</button>
+
+                <div class="shop-ships">
+                    <img src="assets/img/vaisseau.png" class="ship left" alt="Vaisseau précédent">
+                    <img src="assets/img/vaisseau.png" class="ship active" alt="Vaisseau sélectionné">
+                    <img src="assets/img/vaisseau.png" class="ship right" alt="Vaisseau suivant">
+                </div>
+
+                <button class="shop-arrow right">▶</button>
+
+            </div>
+
+            <div class="shop-info">
+                <h3 class="ship-name">Vaisseau Classique</h3>
+                <p class="ship-description">
+                    Équilibré et fiable pour débuter.
+                </p>
+
+                <div class="ship-status">
+                    ✔ Possédé
+                </div>
+
+                <button class="ship-action">
+                    Équipé
+                </button>
+            </div>
+            <button class="btn-return">Retour</button>
+        </div>
+    </div>
+
     <!-- Charger la librairie Howler.js pour les sons -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
     <script src="js/reglage.js"></script>

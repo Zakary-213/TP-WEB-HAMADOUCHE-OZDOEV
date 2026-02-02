@@ -1,0 +1,229 @@
+/* =========================================================
+   OVERLAY BOUTIQUE
+========================================================= */
+
+.shop-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+}
+
+.shop-overlay.active {
+    display: flex;
+}
+
+/* =========================================================
+   CONTENEUR PRINCIPAL (60rem x 40rem)
+========================================================= */
+
+.shop-container {
+    width: 60rem;
+    height: 40rem;
+    max-width: 95vw;
+    max-height: 90vh;
+
+    background: rgba(26, 26, 46, 0.9);
+    border: 3px solid #00ff88;
+    border-radius: 6px;
+
+    box-shadow:
+        0 0 20px rgba(0, 255, 136, 0.5),
+        inset 0 0 20px rgba(0, 255, 136, 0.1);
+
+    padding: 2.5rem 3rem;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* =========================================================
+   TITRE (IDENTIQUE OPTIONS)
+========================================================= */
+
+.shop-title {
+    margin: 0 0 20px 0;
+    font-size: 2em;
+    letter-spacing: 3px;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-family: 'Arial Black', sans-serif;
+    text-align: center;
+    background: linear-gradient(45deg, #ff006e, #8338ec, #00d4ff, #ff006e);
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(3px 3px 0px #1a1a2e) drop-shadow(6px 6px 0px rgba(0, 0, 0, 0.5));
+}
+
+.shop-gold {
+    color: rgb(255, 251, 0);
+    font-weight: bold;
+    margin-bottom: 2rem;
+    font-size: 1.5rem;
+
+}
+
+/* =========================================================
+   CAROUSEL
+========================================================= */
+
+.shop-carousel {
+    flex: 1;
+    width: 100%;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+}
+
+/* =========================================================
+   FLÈCHES (STYLE OPTIONS)
+========================================================= */
+
+.shop-arrow {
+    width: 90px;
+    height: 90px;
+    padding: 0;
+    font-size: 2em;
+
+    background: linear-gradient(135deg, #00ff88, #00cc66);
+    border: 2px solid #00d4ff;
+    color: white;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    box-shadow:
+        0 4px 0 #1a1a2e,
+        0 0 15px rgba(0, 255, 136, 0.6);
+}
+
+.shop-arrow:hover {
+    background: linear-gradient(135deg, #ff006e, #8338ec);
+    transform: translateY(-2px);
+    box-shadow:
+        0 6px 0 #1a1a2e,
+        0 0 25px rgba(255, 0, 110, 0.8),
+        inset 0 0 15px rgba(255, 255, 255, 0.25);
+}
+
+/* =========================================================
+   VAISSEAUX
+========================================================= */
+
+.shop-ships {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5rem;
+}
+
+.ship {
+    width: 120px;
+    opacity: 0.55;
+    filter: grayscale(100%) brightness(0.25);
+    transform: scale(0.85);
+    transition: all 0.25s ease;
+}
+
+.ship.active {
+    width: 180px;
+    opacity: 1;
+    filter: none;
+    transform: scale(1.15);
+}
+
+/* =========================================================
+   INFOS
+========================================================= */
+
+.shop-info {
+    display: flex;
+    flex-direction: column;
+    color: white;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.ship-name {
+    font-size: 1.4em;
+    font-weight: bold;
+    margin: 0 0 0.3rem 0; 
+}
+
+.ship-description {
+    font-size: 0.95em;
+    opacity: 0.8;
+    font-style: italic;
+    margin: 0 0 0.4rem 0;
+}
+
+.ship-status {
+    color: #00ff88;
+    font-weight: bold;
+    margin: 0.2rem 0 0.8rem 0;
+}
+
+/* =========================================================
+   BOUTON ÉQUIPER / ACHETER (STYLE OPTIONS)
+========================================================= */
+
+.ship-action {
+    padding: 12px 40px;
+    font-size: 1.2em;
+    width: fit-content;
+
+    background: linear-gradient(135deg, #00ff88, #00cc66);
+    border: 2px solid #00d4ff;
+    color: #000;
+
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    box-shadow:
+        0 4px 0 #1a1a2e,
+        0 0 15px rgba(0, 255, 136, 0.6);
+    
+    margin-top: 1rem;
+}
+
+.ship-action:hover {
+    background: linear-gradient(135deg, #ff006e, #8338ec);
+    transform: translateY(-2px);
+    box-shadow:
+        0 6px 0 #1a1a2e,
+        0 0 25px rgba(255, 0, 110, 0.8),
+        inset 0 0 15px rgba(255, 255, 255, 0.25);
+}
+
+/* =========================================================
+   RETOUR (IDENTIQUE OPTIONS)
+========================================================= */
+
+.shop-container .btn-return {
+    padding: 12px 45px;
+    font-size: 1.2em;
+    width: 20rem;
+
+
+    background: linear-gradient(135deg, #00ff88, #00cc66);
+    border: 2px solid #00d4ff;
+    color: #000;
+
+    box-shadow:
+        0 4px 0 #1a1a2e,
+        0 0 15px rgba(0, 255, 136, 0.6);
+}
+
+.shop-container .btn-return:hover {
+    background: linear-gradient(135deg, #ff006e, #8338ec);
+}

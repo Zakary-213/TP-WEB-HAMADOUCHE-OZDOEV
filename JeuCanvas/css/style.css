@@ -616,3 +616,18 @@ button:active {
         border: 2px solid #00d4ff;
     }
 }
+
+
+/* CSS bouton Boutique */
+.Boutique {
+    background: linear-gradient(135deg, #9b5cff, #5f27cd);
+}
+
+.Boutique:hover {
+    background: linear-gradient(135deg, #b084ff, #6c3cff);
+    box-shadow: 
+        0 6px 0 #1a1a2e,
+        inset 0 -2px 0 rgba(0, 0, 0, 0.3),
+        0 0 20px rgba(155, 92, 255, 0.8),
+        inset 0 0 15px rgba(255, 255, 255, 0.3);
+}
