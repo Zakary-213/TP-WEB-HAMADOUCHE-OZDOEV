@@ -1,3 +1,5 @@
+import { TYPE_VAISSEAU } from './typeVaisseau.js';
+
 export default class Player {
     constructor() {
         this.gold = 0;

@@ -15,10 +15,8 @@ let previousAppState = "menu";
 let loadedAssets; // Déclaration de la variable
 const lastKeyPress = {};
 const DOUBLE_TAP_DELAY = 250; // ms
+const player = new Player();
 
-window.TYPE_VAISSEAU = TYPE_VAISSEAU;
-window.player = new Player(); // Pour tester le player dans la console
-window.shop = new Boutique(player); // Pour tester la boutique dans la console
 let coeurs;
 
 let settingsOverlay;
@@ -29,6 +27,7 @@ let shopOverlay;
 let shopClose;
 let btnBoutique;
 let boutiqueUI = null;
+//let vaisseauTest = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     canvas = document.getElementById('monCanvas');
@@ -136,7 +135,10 @@ reloadCustomKeysFromStorage();
 
 // Définis les assets à charger
 var assetsToLoadURLs = {
-    vaisseau: { url: './assets/img/vaisseau.png' },
+    [TYPE_VAISSEAU.NORMAL]: { url: './assets/img/vaisseau.png' },
+    [TYPE_VAISSEAU.PHASE]: { url: './assets/img/PHASE.png' },
+    [TYPE_VAISSEAU.SPLIT]: { url: './assets/img/SPLIT.png' },
+    vaisseauRicochet: { url: './assets/img/vaisseauRicochet.png' },
     meteorite: { url: './assets/img/meteorite.png' },
     dyna: { url: './assets/img/dyna.png' },
     nuage: { url: './assets/img/nuage.png' },
@@ -162,7 +164,7 @@ function startGame() {
     monVaisseau = new Vaisseau(
         canvas.width / 2,
         canvas.height / 2,
-        loadedAssets.vaisseau,  
+        loadedAssets[shipType],  
         50,  
         50, 
         1.5, // Vitesse du vaisseau
@@ -170,6 +172,18 @@ function startGame() {
         shipType  // Type du vaisseau équippé par le joueur
     );
 
+    /*
+    vaisseauTest = new Vaisseau(
+        canvas.width / 2 + 80,
+        canvas.height / 2,
+        loadedAssets.vaisseauRicochet,
+        50,   // ⚠️ mêmes dimensions
+        50,
+        0,    // vitesse 0 → immobile
+        999,
+        TYPE_VAISSEAU.RICOCHET
+    );
+    */ 
     console.log("Type du vaisseau :", monVaisseau.type);
 
     updateBarreDeVie();
@@ -377,6 +391,7 @@ function bindKeyboardListeners() {
 function drawPlaying() {
     if (gameManager.isHit()) {
         monVaisseau.draw(ctx);
+        /*if (vaisseauTest) vaisseauTest.draw(ctx);*/
         return;
     }
 
@@ -385,7 +400,8 @@ function drawPlaying() {
 
     // Dessiner le vaisseau
     monVaisseau.draw(ctx);
-
+    /*if (vaisseauTest) vaisseauTest.draw(ctx);*/
+    
     // Dessiner les bullets
     for (let i = monVaisseau.bullets.length - 1; i >= 0; i--) {
         const bullet = monVaisseau.bullets[i];

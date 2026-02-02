@@ -16,13 +16,13 @@ export default class Boutique {
                 id: TYPE_VAISSEAU.PHASE,
                 name: "Vaisseau Phase",
                 description: "Traverse certaines météorites.",
-                price: 800
+                price: 0
             },
             {
                 id: TYPE_VAISSEAU.SPLIT,
                 name: "Vaisseau Split",
                 description: "Tirs qui se divisent à l’impact.",
-                price: 1200
+                price: 0
             }
         ];
     }
@@ -146,7 +146,26 @@ export class BoutiqueUI{
                 (this.currentIndex + 1) % this.ships.length;
             this.render();
         });
+
+        this.shipAction.addEventListener('click', () => {
+            this.onActionClick();
+        });
     }
+
+    onActionClick() {
+        const ship = this.ships[this.currentIndex];
+
+        if (!this.boutique.isOwned(ship.id)) {
+            const success = this.boutique.buy(ship.id);
+            if (!success) return;
+        }
+        else if (!this.boutique.isEquipped(ship.id)) {
+            this.boutique.equip(ship.id);
+            this.currentIndex = this.getEquippedIndex();
+        }
+        this.render();
+    }
+
 
     render() {
         this.updateGold();
@@ -164,8 +183,8 @@ export class BoutiqueUI{
     }
 
     setShipImage(img, ship, isActive) {
-        //imgEl.src = `assets/img/${ship.id}.png`; // adapte si besoin
-        img.src = "assets/img/vaisseau.png";
+        img.src = `assets/img/${ship.id}.png`; // adapte si besoin
+        //img.src = "assets/img/vaisseau.png";
         if (isActive) {
             img.classList.add('active');
         } else {
