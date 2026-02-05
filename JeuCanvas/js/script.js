@@ -144,6 +144,7 @@ var assetsToLoadURLs = {
     dyna: { url: './assets/img/dyna.png' },
     nuage: { url: './assets/img/nuage.png' },
     lancer: { url: './assets/img/drone.png' },
+    enemy: { url: './assets/img/enemy.png' },
     vie: { url: './assets/img/vie.png' },
     gameMusic: { url: './assets/audio/ingame.mp3', buffer: true, loop: true, volume: 0.5 }
 };

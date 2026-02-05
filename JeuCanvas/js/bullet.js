@@ -3,6 +3,7 @@ export default class Bullet {
         this.x = char.x;
         this.y = char.y;
         this.angle = char.angle;
+        this.color = char.color || 'yellow';
         this.speed = 10;
         this.bounces = 0;
         this.hasSplit = false;
@@ -10,7 +11,7 @@ export default class Bullet {
 
     draw(ctx) {
         ctx.save();
-        ctx.fillStyle = 'yellow';
+        ctx.fillStyle = this.color;
         ctx.translate(this.x, this.y);
         ctx.rotate(this.angle + Math.PI / 2);
         ctx.fillRect(-5, -1, 10, 2);

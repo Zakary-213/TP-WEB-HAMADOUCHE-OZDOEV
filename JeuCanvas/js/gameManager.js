@@ -2,6 +2,7 @@ import Meteorite from './meteorite.js';
 import CollisionUtils from './collisionUtils.js';
 import { TYPE_VAISSEAU } from './typeVaisseau.js';
 import Bullet from './bullet.js';
+import Ennemi from './ennemi.js';
 import { METEORITE_CONFIG, TYPE_METEORITE } from './typeMeteorite.js';
 import ParticleManager from './particles.js';
 
@@ -11,12 +12,14 @@ export default class GameManager {
         this.player = player;
         this.assets = assets;
         this.meteorites = [];
+        this.ennemis = [];
         this.cloudZones = [];
         this.particles = new ParticleManager();
         this.gameState = "playing";
         this.collisionUtils = new CollisionUtils();
         this.HIT_DURATION = 600;
         this.nextMeteoriteSpawn = 0;
+        this.nextEnnemiSpawn = Date.now() + 5000; // Premier ennemi après 5 secondes
         this.lastVaisseauX = null;
         this.lastVaisseauY = null;
     }
@@ -320,6 +323,9 @@ export default class GameManager {
         // Mettre à jour les bullets
         this.updateBullets(vaisseau);
 
+        // Gestion des ennemis
+        this.updateEnnemis(vaisseau);
+
         // Vérifier Game Over après tous les dégâts possibles
         if (vaisseau.estMort()) {
             this.setGameOver();
@@ -330,6 +336,12 @@ export default class GameManager {
         if (Date.now() > this.nextMeteoriteSpawn) {
             this.spawnMeteorrite();
             this.nextMeteoriteSpawn = Date.now() + 1000; // Spawn tous les 1000ms
+        }
+
+        // Spawner un seul ennemi à la fois
+        if (Date.now() > this.nextEnnemiSpawn && this.ennemis.length === 0) {
+            this.spawnEnnemi();
+            this.nextEnnemiSpawn = Date.now() + 8000; // Spawn tous les 8 secondes
         }
     }
 
@@ -370,9 +382,96 @@ export default class GameManager {
         this.meteorites.push(meteorite);
     }
 
+    spawnEnnemi() {
+        const x = this.canvas.width / 2;
+        const y = 60;
+
+        const ennemi = new Ennemi(
+            x,
+            y,
+            this.assets.enemy || this.assets.ennemi || './assets/img/enemy.png',
+            50,
+            50,
+            2,
+            3
+        );
+
+        this.ennemis.push(ennemi);
+    }
+
+    updateEnnemis(vaisseau) {
+        const now = Date.now();
+
+        for (let i = this.ennemis.length - 1; i >= 0; i--) {
+            const ennemi = this.ennemis[i];
+
+            ennemi.update(this.canvas.width, vaisseau.x, vaisseau.y);
+            ennemi.shoot(now, vaisseau.x, vaisseau.y);
+            ennemi.updateBullets(this.canvas.width, this.canvas.height);
+
+            // Collision bullets joueur -> ennemi
+            for (let b = vaisseau.bullets.length - 1; b >= 0; b--) {
+                const bullet = vaisseau.bullets[b];
+
+                const collision = this.collisionUtils.rectCircleFromCenter(
+                    bullet.x,
+                    bullet.y,
+                    10,
+                    2,
+                    ennemi.x,
+                    ennemi.y,
+                    ennemi.largeur / 2
+                );
+
+                if (collision) {
+                    ennemi.perdreVie(1);
+                    ennemi.startShake();
+                    setTimeout(() => ennemi.stopShake(), 200);
+
+                    vaisseau.bullets.splice(b, 1);
+
+                    if (ennemi.estMort()) {
+                        this.ennemis.splice(i, 1);
+                    }
+                    break;
+                }
+            }
+
+            // Collision bullets ennemi -> joueur
+            if (i < this.ennemis.length) {
+                for (let b = ennemi.bullets.length - 1; b >= 0; b--) {
+                    const bullet = ennemi.bullets[b];
+
+                    const collision = this.collisionUtils.rectCircleFromCenter(
+                        bullet.x,
+                        bullet.y,
+                        10,
+                        2,
+                        vaisseau.x,
+                        vaisseau.y,
+                        vaisseau.largeur / 2
+                    );
+
+                    if (collision && this.gameState === "playing") {
+                        ennemi.bullets.splice(b, 1);
+                        this.applyHitToVaisseau(vaisseau);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
     draw(ctx) {
         this.meteorites.forEach((meteorite) => {
             meteorite.draw(ctx);
+        });
+
+        this.ennemis.forEach((ennemi) => {
+            ennemi.draw(ctx);
+            ennemi.bullets.forEach((bullet) => {
+                bullet.draw(ctx);
+            });
         });
 
         // Dessiner les zones de nuage (flou/masque) au-dessus des météorites
