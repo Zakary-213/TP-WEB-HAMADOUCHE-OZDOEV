@@ -1,17 +1,18 @@
-import Vaisseau from './vaisseau.js';
+import Vaisseau from '../entities/vaisseau.js';
 import GameManager from './gameManager.js';
 import { loadAssets } from './assetLoader.js';
-import { TYPE_VAISSEAU } from './typeVaisseau.js';
-import Player from './player.js';
-import Boutique, { BoutiqueUI } from './boutique.js';
+import { TYPE_VAISSEAU } from '../entities/typeVaisseau.js';
+import Player from '../entities/player.js';
+import Boutique, { BoutiqueUI } from '../ui/boutique.js';
+import { drawEclairBar, drawShieldBubble, drawRafaleBar } from '../systems/effectsGadget.js';
 
 
 let canvas;
 let ctx;
 let monVaisseau;
 let gameManager;
-let appState = "menu";
-let previousAppState = "menu";
+const ETAT = { MENU: 'MENU ACCUEIL', JEU: 'JEU EN COURS', GAME_OVER: 'GAME OVER' };
+let etat = ETAT.MENU;
 let loadedAssets; // Déclaration de la variable
 const lastKeyPress = {};
 const DOUBLE_TAP_DELAY = 250; // ms
@@ -42,37 +43,54 @@ document.addEventListener('DOMContentLoaded', () => {
     shopClose = shopOverlay.querySelector('.btn-return');
 
 
-    setAppState('menu');
+    setEtat(ETAT.MENU);
 
     document.querySelector('.startBoutton').addEventListener('click', async () => {
-        if (appState !== 'menu' && appState !== 'gameover') return;
+        if (etat !== ETAT.MENU && etat !== ETAT.GAME_OVER) return;
 
         startGame();
-        setAppState('playing');
+        setEtat(ETAT.JEU);
     });
 
     // Bouton Options - Redirection vers page réglages
     document.querySelector('.Réglage').addEventListener('click', () => {
-        previousAppState = appState;
-        setAppState('settings');
+        // Ouvrir l'overlay sans changer l'état du jeu
+        if (settingsOverlay) {
+            settingsOverlay.classList.add('active');
+            settingsOverlay.setAttribute('aria-hidden', 'false');
+        }
     });
 
     if (settingsClose) {
         settingsClose.addEventListener('click', () => {
             // Les touches peuvent avoir été modifiées dans l'overlay
             reloadCustomKeysFromStorage();
-            setAppState(previousAppState);
+            // Fermer l'overlay et garder l'état courant
+            settingsOverlay.classList.remove('active');
+            settingsOverlay.setAttribute('aria-hidden', 'true');
         });
     }
 
     // Bouton Boutique - Redirection vers page boutique
     btnBoutique.addEventListener('click', () => {
-        previousAppState = appState;
-        setAppState('shop');
+        // Ouvrir la boutique sans changer l'état du jeu
+        if (shopOverlay) {
+            shopOverlay.classList.add('active');
+            shopOverlay.setAttribute('aria-hidden', 'false');
+        }
+        if(!boutiqueUI){
+            boutiqueUI = new BoutiqueUI(player);
+        }
+        else {
+            boutiqueUI.updateGold();
+        }
     });
 
     shopClose.addEventListener('click', () => {
-        setAppState('menu');
+        if (shopOverlay) {
+            shopOverlay.classList.remove('active');
+            shopOverlay.setAttribute('aria-hidden', 'true');
+        }
     });
 
 
@@ -90,8 +108,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Rejouer au clic sur le canvas (écran game over)
     canvas.addEventListener('click', () => {
-        if (appState !== 'gameover') return;
-        setAppState('menu');
+        if (etat !== ETAT.GAME_OVER) return;
+        setEtat(ETAT.MENU);
     });
 
     // Lancer la boucle d'animation dès le menu
@@ -146,6 +164,10 @@ var assetsToLoadURLs = {
     lancer: { url: './assets/img/drone.png' },
     enemy: { url: './assets/img/enemy.png' },
     vie: { url: './assets/img/vie.png' },
+    eclair: { url: './assets/img/eclair.png' },
+    bouclier: { url: './assets/img/bouclier.png' },
+    mirroire: { url: './assets/img/portail.png' },
+    rafale: { url: './assets/img/rafale.png' },
     gameMusic: { url: './assets/audio/ingame.mp3', buffer: true, loop: true, volume: 0.5 }
 };
 
@@ -174,29 +196,16 @@ function startGame() {
         shipType  // Type du vaisseau équippé par le joueur
     );
 
-    /*
-    vaisseauTest = new Vaisseau(
-        canvas.width / 2 + 80,
-        canvas.height / 2,
-        loadedAssets.vaisseauRicochet,
-        50,   // ⚠️ mêmes dimensions
-        50,
-        0,    // vitesse 0 → immobile
-        999,
-        TYPE_VAISSEAU.RICOCHET
-    );
-    */ 
     console.log("Type du vaisseau :", monVaisseau.type);
 
     updateBarreDeVie();
 
-    // Spawn la première météorite
-    gameManager.spawnMeteorrite();
+    // Pas de première météorite (désactivé)
 }
 
 function gameLoop() {
     // Ne dessiner le canvas que quand il est visible
-    if (appState === 'playing' || appState === 'gameover') {
+    if (etat === ETAT.JEU || etat === ETAT.GAME_OVER) {
         ctx.fillStyle = '#1a1a2e';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         drawPlaying();
@@ -210,7 +219,7 @@ function gameLoop() {
 }
 
 function updateGameState() {
-    if (appState !== "playing") return;
+    if (etat !== ETAT.JEU) return;
     if (gameManager.isHit()) return;
 
     // Calculer la direction basée sur les touches personnalisées
@@ -230,7 +239,7 @@ function updateGameState() {
 
     // Si le GameManager vient de passer en gameover pendant l'update
     if (gameManager.isGameOver()) {
-        setAppState('gameover');
+        setEtat(ETAT.GAME_OVER);
         console.log("Game Over détecté");
         return;
     }
@@ -252,22 +261,28 @@ function applyMusicVolume(value) {
     }
 }
 
-function setAppState(nextState) {
-    appState = nextState;
+function setEtat(nouvelEtat) {
+    etat = nouvelEtat;
 
-    // Toujours éviter les touches "collées" en changeant d'écran
+    // Anti touches "collées" lors du changement d'état
     for (const key of Object.keys(keys)) {
         keys[key] = false;
     }
 
     const canvasEl = document.getElementById('monCanvas');
 
-    if (appState === 'settings') {
-        canvasEl.classList.remove('game-active');
-        if (settingsOverlay) {
-            settingsOverlay.classList.add('active');
-            settingsOverlay.setAttribute('aria-hidden', 'false');
-        }
+    // Fermer systématiquement les overlays non liés au core state
+    if (settingsOverlay) {
+        settingsOverlay.classList.remove('active');
+        settingsOverlay.setAttribute('aria-hidden', 'true');
+    }
+    if (shopOverlay) {
+        shopOverlay.classList.remove('active');
+        shopOverlay.setAttribute('aria-hidden', 'true');
+    }
+
+    if (etat === ETAT.JEU) {
+        canvasEl.classList.add('game-active');
         if (gameOverOverlay) {
             gameOverOverlay.classList.remove('active');
             gameOverOverlay.setAttribute('aria-hidden', 'true');
@@ -278,54 +293,7 @@ function setAppState(nextState) {
         return;
     }
 
-    if (appState === 'shop') {
-        canvasEl.classList.remove('game-active');
-
-        if (shopOverlay) {
-            shopOverlay.classList.add('active');
-            shopOverlay.setAttribute('aria-hidden', 'false');
-        }
-
-        if (menuButtons) {
-            menuButtons.style.display = 'none';
-        }
-
-        if(!boutiqueUI){
-            boutiqueUI = new BoutiqueUI(player);
-        }
-        else {
-            boutiqueUI.updateGold();
-        }
-        return;
-    }
-
-    // Par défaut, on ferme l'overlay des réglages si on n'est pas en settings
-    if (settingsOverlay) {
-        settingsOverlay.classList.remove('active');
-        settingsOverlay.setAttribute('aria-hidden', 'true');
-    }
-
-    if (shopOverlay) {
-        shopOverlay.classList.remove('active');
-        shopOverlay.setAttribute('aria-hidden', 'true');
-    }
-
-
-    if (gameOverOverlay) {
-        gameOverOverlay.classList.remove('active');
-        gameOverOverlay.setAttribute('aria-hidden', 'true');
-    }
-
-    if (appState === 'playing') {
-        canvasEl.classList.add('game-active');
-        if (menuButtons) {
-            menuButtons.style.display = 'none';
-        }
-        return;
-    }
-
-    if (appState === 'gameover') {
-        // Game over : afficher le canvas, sans les boutons
+    if (etat === ETAT.GAME_OVER) {
         canvasEl.classList.add('game-active');
         if (gameOverOverlay) {
             gameOverOverlay.classList.add('active');
@@ -337,8 +305,12 @@ function setAppState(nextState) {
         return;
     }
 
-    // menu : cacher le canvas (CSS: display:none), garder les boutons
+    // MENU
     canvasEl.classList.remove('game-active');
+    if (gameOverOverlay) {
+        gameOverOverlay.classList.remove('active');
+        gameOverOverlay.setAttribute('aria-hidden', 'true');
+    }
     if (menuButtons) {
         menuButtons.style.display = 'flex';
     }
@@ -356,8 +328,8 @@ function bindKeyboardListeners() {
             keys[normalizedKey] = true;
         }
 
-        // Aucune action de jeu hors de l'état playing
-        if (appState !== 'playing') return;
+        // Aucune action de jeu hors de l'état JEU
+        if (etat !== ETAT.JEU) return;
 
         const now = performance.now();
         if (lastKeyPress[normalizedKey] && now - lastKeyPress[normalizedKey] < DOUBLE_TAP_DELAY) {
@@ -392,9 +364,7 @@ function bindKeyboardListeners() {
 
 function drawPlaying() {
     if (gameManager.isHit()) {
-        monVaisseau.draw(ctx);
-        /*if (vaisseauTest) vaisseauTest.draw(ctx);*/
-        
+        monVaisseau.draw(ctx);        
         return;
     }
 
@@ -403,7 +373,9 @@ function drawPlaying() {
 
     // Dessiner le vaisseau
     monVaisseau.draw(ctx);
-    /*if (vaisseauTest) vaisseauTest.draw(ctx);*/
+    drawShieldBubble(ctx, monVaisseau);
+    drawEclairBar(ctx, monVaisseau);
+    drawRafaleBar(ctx, monVaisseau);
     
     // Dessiner les bullets
     for (let i = monVaisseau.bullets.length - 1; i >= 0; i--) {

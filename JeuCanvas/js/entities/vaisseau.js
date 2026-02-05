@@ -17,6 +17,8 @@ export default class Vaisseau extends ObjetGraphique {
     constructor(x, y, imagePath, largeur, hauteur, vitesse, pointsDeVie = 1, type = TYPE_VAISSEAU.NORMAL) {
         super(x, y, imagePath, largeur, hauteur, vitesse, pointsDeVie);
         this.type = type;
+        // Permet de connaître le nombre de PV max du vaisseau (utile pour les coeurs)
+        this.pointsDeVieMax = pointsDeVie;
         
         // --- Partie tremblement --- 
         this.isShaking = false;

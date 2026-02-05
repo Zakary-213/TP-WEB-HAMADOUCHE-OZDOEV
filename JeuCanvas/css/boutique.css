@@ -134,8 +134,7 @@
     transform: scale(0.85);
     transition: all 0.25s ease;
 }
-
-.ship.active {
+.ship.center {
     width: 180px;
     opacity: 1;
     filter: none;

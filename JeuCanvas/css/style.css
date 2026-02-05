@@ -228,13 +228,14 @@ canvas.game-active {
 /* Barre de vie */
 .barreDeVie {
     position: absolute;
-    top: 130px;
+    /* Ancrée au wrapper du canvas, légèrement au-dessus du bord du canvas */
+    top: -10px;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
     gap: 1vw;
     z-index: 10;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     justify-content: center;
     align-items: center;
 }
