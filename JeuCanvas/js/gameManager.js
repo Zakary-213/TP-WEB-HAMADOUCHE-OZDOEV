@@ -61,7 +61,6 @@ export default class GameManager {
                 canSplit: false,
             }
         );
-
         const right = new Meteorite(
             parentMeteorite.x + offsetX,
             parentMeteorite.y,
@@ -227,7 +226,6 @@ export default class GameManager {
                 );
                 
                 if (collision) {
-
                     
                     if (vaisseau.type === TYPE_VAISSEAU.PHASE) {
                         // Impact visuel même si phase (optionnel)
@@ -250,7 +248,6 @@ export default class GameManager {
                     }
 
                     if (vaisseau.type === TYPE_VAISSEAU.SPLIT && !bullet.hasSplit) {
-                        
 
                         const baseAngle = bullet.angle;
                         const splitAngle = Math.PI / 6; // 30°
@@ -337,7 +334,7 @@ export default class GameManager {
     }
 
     spawnMeteorrite() {
-        const type = TYPE_METEORITE.DYNAMITE; // Exemple: dynamite
+        const type = TYPE_METEORITE.LANCER; // Exemple: dynamite
 
         const x = Math.random() * this.canvas.width;
         const y = -50;
@@ -410,8 +407,6 @@ export default class GameManager {
         default: return 0;
     }
 }
-
-
 }
 
 // Image asset mapping per meteorite type
@@ -428,6 +423,7 @@ GameManager.prototype.getMeteoriteImageForType = function(type) {
             return this.assets.meteorite;
     }
 };
+
 // --- Particles helpers ---
 GameManager.prototype.getPaletteForMeteorite = function(type, kind = 'impact') {
     // Violet neon palettes per meteor type (arcade theme)

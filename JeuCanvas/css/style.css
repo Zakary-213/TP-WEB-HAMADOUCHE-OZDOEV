@@ -111,6 +111,10 @@ canvas {
     display: none;
     border-radius: 10px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    width: 100%;
+    height: auto;
+    max-width: 500px;
+    aspect-ratio: 500 / 600;
 }
 
 canvas.game-active {
@@ -121,6 +125,9 @@ canvas.game-active {
     position: relative;
     display: inline-block;
     z-index: 5;
+    width: 100%;
+    max-width: 500px;
+    padding-top: 50px;
 }
 
 .canvas-wrapper canvas {
@@ -221,15 +228,21 @@ canvas.game-active {
 /* Barre de vie */
 .barreDeVie {
     position: absolute;
-    bottom: -10px;
+    top: 130px;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
-    gap: 10px;
+    gap: 1vw;
     z-index: 10;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
 }
 
 .barreDeVie img {
-    width: 100px;
-    height: 100px;
+    width: clamp(40px, 12vw, 100px);
+    height: clamp(40px, 12vw, 100px);
+    object-fit: contain;
 }
 
 /* Conteneur des boutons */
@@ -429,8 +442,8 @@ button:active {
     background: rgba(26, 26, 46, 0.9);
     border: 3px solid #00ff88;
     border-radius: 6px;
-    padding: 20px;
-    max-width: 550px;
+    padding: clamp(15px, 5vw, 20px);
+    max-width: clamp(280px, 90vw, 550px);
     width: 100%;
     box-shadow: 
         0 0 20px rgba(0, 255, 136, 0.5),
@@ -439,7 +452,7 @@ button:active {
 
 .settings-overlay h2 {
     margin: 0 0 20px 0;
-    font-size: 2em;
+    font-size: clamp(1.5em, 5vw, 2em);
     letter-spacing: 3px;
     font-weight: bold;
     text-transform: uppercase;
@@ -474,14 +487,14 @@ button:active {
 
 .settings-overlay .volume-indicator {
     font-family: 'Arial Black', sans-serif;
-    width: 50px;
-    height: 50px;
+    width: clamp(40px, 12vw, 50px);
+    height: clamp(40px, 12vw, 50px);
     border-radius: 50%;
     background: linear-gradient(135deg, #00ff88, #00cc66);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.9em;
+    font-size: clamp(0.7em, 2.5vw, 0.9em);
     font-weight: bold;
     color: #000;
     box-shadow: 0 0 15px rgba(0, 255, 136, 0.6);
@@ -491,7 +504,7 @@ button:active {
 .settings-overlay .setting-group p,
 .settings-overlay .setting-group label {
     color: #00ff88;
-    font-size: 1.1em;
+    font-size: clamp(0.9em, 3vw, 1.1em);
     font-weight: bold;
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -545,7 +558,7 @@ button:active {
 .settings-overlay .controls-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
+    gap: clamp(5px, 2vw, 8px);
     margin: 12px 0;
     width: 100%;
 }
@@ -558,7 +571,7 @@ button:active {
 }
 
 .settings-overlay .control-label {
-    font-size: 0.8em;
+    font-size: clamp(0.65em, 2vw, 0.8em);
     color: #00ff88;
     margin-top: 4px;
     text-align: center;
@@ -571,9 +584,9 @@ button:active {
     background: linear-gradient(135deg, #ff006e, #8338ec);
     color: white;
     border: 2px solid #00d4ff;
-    padding: 10px 20px;
-    margin: 5px 8px 5px 0;
-    font-size: 1em;
+    padding: clamp(8px, 2vw, 10px) clamp(15px, 3vw, 20px);
+    margin: clamp(3px, 1vw, 5px) clamp(5px, 1vw, 8px) clamp(3px, 1vw, 5px) 0;
+    font-size: clamp(0.85em, 2.5vw, 1em);
     font-weight: bold;
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -605,15 +618,42 @@ button:active {
 
 @media (max-width: 768px) {
     .settings-overlay .settings-container {
-        padding: 20px;
-        max-width: 90%;
+        padding: clamp(12px, 4vw, 20px);
+        max-width: 95%;
+    }
+    
+    .settings-overlay .setting-group {
+        margin-bottom: clamp(10px, 2vw, 15px);
+        padding: clamp(8px, 2vw, 12px);
     }
 }
 
 @media (max-width: 480px) {
     .settings-overlay .settings-container {
-        padding: 15px;
+        padding: clamp(12px, 3vw, 15px);
         border: 2px solid #00d4ff;
+        max-width: 98%;
+    }
+    
+    .settings-overlay h2 {
+        margin-bottom: clamp(12px, 3vw, 20px);
+    }
+    
+    .settings-overlay .setting-group {
+        margin-bottom: clamp(8px, 2vw, 12px);
+        padding: clamp(8px, 2vw, 10px);
+    }
+    
+    .settings-overlay button {
+        width: 100% !important;
+        margin: clamp(5px, 1vw, 8px) 0 !important;
+    }
+    
+    .settings-overlay .btn-return {
+        width: 100% !important;
+        margin-top: clamp(12px, 3vw, 20px);
+        margin-left: auto !important;
+        margin-right: auto !important;
     }
 }
 

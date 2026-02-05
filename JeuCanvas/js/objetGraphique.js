@@ -61,6 +61,5 @@ export default class ObjetGraphique {
         this.x += dx * this.vitesse;
         this.y += dy * this.vitesse;
     }
-
     
 }
