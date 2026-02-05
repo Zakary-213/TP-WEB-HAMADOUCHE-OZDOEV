@@ -16,6 +16,7 @@ let loadedAssets; // Déclaration de la variable
 const lastKeyPress = {};
 const DOUBLE_TAP_DELAY = 250; // ms
 const player = new Player();
+const DEBUG_HITBOX = true;
 
 let coeurs;
 
@@ -135,7 +136,7 @@ reloadCustomKeysFromStorage();
 
 // Définis les assets à charger
 var assetsToLoadURLs = {
-    [TYPE_VAISSEAU.NORMAL]: { url: './assets/img/vaisseau.png' },
+    [TYPE_VAISSEAU.NORMAL]: { url: './assets/img/NORMAL.png' },
     [TYPE_VAISSEAU.PHASE]: { url: './assets/img/PHASE.png' },
     [TYPE_VAISSEAU.SPLIT]: { url: './assets/img/SPLIT.png' },
     vaisseauRicochet: { url: './assets/img/vaisseauRicochet.png' },
@@ -392,6 +393,7 @@ function drawPlaying() {
     if (gameManager.isHit()) {
         monVaisseau.draw(ctx);
         /*if (vaisseauTest) vaisseauTest.draw(ctx);*/
+        
         return;
     }
 

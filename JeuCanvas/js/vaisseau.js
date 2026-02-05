@@ -11,6 +11,8 @@ export default class Vaisseau extends ObjetGraphique {
     isDashing = false;
     dashSpeed = 5;
     dashDuration = 150; 
+    
+
 
     constructor(x, y, imagePath, largeur, hauteur, vitesse, pointsDeVie = 1, type = TYPE_VAISSEAU.NORMAL) {
         super(x, y, imagePath, largeur, hauteur, vitesse, pointsDeVie);
@@ -19,6 +21,7 @@ export default class Vaisseau extends ObjetGraphique {
         // --- Partie tremblement --- 
         this.isShaking = false;
         this.shakeIntensity = 8;
+         this.debugHitbox = true;
     }
 
     moveInDirection(dx, dy) {
@@ -120,6 +123,22 @@ export default class Vaisseau extends ObjetGraphique {
             this.largeur,
             this.hauteur
         );
+
+        if ( this.debugHitbox) {
+    ctx.save();
+    ctx.strokeStyle = 'red';
+    ctx.lineWidth = 1;
+
+    ctx.strokeRect(
+        -this.largeur / 2,
+        -this.hauteur / 2,
+        this.largeur,
+        this.hauteur
+    );
+
+    ctx.restore();
+}
+
 
         ctx.restore();
     }
