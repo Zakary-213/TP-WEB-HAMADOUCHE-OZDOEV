@@ -1,4 +1,4 @@
-import { TYPE_VAISSEAU } from '../entities/typeVaisseau.js';
+import { TYPE_VAISSEAU } from './typeVaisseau.js';
 
 export default class Boutique {
     constructor(player) {
@@ -8,20 +8,38 @@ export default class Boutique {
         this.ships = [
             {
                 id: TYPE_VAISSEAU.NORMAL,
-                name: "Vaisseau Classique",
+                name: "Vaisseau normal",
                 description: "Équilibré et fiable pour débuter.",
                 price: 0
             },
             {
                 id: TYPE_VAISSEAU.PHASE,
-                name: "Vaisseau Phase",
-                description: "Traverse certaines météorites.",
+                name: "Vaisseau phase",
+                description: "Traverse certaines les météorites.",
                 price: 0
             },
             {
                 id: TYPE_VAISSEAU.SPLIT,
-                name: "Vaisseau Split",
-                description: "Tirs qui se divisent à l’impact.",
+                name: "Vaisseau split",
+                description: "Tirs qui se divisent en 2 à l’impact.",
+                price: 0
+            },
+            {
+                id: TYPE_VAISSEAU.SPREAD,
+                name: "Vaisseau spread",
+                description: "Deux tirs simultanés.",
+                price: 0
+            },
+            {
+                id: TYPE_VAISSEAU.RICOCHET,
+                name: "Vaisseau ricochet",
+                description: "Tirs qui rebondissent sur les murs.",
+                price: 0
+            },
+            {
+                id: TYPE_VAISSEAU.PIERCE,
+                name: "Vaisseau pierce",
+                description: "Tirs qui traversent les météorites.",
                 price: 0
             }
         ];
@@ -80,117 +98,139 @@ export default class Boutique {
 
         this.player.spendGold(ship.price);
         this.player.addShip(shipId);
+
+        console.log(`Achat réussi : ${ship.name}`);
         return true;
     }
 
+    /* =============================
+       ÉQUIPEMENT
+    ============================= */
+
     equip(shipId) {
-        return this.player.equipShip(shipId);
-    }
+    if (!this.isOwned(shipId)) return false;
+    this.player.equipShip(shipId);
+    return true;
+}
+
 }
 
 export class BoutiqueUI{
-    constructor(player){
+    constructor(player) {
         this.player = player;
-        this.currentShipIndex = 0;
-        this.buyButton = document.querySelector('.ship-action');
-        this.shopGold = document.querySelector('.shop-gold');
-        this.shopShips = document.querySelectorAll('.ship');
-        this.shopName = document.querySelector('.ship-name');
-        this.shopDescription = document.querySelector('.ship-description');
-        this.shopStatus = document.querySelector('.ship-status');
+        this.boutique = new Boutique(player);
+        this.ships = this.boutique.getAllShips();
+        this.currentIndex = this.getEquippedIndex();
 
-        this.carouselLeftButton = document.querySelector('.shop-arrow.left');
-        this.carouselRightButton = document.querySelector('.shop-arrow.right');
+        // DOM
+        this.goldElement = document.querySelector('.shop-gold');
+        this.shipName = document.querySelector('.ship-name');
+        this.shipDesc = document.querySelector('.ship-description');
+        this.shipStatus = document.querySelector('.ship-status');
+        this.shipAction = document.querySelector('.ship-action');
 
-        this.updateGold();
-        this.updateShipInfo();
+        this.shipImgs = {
+            left: document.querySelector('.ship.left'),
+            center: document.querySelector('.ship.center'),
+            right: document.querySelector('.ship.right')
+        };
 
-        this.carouselLeftButton.addEventListener('click', () => {
-            const total = this.player.ownedShips.length;
-            if (total === 0) return;
-            this.currentShipIndex = (this.currentShipIndex - 1 + total) % total;
-            this.updateShipInfo();
-        });
+        this.btnLeft = document.querySelector('.shop-arrow.left');
+        this.btnRight = document.querySelector('.shop-arrow.right');
 
-        this.carouselRightButton.addEventListener('click', () => {
-            const total = this.player.ownedShips.length;
-            if (total === 0) return;
-            this.currentShipIndex = (this.currentShipIndex + 1) % total;
-            this.updateShipInfo();
-        });
-
-        this.buyButton.addEventListener('click', () => {
-            const currentShipId = this.player.ownedShips[this.currentShipIndex];
-            if(this.player.getEquippedShip() === currentShipId){
-                return;
-            }
-            this.player.equipShip(currentShipId);
-            this.updateShipInfo();
-        });
+        this.bindEvents();
+        this.render();
     }
 
     updateGold(){
-        this.shopGold.textContent = `💰 ${this.player.gold}`;
+        this.goldElement.textContent = `💰 ${this.player.gold}`;
     }
 
-    updateShipInfo(){
-        const owned = this.player.ownedShips;
-        const total = owned.length;
-        if (total === 0) return;
+    getEquippedIndex() {
+        const equipped = this.player.getEquippedShip();
+        const index = this.ships.findIndex(s => s.id === equipped);
+        return index !== -1 ? index : 0;
+    }
 
-        const currentShipId = owned[this.currentShipIndex];
+    bindEvents() {
+        this.btnLeft.addEventListener('click', () => {
+            this.currentIndex =
+                (this.currentIndex - 1 + this.ships.length) % this.ships.length;
+            this.render();
+        });
 
-        // Nom + description simples selon le type de vaisseau
-        let name = currentShipId;
-        let description = "Description du vaisseau à définir";
-        switch (currentShipId) {
-            case TYPE_VAISSEAU.NORMAL:
-                name = "Vaisseau Classique";
-                description = "Équilibré et fiable pour débuter.";
-                break;
-            case TYPE_VAISSEAU.PHASE:
-                name = "Vaisseau Phase";
-                description = "Traverse certaines météorites.";
-                break;
-            case TYPE_VAISSEAU.SPLIT:
-                name = "Vaisseau Split";
-                description = "Tirs qui se divisent à l’impact.";
-                break;
-        }
+        this.btnRight.addEventListener('click', () => {
+            this.currentIndex =
+                (this.currentIndex + 1) % this.ships.length;
+            this.render();
+        });
 
-        this.shopName.textContent = name;
-        this.shopDescription.textContent = description;
-        this.shopStatus.textContent = this.player.getEquippedShip() === currentShipId ? "✔ Équipé" : "➕ Cliquer pour équiper";
-
-        // Calcul des index pour gauche / centre / droite (carousel circulaire)
-        const prevIndex = (this.currentShipIndex - 1 + total) % total;
-        const nextIndex = (this.currentShipIndex + 1) % total;
-
-        const mapShipIdToImage = (shipId) => {
-            switch (shipId) {
-                case TYPE_VAISSEAU.NORMAL:
-                    return 'assets/img/NORMAL.png';
-                case TYPE_VAISSEAU.PHASE:
-                    return 'assets/img/PHASE.png';
-                case TYPE_VAISSEAU.SPLIT:
-                    return 'assets/img/SPLIT.png';
-                default:
-                    return 'assets/img/vaisseau.png';
-            }
-        };
-
-        const slots = [
-            { el: this.shopShips[0], shipIndex: prevIndex, position: 'left' },
-            { el: this.shopShips[1], shipIndex: this.currentShipIndex, position: 'center' },
-            { el: this.shopShips[2], shipIndex: nextIndex, position: 'right' }
-        ];
-
-        slots.forEach(slot => {
-            if (!slot.el) return;
-            const shipId = owned[slot.shipIndex];
-            slot.el.src = mapShipIdToImage(shipId);
-            slot.el.classList.remove('left', 'center', 'right');
-            slot.el.classList.add(slot.position);
+        this.shipAction.addEventListener('click', () => {
+            this.onActionClick();
         });
     }
+
+    onActionClick() {
+        const ship = this.ships[this.currentIndex];
+
+        if (!this.boutique.isOwned(ship.id)) {
+            const success = this.boutique.buy(ship.id);
+            if (!success) return;
+        }
+        else if (!this.boutique.isEquipped(ship.id)) {
+            this.boutique.equip(ship.id);
+            this.currentIndex = this.getEquippedIndex();
+        }
+        this.render();
+    }
+
+
+    render() {
+        this.updateGold();
+        this.updateShips();
+        this.updateInfo();
+    }
+
+    updateShips() {
+        const leftIndex = (this.currentIndex - 1 + this.ships.length) % this.ships.length;
+        const rightIndex = (this.currentIndex + 1) % this.ships.length;
+
+        this.setShipImage(this.shipImgs.left, this.ships[leftIndex], false);
+        this.setShipImage(this.shipImgs.center, this.ships[this.currentIndex], true);
+        this.setShipImage(this.shipImgs.right, this.ships[rightIndex], false);
+    }
+
+    setShipImage(img, ship, isActive) {
+        img.src = `assets/img/${ship.id}.png`; // adapte si besoin
+        //img.src = "assets/img/vaisseau.png";
+        if (isActive) {
+            img.classList.add('active');
+        } else {
+            img.classList.remove('active');
+        }
+    }
+
+    updateInfo() {
+        const ship = this.ships[this.currentIndex];
+
+        this.shipName.textContent = ship.name;
+        this.shipDesc.textContent = ship.description;
+
+        if (this.boutique.isEquipped(ship.id)) {
+            this.shipStatus.textContent = "✔ Équipé";
+            this.shipAction.textContent = "ÉQUIPÉ";
+            this.shipAction.disabled = true;
+        }
+        else if (this.boutique.isOwned(ship.id)) {
+            this.shipStatus.textContent = "✔ Possédé";
+            this.shipAction.textContent = "ÉQUIPER";
+            this.shipAction.disabled = false;
+        }
+        else {
+            this.shipStatus.textContent = `💰 ${ship.price}`;
+            this.shipAction.textContent = "ACHETER";
+            this.shipAction.disabled = !this.boutique.canBuy(ship.id);
+        }
+    }
 }
+

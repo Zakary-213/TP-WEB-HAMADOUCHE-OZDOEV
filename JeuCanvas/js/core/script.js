@@ -154,9 +154,13 @@ reloadCustomKeysFromStorage();
 
 // Définis les assets à charger
 var assetsToLoadURLs = {
-    [TYPE_VAISSEAU.NORMAL]: { url: './assets/img/NORMAL.png' },
-    [TYPE_VAISSEAU.PHASE]: { url: './assets/img/PHASE.png' },
-    [TYPE_VAISSEAU.SPLIT]: { url: './assets/img/SPLIT.png' },
+    [TYPE_VAISSEAU.NORMAL]: { url: './assets/img/vaisseaux/NORMAL.png' },
+    [TYPE_VAISSEAU.PHASE]: { url: './assets/img/vaisseaux/PHASE.png' },
+    [TYPE_VAISSEAU.SPLIT]: { url: './assets/img/vaisseaux/SPLIT.png' },
+    [TYPE_VAISSEAU.PIERCE]: { url: './assets/img/vaisseaux/PIERCE.png' },
+    [TYPE_VAISSEAU.RICOCHET]: { url: './assets/img/vaisseaux/RICOCHET.png' },
+    [TYPE_VAISSEAU.SPREAD]: { url: './assets/img/vaisseaux/SPREAD.png' },
+    [TYPE_VAISSEAU.ENEMY]: { url: './assets/img/vaisseaux/ENEMY.png' },
     vaisseauRicochet: { url: './assets/img/vaisseauRicochet.png' },
     meteorite: { url: './assets/img/meteorite.png' },
     dyna: { url: './assets/img/dyna.png' },
