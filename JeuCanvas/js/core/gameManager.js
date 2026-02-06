@@ -293,7 +293,7 @@ export default class GameManager {
 
         // Spawner uniquement le gadget Coeur périodiquement pour test
         if (now > this.nextGadgetSpawn) {
-            this.spawnGadgetCoeur();
+            this.spawnGadgetMirroire();
             this.nextGadgetSpawn = now + 5000; // toutes 5s
         }
     }
