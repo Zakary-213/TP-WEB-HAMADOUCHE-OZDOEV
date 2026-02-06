@@ -293,7 +293,7 @@ export default class GameManager {
 
         // Spawner uniquement le gadget Coeur périodiquement pour test
         if (now > this.nextGadgetSpawn) {
-            this.spawnGadgetMirroire();
+            this.spawnGadgetBouclier();
             this.nextGadgetSpawn = now + 5000; // toutes 5s
         }
     }
@@ -342,7 +342,7 @@ export default class GameManager {
         const ennemi = new Ennemi(
             x,
             y,
-            this.assets.enemy || this.assets.ennemi || './assets/img/enemy.png',
+            this.assets.enemy || this.assets.ennemi || './assets/img/vaisseaux/ENEMY.png',
             50,
             50,
             2,

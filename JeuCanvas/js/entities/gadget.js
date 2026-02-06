@@ -5,11 +5,11 @@ import { applyEclairEffect, applyRafaleEffect } from '../systems/effectsGadget.j
 
 // Mapping d'images (fallback)
 const DEFAULT_SPRITES = {
-    [TYPE_GADGET.ECLAIR]: './assets/img/eclair.png',
-    [TYPE_GADGET.BOUCLIER]: './assets/img/bouclier.png',
-    [TYPE_GADGET.MIRROIRE]: './assets/img/portail.png',
-    [TYPE_GADGET.RAFALE]: './assets/img/rafale.png',
-    [TYPE_GADGET.COEUR]: './assets/img/vie.png'
+    [TYPE_GADGET.ECLAIR]: './assets/img/gadgets/eclair.png',
+    [TYPE_GADGET.BOUCLIER]: './assets/img/gadgets/bouclier.png',
+    [TYPE_GADGET.MIRROIRE]: './assets/img/gadgets/mirroire.png',
+    [TYPE_GADGET.RAFALE]: './assets/img/gadgets/rafale.png',
+    [TYPE_GADGET.COEUR]: './assets/img/gadgets/coeur.png'
 };
 
 export default class Gadget extends ObjetGraphique {
@@ -22,7 +22,7 @@ export default class Gadget extends ObjetGraphique {
         } else if (DEFAULT_SPRITES[type] !== undefined && DEFAULT_SPRITES[type] !== null) {
             imagePath = DEFAULT_SPRITES[type];
         } else {
-            imagePath = './assets/img/eclair.png';
+            imagePath = './assets/img/gadgets/eclair.png';
         }
         const largeur = (options.largeur !== undefined && options.largeur !== null) ? options.largeur : 32;
         const hauteur = (options.hauteur !== undefined && options.hauteur !== null) ? options.hauteur : 32;

@@ -1,4 +1,4 @@
-import { TYPE_VAISSEAU } from './typeVaisseau.js';
+import { TYPE_VAISSEAU } from '../entities/typeVaisseau.js';
 
 export default class Boutique {
     constructor(player) {

@@ -9,7 +9,7 @@ export const TYPE_METEORITE = {
 
 export const METEORITE_CONFIG = {
   [TYPE_METEORITE.NORMAL]: {
-    imagePath: './assets/img/meteorite.png',
+    imagePath: './assets/img/meteorites/meteorite.png',
     largeur: 40,
     hauteur: 40,
     vitesse: 0.2,
@@ -17,7 +17,7 @@ export const METEORITE_CONFIG = {
   },
 
   [TYPE_METEORITE.DYNAMITE]: {
-    imagePath: './assets/img/dyna.png',
+    imagePath: './assets/img/meteorites/dyna.png',
     largeur: 40,
     hauteur: 40,
     vitesse: 0.5,
@@ -27,7 +27,7 @@ export const METEORITE_CONFIG = {
   },
 
   [TYPE_METEORITE.ECLATS]: {
-    imagePath: './assets/img/meteorite.png',
+    imagePath: './assets/img/meteorites/eclats.png',
     largeur: 40,
     hauteur: 40,
     vitesse: 0.2,
@@ -35,7 +35,7 @@ export const METEORITE_CONFIG = {
   },
 
   [TYPE_METEORITE.LANCER]: {
-    imagePath: './assets/img/drone.png',
+    imagePath: './assets/img/meteorites/drone.png',
     largeur: 45,
     hauteur: 45,
     vitesse: 0.7,
@@ -43,7 +43,7 @@ export const METEORITE_CONFIG = {
   },
 
   [TYPE_METEORITE.COSTAUD]: {
-    imagePath: './assets/img/meteorite.png',
+    imagePath: './assets/img/meteorites/costaud.png',
     largeur: 50,
     hauteur: 50,
     vitesse: 0.12,
@@ -52,7 +52,7 @@ export const METEORITE_CONFIG = {
 
 
   [TYPE_METEORITE.NUAGE]: {
-    imagePath: './assets/img/nuage.png',
+    imagePath: './assets/img/meteorites/nuage.png',
     largeur: 50,
     hauteur: 50,
     vitesse: 0.2,
