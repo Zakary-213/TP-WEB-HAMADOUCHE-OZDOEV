@@ -201,7 +201,7 @@ export class BoutiqueUI{
     }
 
     setShipImage(img, ship, isActive) {
-        img.src = `assets/img/${ship.id}.png`; // adapte si besoin
+        img.src = `assets/img/vaisseaux/${ship.id}.png`; // adapte si besoin
         //img.src = "assets/img/vaisseau.png";
         if (isActive) {
             img.classList.add('active');
