@@ -15,6 +15,7 @@ export default class Niveau1 extends Niveau {
     }
 
     update() {
+        if (this.finished) return;
         super.update();
         const now = performance.now();
 

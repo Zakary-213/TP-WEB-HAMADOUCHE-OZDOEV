@@ -5,6 +5,7 @@ export default class Niveau {
         this.finished = false;
         this.startTime = null;
         this.elapsedTime = 0; // en ms
+        this.hasEnded = false;   
     }
 
     start() {

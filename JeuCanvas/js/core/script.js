@@ -268,12 +268,13 @@ function updateGameState() {
     if (currentLevel) {
         chronometre.textContent = formatTime(currentLevel.getElapsedTime());
     }
-    if(currentLevel && currentLevel.isFinished())
-    {
+    if (currentLevel && currentLevel.isFinished() && !currentLevel.hasEnded) {
+        currentLevel.hasEnded = true;   
         console.log("Niveau terminé");
         goToNextLevel();
         return;
     }
+
     updateBarreDeVie();
 
     // Si le GameManager vient de passer en gameover pendant l'update
