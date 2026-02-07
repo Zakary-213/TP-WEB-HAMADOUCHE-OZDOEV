@@ -3,10 +3,8 @@ import { TYPE_GADGET } from '../entities/typeGadget.js';
 export default class Niveau {
     constructor(gameManager) {
         this.gameManager = gameManager;
-
         this.started = false;
         this.finished = false;
-
         this.startTime = null;
         this.elapsedTime = 0;
     }

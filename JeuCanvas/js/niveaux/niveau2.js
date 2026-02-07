@@ -1,12 +1,13 @@
 import Niveau from './niveau.js';
 import { TYPE_METEORITE } from '../entities/typeMeteorite.js';
 import { pickByWeight } from '../systems/random.js';
+import { TYPE_GADGET } from '../entities/typeGadget.js';
 
 export default class Niveau2 extends Niveau {
     constructor(gameManager) {
         super(gameManager);
 
-        this.targetKills = 50;
+        this.targetKills = 1;
         this.currentKills = 0;
 
         this.maxMeteoritesToSpawn = 100000;
@@ -22,12 +23,23 @@ export default class Niveau2 extends Niveau {
         this.lancerDelay = 2000;
         this.lastLancerSpawn = 0;
 
+        this.gadgetSpawnDelay = 10000; 
+        this.lastGadgetSpawn = 0;
+
         this.spawnTable = [
             { type: TYPE_METEORITE.NORMAL,   weight: 50 },
             { type: TYPE_METEORITE.COSTAUD,  weight: 5 },
             { type: TYPE_METEORITE.NUAGE,    weight: 10 },
             { type: TYPE_METEORITE.DYNAMITE, weight: 15 },
             { type: TYPE_METEORITE.ECLATS,   weight: 15 }
+        ];
+
+        this.gadgetSpawnTable = [
+            { type: TYPE_GADGET.COEUR,     weight: 10 },
+            { type: TYPE_GADGET.BOUCLIER,  weight: 30 },
+            { type: TYPE_GADGET.ECLAIR,    weight: 20 },
+            { type: TYPE_GADGET.RAFALE,    weight: 30 },
+            { type: TYPE_GADGET.MIRROIRE,  weight: 10 }
         ];
     }
 
@@ -40,9 +52,10 @@ export default class Niveau2 extends Niveau {
         const previousCallback = this.gameManager.onMeteoriteDestroyed;
         this.totalSpawned = 0;
         this.spawnFinished = false;
-
         this.lastBurstTime = performance.now();
         this.lastLancerSpawn = performance.now();
+        this.lastGadgetSpawn = performance.now();
+
 
         this.gameManager.onMeteoriteDestroyed = (meteorite) => {
             if (previousCallback) {
@@ -67,6 +80,7 @@ export default class Niveau2 extends Niveau {
         super.update();
         this.handleBurstSpawn();
         this.handleLancerSpawn();
+        this.handleGadgetSpawn();
     }
 
     handleBurstSpawn() {
@@ -118,4 +132,17 @@ export default class Niveau2 extends Niveau {
         this.lastLancerSpawn = now;
         this.totalSpawned++;
     }
+
+    handleGadgetSpawn() {
+        if (this.finished || this.spawnFinished) return;
+
+        const now = performance.now();
+        if (now - this.lastGadgetSpawn < this.gadgetSpawnDelay) return;
+
+        const gadgetType = pickByWeight(this.gadgetSpawnTable);
+        this.spawnGadgetByType(gadgetType);
+
+        this.lastGadgetSpawn = now;
+    }
+
 }
