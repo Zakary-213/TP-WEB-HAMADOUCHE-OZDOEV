@@ -27,7 +27,7 @@ export const METEORITE_CONFIG = {
   },
 
   [TYPE_METEORITE.ECLATS]: {
-    imagePath: './assets/img/meteorites/eclats.png',
+    imagePath: './assets/img/meteorites/meteorite.png',
     largeur: 40,
     hauteur: 40,
     vitesse: 0.2,

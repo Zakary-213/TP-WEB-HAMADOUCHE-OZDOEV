@@ -302,8 +302,8 @@ export default class GameManager {
         }
     }
 
-    spawnMeteorrite() {
-        const type = TYPE_METEORITE.NORMAL; // Exemple: dynamite
+    spawnMeteorrite(type = TYPE_METEORITE.NORMAL) {
+        //const type = TYPE_METEORITE.NORMAL; // Exemple: dynamite
 
         const x = Math.random() * this.canvas.width;
         const y = -50;
