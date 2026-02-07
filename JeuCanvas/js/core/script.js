@@ -5,6 +5,9 @@ import { TYPE_VAISSEAU } from '../entities/typeVaisseau.js';
 import Player from '../entities/player.js';
 import Boutique, { BoutiqueUI } from '../ui/boutique.js';
 import { drawEclairBar, drawShieldBubble, drawRafaleBar } from '../systems/effectsGadget.js';
+import niveau1 from '../niveaux/niveau1.js';
+//import niveau2 from '../niveaux/niveau2.js';
+//import niveau3 from '../niveaux/niveau3.js';
 
 
 let canvas;
@@ -31,6 +34,20 @@ let btnBoutique;
 let boutiqueUI = null;
 //let vaisseauTest = null;
 
+let chronometre;
+let meteoriteCountElement;
+let destroyedMeteorites = 0;
+
+const LEVELS = [
+    niveau1
+    //niveau2,
+    //niveau3
+];
+let currentLevel = null;
+let currentLevelIndex = 0;
+
+
+
 document.addEventListener('DOMContentLoaded', () => {
     canvas = document.getElementById('monCanvas');
     ctx = canvas.getContext('2d');
@@ -41,8 +58,8 @@ document.addEventListener('DOMContentLoaded', () => {
     shopOverlay = document.querySelector('.shop-overlay');
     btnBoutique = document.querySelector('.Boutique');
     shopClose = shopOverlay.querySelector('.btn-return');
-
-
+    chronometre = document.getElementById('timer');
+    meteoriteCountElement = document.getElementById('meteorite-count');
     setEtat(ETAT.MENU);
 
     document.querySelector('.startBoutton').addEventListener('click', async () => {
@@ -186,6 +203,14 @@ async function loadAssetsOnStart() {
 
 function startGame() {
     gameManager = new GameManager(canvas, player, loadedAssets);
+    destroyedMeteorites = 0;
+    meteoriteCountElement.textContent = "0";
+    gameManager.onMeteoriteDestroyed = () => {
+        destroyedMeteorites++;
+        meteoriteCountElement.textContent = destroyedMeteorites;
+    };
+    currentLevelIndex = 0;
+    startCurrentLevel();
     let shipType = player.getEquippedShip();
     
     monVaisseau = new Vaisseau(
@@ -237,7 +262,18 @@ function updateGameState() {
     monVaisseau.moveInDirection(dx, dy);
 
     // Mettre à jour les collisions via GameManager
+    currentLevel.update();
     gameManager.update(monVaisseau);
+
+    if (currentLevel) {
+        chronometre.textContent = formatTime(currentLevel.getElapsedTime());
+    }
+    if(currentLevel && currentLevel.isFinished())
+    {
+        console.log("Niveau terminé");
+        goToNextLevel();
+        return;
+    }
     updateBarreDeVie();
 
     // Si le GameManager vient de passer en gameover pendant l'update
@@ -386,3 +422,37 @@ function drawPlaying() {
         bullet.draw(ctx);
     }
 }
+
+function formatTime(ms) {
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+function startCurrentLevel() {
+    const LevelClass = LEVELS[currentLevelIndex];
+    currentLevel = new LevelClass(gameManager);
+    currentLevel.start();
+    console.log(`Début du niveau ${currentLevelIndex + 1}`);
+}
+
+function goToNextLevel() {
+    currentLevelIndex++;
+
+    /*
+    if (currentLevelIndex >= LEVELS.length) {
+        console.log("Tous les niveaux terminés !");
+        setEtat(ETAT.MENU);
+        return;
+    }
+    */
+    gameManager.meteorites.length = 0;
+    gameManager.gadgets.length = 0;
+    gameManager.ennemis.length = 0;
+
+    //startCurrentLevel();
+}
+
+

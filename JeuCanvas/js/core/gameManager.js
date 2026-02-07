@@ -29,6 +29,7 @@ export default class GameManager {
         this.nextGadgetSpawn = Date.now() + 500; // premier gadget rapidement
         this.lastVaisseauX = null;
         this.lastVaisseauY = null;
+        this.onMeteoriteDestroyed = null;
     }
 
     spawnEclatsPieces(parentMeteorite) {
@@ -131,7 +132,7 @@ export default class GameManager {
         this.handleBulletMeteoriteCollisions(vaisseau);
         this.updateBullets(vaisseau);
         this.updateGadgets(vaisseau);
-        this.handleSpawns();
+        //this.handleSpawns();
     }
 
     updateMeteorites(vaisseau) {
@@ -257,6 +258,9 @@ export default class GameManager {
                     if (meteorite.pv <= 0) {
                         spawnExplosionParticles(this.particles, meteorite);
                         this.meteorites.splice(m, 1);
+                        if (this.onMeteoriteDestroyed) {
+                            this.onMeteoriteDestroyed(meteorite);
+                        }
                         const goldEarned = this.getGoldForMeteorite(meteorite.type);
                         this.player.addGold(goldEarned);
                     }
