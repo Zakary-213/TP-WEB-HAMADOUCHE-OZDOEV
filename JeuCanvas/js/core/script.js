@@ -7,7 +7,7 @@ import Boutique, { BoutiqueUI } from '../ui/boutique.js';
 import { drawEclairBar, drawShieldBubble, drawRafaleBar } from '../systems/effectsGadget.js';
 import niveau1 from '../niveaux/niveau1.js';
 import niveau2 from '../niveaux/niveau2.js';
-//import niveau3 from '../niveaux/niveau3.js';
+import niveau3 from '../niveaux/niveau3.js';
 
 
 let canvas;
@@ -40,8 +40,8 @@ let destroyedMeteorites = 0;
 
 const LEVELS = [
     niveau1,
-    niveau2
-    //niveau3
+    niveau2,
+    niveau3
 ];
 let currentLevel = null;
 let currentLevelIndex = 0;
@@ -441,20 +441,20 @@ function startCurrentLevel() {
 
 function goToNextLevel() {
     currentLevelIndex++;
-    if(currentLevelIndex == 2)
-    {
-        return;
-    }
-    /*
+    meteoriteCountElement.textContent = "0";
+    gameManager.meteorites.length = 0;
+    gameManager.gadgets.length = 0;
+    gameManager.ennemis.length = 0;
+
+    
     if (currentLevelIndex >= LEVELS.length) {
         console.log("Tous les niveaux terminés !");
         setEtat(ETAT.MENU);
         return;
     }
-    */
-    gameManager.meteorites.length = 0;
-    gameManager.gadgets.length = 0;
-    gameManager.ennemis.length = 0;
+    
+    
+    
 
     startCurrentLevel();
 }

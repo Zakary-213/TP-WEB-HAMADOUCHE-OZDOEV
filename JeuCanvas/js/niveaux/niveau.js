@@ -3,15 +3,17 @@ import { TYPE_GADGET } from '../entities/typeGadget.js';
 export default class Niveau {
     constructor(gameManager) {
         this.gameManager = gameManager;
+
         this.started = false;
         this.finished = false;
+
         this.startTime = null;
-        this.elapsedTime = 0; // en ms
-        this.hasEnded = false;   
+        this.elapsedTime = 0;
     }
 
     start() {
         this.started = true;
+        this.finished = false;
         this.startTime = performance.now();
     }
 
@@ -22,6 +24,10 @@ export default class Niveau {
 
     getElapsedTime() {
         return this.elapsedTime;
+    }
+
+    isFinished() {
+        return this.finished;
     }
 
     spawnGadgetByType(type) {
@@ -42,9 +48,5 @@ export default class Niveau {
                 this.gameManager.spawnGadgetMirroire();
                 break;
         }
-    }
-
-    isFinished() {
-        return this.finished;
     }
 }

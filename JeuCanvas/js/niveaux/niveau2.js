@@ -1,25 +1,121 @@
 import Niveau from './niveau.js';
+import { TYPE_METEORITE } from '../entities/typeMeteorite.js';
+import { pickByWeight } from '../systems/random.js';
 
 export default class Niveau2 extends Niveau {
     constructor(gameManager) {
         super(gameManager);
 
-        this.duration = 5000; // 5 secondes, juste pour test
+        this.targetKills = 50;
+        this.currentKills = 0;
+
+        this.maxMeteoritesToSpawn = 100000;
+        this.totalSpawned = 0;
+        this.spawnFinished = false;
+
+        this.burstSize = 10;
+        this.burstDelay = 1000;
+        this.burstSpacing = 500;
+        this.lastBurstTime = 0;
+        this.isBurstSpawning = false;
+
+        this.lancerDelay = 2000;
+        this.lastLancerSpawn = 0;
+
+        this.spawnTable = [
+            { type: TYPE_METEORITE.NORMAL,   weight: 50 },
+            { type: TYPE_METEORITE.COSTAUD,  weight: 5 },
+            { type: TYPE_METEORITE.NUAGE,    weight: 10 },
+            { type: TYPE_METEORITE.DYNAMITE, weight: 15 },
+            { type: TYPE_METEORITE.ECLATS,   weight: 15 }
+        ];
     }
 
     start() {
         super.start();
+
         console.log('=== NIVEAU 2 : START ===');
+
+        this.currentKills = 0;
+        const previousCallback = this.gameManager.onMeteoriteDestroyed;
+        this.totalSpawned = 0;
+        this.spawnFinished = false;
+
+        this.lastBurstTime = performance.now();
+        this.lastLancerSpawn = performance.now();
+
+        this.gameManager.onMeteoriteDestroyed = (meteorite) => {
+            if (previousCallback) {
+                previousCallback(meteorite);
+            }
+            this.currentKills++;
+
+            console.log(
+                `[N2] Météorites détruites : ${this.currentKills}/${this.targetKills}`
+            );
+
+            if (this.currentKills >= this.targetKills) {
+                this.finished = true;
+                this.spawnFinished = true;
+                console.log('=== NIVEAU 2 GAGNÉ ===');
+            }
+        };
     }
 
     update() {
         if (this.finished) return;
         super.update();
+        this.handleBurstSpawn();
+        this.handleLancerSpawn();
+    }
 
-        // Fin automatique après X secondes
-        if (this.elapsedTime >= this.duration) {
-            this.finished = true;
-            console.log('=== NIVEAU 2 : FINISHED ===');
+    handleBurstSpawn() {
+        if (this.finished || this.spawnFinished) return;
+        const now = performance.now();
+        if (this.isBurstSpawning) return;
+        if (now - this.lastBurstTime < this.burstDelay) return;
+
+        this.isBurstSpawning = true;
+        this.lastBurstTime = now;
+
+        let spawnedInBurst = 0;
+
+        const interval = setInterval(() => {
+            if (this.finished || this.spawnFinished) return;
+            if (
+                spawnedInBurst >= this.burstSize ||
+                this.totalSpawned >= this.maxMeteoritesToSpawn
+            ) {
+                clearInterval(interval);
+                this.isBurstSpawning = false;
+
+                if (this.totalSpawned >= this.maxMeteoritesToSpawn) {
+                    this.spawnFinished = true;
+                }
+                return;
+            }
+
+            const type = pickByWeight(this.spawnTable);
+            this.gameManager.spawnMeteorrite(type);
+
+            spawnedInBurst++;
+            this.totalSpawned++;
+        }, this.burstSpacing);
+    }
+
+    handleLancerSpawn() {
+        if (this.finished || this.spawnFinished) return;
+
+        const now = performance.now();
+        if (now - this.lastLancerSpawn < this.lancerDelay) return;
+
+        if (this.totalSpawned >= this.maxMeteoritesToSpawn) {
+            this.spawnFinished = true;
+            return;
         }
+
+        this.gameManager.spawnMeteorrite(TYPE_METEORITE.LANCER);
+        this.lastLancerSpawn = now;
+        this.totalSpawned++;
     }
 }
