@@ -1,3 +1,5 @@
+import { TYPE_GADGET } from '../entities/typeGadget.js';
+
 export default class Niveau {
     constructor(gameManager) {
         this.gameManager = gameManager;
@@ -20,6 +22,26 @@ export default class Niveau {
 
     getElapsedTime() {
         return this.elapsedTime;
+    }
+
+    spawnGadgetByType(type) {
+        switch (type) {
+            case TYPE_GADGET.COEUR:
+                this.gameManager.spawnGadgetCoeur();
+                break;
+            case TYPE_GADGET.BOUCLIER:
+                this.gameManager.spawnGadgetBouclier();
+                break;
+            case TYPE_GADGET.ECLAIR:
+                this.gameManager.spawnGadgetEclair();
+                break;
+            case TYPE_GADGET.RAFALE:
+                this.gameManager.spawnGadgetRafale();
+                break;
+            case TYPE_GADGET.MIRROIRE:
+                this.gameManager.spawnGadgetMirroire();
+                break;
+        }
     }
 
     isFinished() {

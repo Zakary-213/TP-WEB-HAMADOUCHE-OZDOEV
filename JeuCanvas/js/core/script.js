@@ -6,7 +6,7 @@ import Player from '../entities/player.js';
 import Boutique, { BoutiqueUI } from '../ui/boutique.js';
 import { drawEclairBar, drawShieldBubble, drawRafaleBar } from '../systems/effectsGadget.js';
 import niveau1 from '../niveaux/niveau1.js';
-//import niveau2 from '../niveaux/niveau2.js';
+import niveau2 from '../niveaux/niveau2.js';
 //import niveau3 from '../niveaux/niveau3.js';
 
 
@@ -39,8 +39,8 @@ let meteoriteCountElement;
 let destroyedMeteorites = 0;
 
 const LEVELS = [
-    niveau1
-    //niveau2,
+    niveau1,
+    niveau2
     //niveau3
 ];
 let currentLevel = null;
@@ -441,7 +441,10 @@ function startCurrentLevel() {
 
 function goToNextLevel() {
     currentLevelIndex++;
-
+    if(currentLevelIndex == 2)
+    {
+        return;
+    }
     /*
     if (currentLevelIndex >= LEVELS.length) {
         console.log("Tous les niveaux terminés !");
@@ -453,7 +456,7 @@ function goToNextLevel() {
     gameManager.gadgets.length = 0;
     gameManager.ennemis.length = 0;
 
-    //startCurrentLevel();
+    startCurrentLevel();
 }
 
 
