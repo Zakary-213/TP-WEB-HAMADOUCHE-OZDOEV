@@ -90,6 +90,28 @@ h1 {
     animation: arcade-glow 2s ease-in-out infinite;
 }
 
+    /* Ajustements responsive pour petits écrans */
+    @media (max-width: 600px) {
+        h1 {
+            font-size: clamp(2.2rem, 7vw, 2.8rem);
+            margin-bottom: 18px;
+        }
+
+        .canvas-wrapper {
+            padding-top: 16px;
+        }
+
+        .barreDeVie img {
+            width: clamp(24px, 9vw, 40px);
+            height: clamp(24px, 9vw, 40px);
+        }
+
+        .gameover-container,
+        .level-transition-container {
+            padding: 18px 16px;
+        }
+    }
+
 @keyframes arcade-glow {
     0%, 100% {
         text-shadow: 
@@ -127,7 +149,7 @@ canvas.game-active {
     z-index: 5;
     width: 100%;
     max-width: 500px;
-    padding-top: 50px;
+    padding-top: 16px;
 }
 
 .canvas-wrapper canvas {
@@ -374,25 +396,39 @@ canvas.game-active {
 .game-hud{
     color: white;
 }
-/* Barre de vie */
+
+/* Barre de vie (Joueur 1 / Joueur 2) */
 .barreDeVie {
-    position: absolute;
-    /* Ancrée au wrapper du canvas, légèrement au-dessus du bord du canvas */
-    top: -10px;
-    left: 50%;
-    transform: translateX(-50%);
+    position: relative;           /* dans le flux, au-dessus du canvas */
     display: flex;
-    gap: 1vw;
-    z-index: 10;
-    flex-wrap: nowrap;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin: 0 auto 8px auto;      /* centré et espacé du canvas */
+    z-index: 10;
+}
+
+.barreDeVie-j1 {
+    margin-top: 0.25rem;
+}
+
+.barreDeVie-j2 {
+    margin-top: 0.25rem;
 }
 
 .barreDeVie img {
-    width: clamp(40px, 12vw, 100px);
-    height: clamp(40px, 12vw, 100px);
+    width: clamp(24px, 8vw, 40px);
+    height: clamp(24px, 8vw, 40px);
     object-fit: contain;
+}
+
+.label-vie {
+    color: #ffffff;
+    font-family: 'Arial Black', Arial, sans-serif; /* même famille que le titre */
+    text-transform: uppercase;
+    font-size: clamp(0.7rem, 1.6vw, 0.9rem);
+    letter-spacing: 1px;
+    margin-right: 6px;
 }
 
 /* Conteneur des boutons */
