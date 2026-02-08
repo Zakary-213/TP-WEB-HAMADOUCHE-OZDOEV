@@ -15,7 +15,7 @@ let canvas;
 let ctx;
 let monVaisseau;
 let gameManager;
-const ETAT = { MENU: 'MENU ACCUEIL', JEU: 'JEU EN COURS', GAME_OVER: 'GAME OVER', TRANSITION: 'TRANSITION NIVEAU' };
+const ETAT = { MENU: 'MENU ACCUEIL', CHOIX_MODE: 'CHOIX MODE', JEU: 'JEU EN COURS', GAME_OVER: 'GAME OVER', TRANSITION: 'TRANSITION NIVEAU' };
 let etat = ETAT.MENU;
 let loadedAssets; // Déclaration de la variable
 const lastKeyPress = {};
@@ -31,6 +31,7 @@ let coeurs;
 let settingsOverlay;
 let settingsClose;
 let menuButtons;
+let modeButtons;
 let gameOverOverlay;
 let shopOverlay;
 let shopClose;
@@ -59,6 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
     gameOverOverlay = document.querySelector('.gameover-overlay');
     settingsClose = document.getElementById('close-settings');
     menuButtons = document.querySelector('div.boutton');
+    modeButtons = document.querySelector('.mode-buttons');
     shopOverlay = document.querySelector('.shop-overlay');
     btnBoutique = document.querySelector('.Boutique');
     shopClose = shopOverlay.querySelector('.btn-return');
@@ -67,12 +69,39 @@ document.addEventListener('DOMContentLoaded', () => {
     levelTransition = new TransitionNiveau(canvas);
     setEtat(ETAT.MENU);
 
-    document.querySelector('.startBoutton').addEventListener('click', async () => {
+    document.querySelector('.startBoutton').addEventListener('click', () => {
         if (etat !== ETAT.MENU && etat !== ETAT.GAME_OVER) return;
-
-        startGame();
-        setEtat(ETAT.JEU);
+        setEtat(ETAT.CHOIX_MODE);
     });
+
+    // Boutons de choix de mode (Solo / Duo / Duel)
+    if (modeButtons) {
+        const btnSolo = modeButtons.querySelector('.btn-mode-solo');
+        const btnDuo = modeButtons.querySelector('.btn-mode-duo');
+        const btnDuel = modeButtons.querySelector('.btn-mode-duel');
+
+        if (btnSolo) {
+            btnSolo.addEventListener('click', () => {
+                if (etat !== ETAT.CHOIX_MODE) return;
+                startGame();
+                setEtat(ETAT.JEU);
+            });
+        }
+
+        if (btnDuo) {
+            btnDuo.addEventListener('click', () => {
+                // Logique du mode duo à implémenter plus tard
+                console.log('Mode Duo non implémenté pour le moment');
+            });
+        }
+
+        if (btnDuel) {
+            btnDuel.addEventListener('click', () => {
+                // Logique du mode duel à implémenter plus tard
+                console.log('Mode Duel non implémenté pour le moment');
+            });
+        }
+    }
 
     // Bouton Options - Redirection vers page réglages
     document.querySelector('.Réglage').addEventListener('click', () => {
@@ -361,6 +390,10 @@ function setEtat(nouvelEtat) {
         if (menuButtons) {
             menuButtons.style.display = 'none';
         }
+        if (modeButtons) {
+            modeButtons.style.display = 'none';
+            modeButtons.setAttribute('aria-hidden', 'true');
+        }
         // En jeu uniquement : les cœurs sont gérés par updateBarreDeVie
         return;
     }
@@ -373,6 +406,10 @@ function setEtat(nouvelEtat) {
         }
         if (menuButtons) {
             menuButtons.style.display = 'none';
+        }
+        if (modeButtons) {
+            modeButtons.style.display = 'none';
+            modeButtons.setAttribute('aria-hidden', 'true');
         }
         // Hors jeu : masquer la barre de vie
         if (coeurs) {
@@ -390,7 +427,31 @@ function setEtat(nouvelEtat) {
         if (menuButtons) {
             menuButtons.style.display = 'none';
         }
+        if (modeButtons) {
+            modeButtons.style.display = 'none';
+            modeButtons.setAttribute('aria-hidden', 'true');
+        }
         // Hors jeu : masquer la barre de vie
+        if (coeurs) {
+            coeurs.forEach(c => c.style.visibility = 'hidden');
+        }
+        return;
+    }
+
+    // CHOIX DU MODE : on masque le canvas et on affiche uniquement les boutons de mode
+    if (etat === ETAT.CHOIX_MODE) {
+        canvasEl.classList.remove('game-active');
+        if (gameOverOverlay) {
+            gameOverOverlay.classList.remove('active');
+            gameOverOverlay.setAttribute('aria-hidden', 'true');
+        }
+        if (menuButtons) {
+            menuButtons.style.display = 'none';
+        }
+        if (modeButtons) {
+            modeButtons.style.display = 'flex';
+            modeButtons.setAttribute('aria-hidden', 'false');
+        }
         if (coeurs) {
             coeurs.forEach(c => c.style.visibility = 'hidden');
         }
@@ -405,6 +466,11 @@ function setEtat(nouvelEtat) {
     }
     if (menuButtons) {
         menuButtons.style.display = 'flex';
+    }
+
+    if (modeButtons) {
+        modeButtons.style.display = 'none';
+        modeButtons.setAttribute('aria-hidden', 'true');
     }
 
     // En MENU : masquer la barre de vie

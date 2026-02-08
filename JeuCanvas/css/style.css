@@ -404,6 +404,16 @@ canvas.game-active {
     width: 300px;
 }
 
+/* Conteneur pour le choix du mode (Solo / Duo / Duel) */
+.mode-buttons {
+    display: none;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 30px;
+    width: 300px;
+    align-items: stretch;
+}
+
 /* Style des boutons */
 button {
     padding: 15px 30px;
