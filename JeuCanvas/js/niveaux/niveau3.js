@@ -4,23 +4,34 @@ export default class Niveau3 extends Niveau {
     constructor(gameManager) {
         super(gameManager);
 
-        // Durée arbitraire juste pour test
-        this.duration = 5000; // 5 secondes
+        this.enemySpawnDelay = 15000; // 15 secondes
+        this.enemySpawned = false;
     }
 
     start() {
         super.start();
         console.log('=== NIVEAU 3 : START ===');
+
+        // Sécurité : vider les ennemis
+        this.gameManager.ennemis.length = 0;
+        this.enemySpawned = false;
     }
 
     update() {
         if (this.finished) return;
         super.update();
 
-        // Fin automatique après X secondes
-        if (this.elapsedTime >= this.duration) {
+        // 👾 Spawn ennemi après 15s
+        if (!this.enemySpawned && this.elapsedTime >= this.enemySpawnDelay) {
+            this.gameManager.spawnEnnemi();
+            this.enemySpawned = true;
+            console.log('👾 ENNEMI SPAWN');
+        }
+
+        // 🎯 Victoire : ennemi détruit
+        if (this.enemySpawned && this.gameManager.ennemis.length === 0) {
             this.finished = true;
-            console.log('=== NIVEAU 3 : FINISHED ===');
+            console.log('=== NIVEAU 3 GAGNÉ : ENNEMI DÉTRUIT ===');
         }
     }
 }

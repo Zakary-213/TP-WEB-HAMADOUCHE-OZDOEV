@@ -5,7 +5,7 @@ export default class Ennemi extends ObjetGraphique {
     constructor(x, y, imagePath, largeur, hauteur, vitesse, pointsDeVie = 3) {
         super(x, y, imagePath, largeur, hauteur, vitesse, pointsDeVie);
         this.bullets = [];
-        this.delayMinBetweenBullets = 5500; // Tir toutes les 1.5 secondes
+        this.delayMinBetweenBullets = 3000; // Tir toutes les 1.5 secondes
         this.lastBulletTime = undefined;
         this.direction = 1; // 1 = droite, -1 = gauche
         this.isShaking = false;

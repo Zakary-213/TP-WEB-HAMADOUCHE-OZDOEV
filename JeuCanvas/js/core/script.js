@@ -8,6 +8,7 @@ import { drawEclairBar, drawShieldBubble, drawRafaleBar } from '../systems/effec
 import niveau1 from '../niveaux/niveau1.js';
 import niveau2 from '../niveaux/niveau2.js';
 import niveau3 from '../niveaux/niveau3.js';
+import LevelManager from '../niveaux/levelManagerSolo.js';
 
 
 let canvas;
@@ -32,19 +33,18 @@ let shopOverlay;
 let shopClose;
 let btnBoutique;
 let boutiqueUI = null;
-//let vaisseauTest = null;
 
 let chronometre;
 let meteoriteCountElement;
 let destroyedMeteorites = 0;
+let levelManager;
 
 const LEVELS = [
     niveau1,
     niveau2,
     niveau3
 ];
-let currentLevel = null;
-let currentLevelIndex = 0;
+
 
 
 
@@ -203,14 +203,17 @@ async function loadAssetsOnStart() {
 
 function startGame() {
     gameManager = new GameManager(canvas, player, loadedAssets);
-    destroyedMeteorites = 0;
-    meteoriteCountElement.textContent = "0";
     gameManager.onMeteoriteDestroyed = () => {
         destroyedMeteorites++;
         meteoriteCountElement.textContent = destroyedMeteorites;
     };
-    currentLevelIndex = 0;
-    startCurrentLevel();
+    levelManager = new LevelManager(gameManager, LEVELS, () => {
+        destroyedMeteorites = 0;
+        meteoriteCountElement.textContent = "0";
+    });
+    levelManager.start();
+
+
     let shipType = player.getEquippedShip();
     
     monVaisseau = new Vaisseau(
@@ -262,17 +265,12 @@ function updateGameState() {
     monVaisseau.moveInDirection(dx, dy);
 
     // Mettre à jour les collisions via GameManager
-    currentLevel.update();
+    levelManager.update();
     gameManager.update(monVaisseau);
 
-    if (currentLevel) {
-        chronometre.textContent = formatTime(currentLevel.getElapsedTime());
-    }
-    if (currentLevel && currentLevel.isFinished() && !currentLevel.hasEnded) {
-        currentLevel.hasEnded = true;   
-        console.log("Niveau terminé");
-        goToNextLevel();
-        return;
+    const level = levelManager.getCurrentLevel();
+    if (level) {
+        chronometre.textContent = formatTime(level.getElapsedTime());
     }
 
     updateBarreDeVie();
@@ -430,33 +428,6 @@ function formatTime(ms) {
     const seconds = totalSeconds % 60;
 
     return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-}
-
-function startCurrentLevel() {
-    const LevelClass = LEVELS[currentLevelIndex];
-    currentLevel = new LevelClass(gameManager);
-    currentLevel.start();
-    console.log(`Début du niveau ${currentLevelIndex + 1}`);
-}
-
-function goToNextLevel() {
-    currentLevelIndex++;
-    meteoriteCountElement.textContent = "0";
-    gameManager.meteorites.length = 0;
-    gameManager.gadgets.length = 0;
-    gameManager.ennemis.length = 0;
-
-    
-    if (currentLevelIndex >= LEVELS.length) {
-        console.log("Tous les niveaux terminés !");
-        setEtat(ETAT.MENU);
-        return;
-    }
-    
-    
-    
-
-    startCurrentLevel();
 }
 
 
