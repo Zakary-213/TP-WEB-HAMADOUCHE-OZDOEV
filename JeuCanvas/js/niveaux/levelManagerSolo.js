@@ -1,11 +1,13 @@
 export default class LevelManager {
-    constructor(gameManager, levels, onLevelStart = null) {
+    constructor(gameManager, levels, onLevelStart = null, onLevelEnd = null) {
         this.gameManager = gameManager;
         this.levels = levels;
         this.onLevelStart = onLevelStart;
+        this.onLevelEnd = onLevelEnd;
 
         this.currentIndex = 0;
         this.currentLevel = null;
+        this.isWaitingForTransition = false;
     }
 
     start() {
@@ -28,11 +30,32 @@ export default class LevelManager {
     update() {
         if (!this.currentLevel) return;
 
+        // Si on attend une transition (par ex. après fin de niveau), ne plus mettre à jour le niveau
+        if (this.isWaitingForTransition) return;
+
         this.currentLevel.update();
 
         if (this.currentLevel.isFinished() && !this.currentLevel.hasEnded) {
             this.currentLevel.hasEnded = true;
+
+            // Transition de fin de niveau (y compris dernier niveau) gérée par onLevelEnd
+            if (this.onLevelEnd) {
+                this.isWaitingForTransition = true;
+                this.onLevelEnd(this.currentIndex, () => this.handleTransitionComplete());
+            } else {
+                this.goToNextLevel();
+            }
+        }
+    }
+
+    handleTransitionComplete() {
+        this.isWaitingForTransition = false;
+
+        // Si ce n'est pas le dernier niveau, passer au suivant
+        if (this.currentIndex < this.levels.length - 1) {
             this.goToNextLevel();
+        } else {
+            console.log("Tous les niveaux terminés !");
         }
     }
 

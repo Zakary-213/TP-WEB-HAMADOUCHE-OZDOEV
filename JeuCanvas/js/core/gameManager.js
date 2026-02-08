@@ -141,17 +141,29 @@ export default class GameManager {
             const meteorite = this.meteorites[i];
             meteorite.descendre();
 
-            // DYNAMITE : tremblement avant explosion
-            if (meteorite.type === TYPE_METEORITE.DYNAMITE && meteorite.explodeAfterMs !== null) {
+            // Météorites avec timer d'explosion (dynamite, nuage, ...)
+            if (meteorite.explodeAfterMs !== null) {
                 const elapsed = Date.now() - meteorite.spawnedAt;
                 const remaining = meteorite.explodeAfterMs - elapsed;
+                // Tremblement dans la dernière seconde avant explosion
                 if (remaining > 0 && remaining <= this.HIT_DURATION) {
                     meteorite.startShake();
                 }
             }
 
-            // Explosion (DYNAMITE)
+            // Explosion des météorites à timer
             if (meteorite.shouldExplode()) {
+                // Comportement spécifique selon le type
+                if (meteorite.type === TYPE_METEORITE.NUAGE) {
+                    // Le nuage n'enlève pas de vie à l'explosion :
+                    // il crée seulement une zone de nuage
+                    this.spawnCloudZone(meteorite);
+                    spawnExplosionParticles(this.particles, meteorite);
+                    this.meteorites.splice(i, 1);
+                    continue;
+                }
+
+                // Par défaut (ex : DYNAMITE) : explosion qui peut faire des dégâts
                 spawnExplosionParticles(this.particles, meteorite);
                 this.meteorites.splice(i, 1);
 
@@ -313,8 +325,6 @@ export default class GameManager {
     }
 
     spawnMeteorrite(type = TYPE_METEORITE.NORMAL) {
-        //const type = TYPE_METEORITE.NORMAL; // Exemple: dynamite
-
         const x = Math.random() * this.canvas.width;
         const y = -50;
 
@@ -322,6 +332,13 @@ export default class GameManager {
 
         const imageForType = getMeteoriteImageForType(this.assets, type);
 
+        // Timer d'explosion aléatoire (>= 5s) pour DYNAMITE et NUAGE
+        const options = { imagePath: imageForType };
+        if (type === TYPE_METEORITE.DYNAMITE || type === TYPE_METEORITE.NUAGE) {
+            const minDelay = 5000; // 5s minimum
+            const maxDelay = 10000; // jusqu'à 10s
+            options.explodeAfterMs = minDelay + Math.random() * (maxDelay - minDelay);
+        }
 
         if (type === TYPE_METEORITE.LANCER && this.lastVaisseauX !== null && this.lastVaisseauY !== null) {
             const dx = this.lastVaisseauX - x;
@@ -341,9 +358,9 @@ export default class GameManager {
             if (config && config.vitesse !== undefined) {
                 speed = config.vitesse;
             }
-            meteorite = new Meteorite(x, y, type, { imagePath: imageForType, vx: vx * speed, vy: vy * speed });
+            meteorite = new Meteorite(x, y, type, { ...options, vx: vx * speed, vy: vy * speed });
         } else {
-            meteorite = new Meteorite(x, y, type, { imagePath: imageForType });
+            meteorite = new Meteorite(x, y, type, options);
         }
 
         this.meteorites.push(meteorite);

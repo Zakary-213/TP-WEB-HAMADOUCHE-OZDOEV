@@ -9,19 +9,22 @@ import niveau1 from '../niveaux/niveau1.js';
 import niveau2 from '../niveaux/niveau2.js';
 import niveau3 from '../niveaux/niveau3.js';
 import LevelManager from '../niveaux/levelManagerSolo.js';
-
+import TransitionNiveau from '../niveaux/transitionNiveau.js';
 
 let canvas;
 let ctx;
 let monVaisseau;
 let gameManager;
-const ETAT = { MENU: 'MENU ACCUEIL', JEU: 'JEU EN COURS', GAME_OVER: 'GAME OVER' };
+const ETAT = { MENU: 'MENU ACCUEIL', JEU: 'JEU EN COURS', GAME_OVER: 'GAME OVER', TRANSITION: 'TRANSITION NIVEAU' };
 let etat = ETAT.MENU;
 let loadedAssets; // Déclaration de la variable
 const lastKeyPress = {};
 const DOUBLE_TAP_DELAY = 250; // ms
 const player = new Player();
 const DEBUG_HITBOX = true;
+
+// Gestion des touches pressées
+let keys = {};
 
 let coeurs;
 
@@ -36,6 +39,7 @@ let boutiqueUI = null;
 
 let chronometre;
 let meteoriteCountElement;
+let levelTransition;
 let destroyedMeteorites = 0;
 let levelManager;
 
@@ -60,6 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
     shopClose = shopOverlay.querySelector('.btn-return');
     chronometre = document.getElementById('timer');
     meteoriteCountElement = document.getElementById('meteorite-count');
+    levelTransition = new TransitionNiveau(canvas);
     setEtat(ETAT.MENU);
 
     document.querySelector('.startBoutton').addEventListener('click', async () => {
@@ -123,20 +128,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // Centraliser les écouteurs clavier
     bindKeyboardListeners();
 
-    // Rejouer au clic sur le canvas (écran game over)
+    // Clic sur le canvas : gérer game over et transition de niveau
     canvas.addEventListener('click', () => {
-        if (etat !== ETAT.GAME_OVER) return;
-        setEtat(ETAT.MENU);
+        if (etat === ETAT.GAME_OVER) {
+            setEtat(ETAT.MENU);
+            return;
+        }
+
+        if (etat === ETAT.TRANSITION && levelTransition) {
+            levelTransition.completeManually();
+        }
     });
 
     // Lancer la boucle d'animation dès le menu
     requestAnimationFrame(gameLoop);
 });
-
-// Gestion des touches pressées
-let keys = {};
-
-// Charger les touches personnalisées depuis localStorage
 let customKeys = {
     up: localStorage.getItem('key_up') || '↑',
     left: localStorage.getItem('key_left') || '←',
@@ -207,10 +213,37 @@ function startGame() {
         destroyedMeteorites++;
         meteoriteCountElement.textContent = destroyedMeteorites;
     };
-    levelManager = new LevelManager(gameManager, LEVELS, () => {
-        destroyedMeteorites = 0;
-        meteoriteCountElement.textContent = "0";
-    });
+    levelManager = new LevelManager(
+        gameManager,
+        LEVELS,
+        () => {
+            destroyedMeteorites = 0;
+            meteoriteCountElement.textContent = "0";
+        },
+        (levelIndex, doneCallback) => {
+            if (!levelTransition) {
+                doneCallback();
+                return;
+            }
+
+            const isLastLevel = (levelIndex === LEVELS.length - 1);
+            setEtat(ETAT.TRANSITION);
+
+            if (isLastLevel) {
+                // Fin du niveau 3 : thème or + feux d'artifice + retour menu
+                levelTransition.showFinalEndGame(() => {
+                    setEtat(ETAT.MENU);
+                    doneCallback();
+                });
+            } else {
+                // Transitions normales (niveau 1 -> 2, niveau 2 -> 3)
+                levelTransition.showForLevel(levelIndex + 1, () => {
+                    setEtat(ETAT.JEU);
+                    doneCallback();
+                });
+            }
+        }
+    );
     levelManager.start();
 
 
@@ -236,7 +269,7 @@ function startGame() {
 
 function gameLoop() {
     // Ne dessiner le canvas que quand il est visible
-    if (etat === ETAT.JEU || etat === ETAT.GAME_OVER) {
+    if (etat === ETAT.JEU || etat === ETAT.GAME_OVER || etat === ETAT.TRANSITION) {
         ctx.fillStyle = '#1a1a2e';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         drawPlaying();
@@ -328,6 +361,7 @@ function setEtat(nouvelEtat) {
         if (menuButtons) {
             menuButtons.style.display = 'none';
         }
+        // En jeu uniquement : les cœurs sont gérés par updateBarreDeVie
         return;
     }
 
@@ -340,6 +374,26 @@ function setEtat(nouvelEtat) {
         if (menuButtons) {
             menuButtons.style.display = 'none';
         }
+        // Hors jeu : masquer la barre de vie
+        if (coeurs) {
+            coeurs.forEach(c => c.style.visibility = 'hidden');
+        }
+        return;
+    }
+
+    if (etat === ETAT.TRANSITION) {
+        canvasEl.classList.add('game-active');
+        if (gameOverOverlay) {
+            gameOverOverlay.classList.remove('active');
+            gameOverOverlay.setAttribute('aria-hidden', 'true');
+        }
+        if (menuButtons) {
+            menuButtons.style.display = 'none';
+        }
+        // Hors jeu : masquer la barre de vie
+        if (coeurs) {
+            coeurs.forEach(c => c.style.visibility = 'hidden');
+        }
         return;
     }
 
@@ -351,6 +405,11 @@ function setEtat(nouvelEtat) {
     }
     if (menuButtons) {
         menuButtons.style.display = 'flex';
+    }
+
+    // En MENU : masquer la barre de vie
+    if (coeurs) {
+        coeurs.forEach(c => c.style.visibility = 'hidden');
     }
 }
 

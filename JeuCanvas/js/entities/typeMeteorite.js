@@ -12,7 +12,7 @@ export const METEORITE_CONFIG = {
     imagePath: './assets/img/meteorites/meteorite.png',
     largeur: 40,
     hauteur: 40,
-    vitesse: 0.2,
+    vitesse: 0.8,
     pv: 1,
   },
 
@@ -30,7 +30,7 @@ export const METEORITE_CONFIG = {
     imagePath: './assets/img/meteorites/meteorite.png',
     largeur: 40,
     hauteur: 40,
-    vitesse: 0.2,
+    vitesse: 0.4,
     pv: 1,
   },
 
@@ -55,7 +55,7 @@ export const METEORITE_CONFIG = {
     imagePath: './assets/img/meteorites/nuage.png',
     largeur: 50,
     hauteur: 50,
-    vitesse: 0.2,
+    vitesse: 0.4,
     pv: 1,
     cloudRadius: 190,
     cloudDurationMs: 4000,

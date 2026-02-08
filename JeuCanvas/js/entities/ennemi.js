@@ -2,7 +2,7 @@ import ObjetGraphique from "./objetGraphique.js";
 import Bullet from "./bullet.js";
 
 export default class Ennemi extends ObjetGraphique {
-    constructor(x, y, imagePath, largeur, hauteur, vitesse, pointsDeVie = 3) {
+    constructor(x, y, imagePath, largeur, hauteur, vitesse, pointsDeVie = 1) {
         super(x, y, imagePath, largeur, hauteur, vitesse, pointsDeVie);
         this.bullets = [];
         this.delayMinBetweenBullets = 3000; // Tir toutes les 1.5 secondes
