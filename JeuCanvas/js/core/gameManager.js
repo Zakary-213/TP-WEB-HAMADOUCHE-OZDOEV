@@ -214,9 +214,18 @@ export default class GameManager {
                     if (vaisseau.type === TYPE_VAISSEAU.PHASE) {
                         spawnImpactParticles(this.particles, meteorite);
                         this.meteorites.splice(m, 1);
+
+                        if (this.onMeteoriteDestroyed) {
+                            this.onMeteoriteDestroyed(meteorite);
+                        }
+
+                        const goldEarned = this.getGoldForMeteorite(meteorite.type);
+                        this.player.addGold(goldEarned);
+
                         vaisseau.bullets.splice(b, 1);
                         break;
                     }
+
 
                     if (meteorite.type === TYPE_METEORITE.NUAGE) {
                         this.spawnCloudZone(meteorite);
