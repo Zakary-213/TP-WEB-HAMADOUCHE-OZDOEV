@@ -14,18 +14,22 @@ export default class EntityManager {
 		this.game = game;
 	}
 
-	updateAll(vaisseau) {
+	updateAll(vaisseauOrArray) {
 		const game = this.game;
+		const vaisseaux = Array.isArray(vaisseauOrArray)
+			? vaisseauOrArray.filter(v => !!v)
+			: [vaisseauOrArray];
+		if (!vaisseaux.length) return;
 
-		// Garder en mémoire la dernière position du vaisseau pour certains spawns
-		game.lastVaisseauX = vaisseau.x;
-		game.lastVaisseauY = vaisseau.y;
+		// Garder en mémoire la dernière position du vaisseau principal pour certains spawns
+		game.lastVaisseauX = vaisseaux[0].x;
+		game.lastVaisseauY = vaisseaux[0].y;
 
-		this.updateMeteorites(vaisseau);
+		this.updateMeteorites(vaisseaux);
 		this.updateCloudZonesAndParticles();
-		this.handleBulletMeteoriteCollisions(vaisseau);
-		this.updateGadgets(vaisseau);
-		this.updateEnnemis(vaisseau);
+		this.handleBulletMeteoriteCollisions(vaisseaux);
+		this.updateGadgets(vaisseaux);
+		this.updateEnnemis(vaisseaux);
 	}
 
 	spawnEclatsPieces(parentMeteorite) {
@@ -80,7 +84,7 @@ export default class EntityManager {
 		});
 	}
 
-	updateMeteorites(vaisseau) {
+	updateMeteorites(vaisseaux) {
 		const game = this.game;
 		const meteorites = game.meteorites;
 
@@ -114,35 +118,43 @@ export default class EntityManager {
 				spawnExplosionParticles(game.particles, meteorite);
 				meteorites.splice(i, 1);
 
-				if (!(vaisseau.type === TYPE_VAISSEAU.PHASE && vaisseau.isDashing)) {
-					const explosionRadius = meteorite.explosionRadius ?? (meteorite.largeur * 2);
-					const dx = vaisseau.x - meteorite.x;
-					const dy = vaisseau.y - meteorite.y;
+				const explosionRadius = meteorite.explosionRadius ?? (meteorite.largeur * 2);
+				for (const v of vaisseaux) {
+					if (v.type === TYPE_VAISSEAU.PHASE && v.isDashing) continue;
+					const dx = v.x - meteorite.x;
+					const dy = v.y - meteorite.y;
 					const distSq = dx * dx + dy * dy;
 					if (distSq <= explosionRadius * explosionRadius) {
-						game.gestionDegats.appliquerCoup(vaisseau, game);
+						game.gestionDegats.appliquerCoup(v, game);
 					}
 				}
 				continue;
 			}
 
-			// Collision météorite ↔ vaisseau
-			const collision = game.collisionUtils.rectCircleFromCenter(
-				vaisseau.x,
-				vaisseau.y,
-				vaisseau.largeur,
-				vaisseau.hauteur,
-				meteorite.x,
-				meteorite.y,
-				meteorite.largeur / 2
-			);
+			// Collision météorite ↔ vaisseaux
+			let meteoriteRemoved = false;
+			for (const v of vaisseaux) {
+				const collision = game.collisionUtils.rectCircleFromCenter(
+					v.x,
+					v.y,
+					v.largeur,
+					v.hauteur,
+					meteorite.x,
+					meteorite.y,
+					meteorite.largeur / 2
+				);
 
-			if (collision && game.gameState === "playing") {
-				if (vaisseau.type === TYPE_VAISSEAU.PHASE && vaisseau.isDashing) {
-					continue;
+				if (collision && game.gameState === "playing") {
+					if (v.type === TYPE_VAISSEAU.PHASE && v.isDashing) {
+						continue;
+					}
+					meteorites.splice(i, 1);
+					game.gestionDegats.appliquerCoup(v, game);
+					meteoriteRemoved = true;
+					break;
 				}
-				meteorites.splice(i, 1);
-				game.gestionDegats.appliquerCoup(vaisseau, game);
+			}
+			if (meteoriteRemoved) {
 				continue;
 			}
 
@@ -160,36 +172,39 @@ export default class EntityManager {
 		game.particles.update();
 	}
 
-	handleBulletMeteoriteCollisions(vaisseau) {
+	handleBulletMeteoriteCollisions(vaisseauxOrVaisseau) {
 		const game = this.game;
 		const meteorites = game.meteorites;
+		const vaisseaux = Array.isArray(vaisseauxOrVaisseau)
+			? vaisseauxOrVaisseau.filter(v => !!v)
+			: [vaisseauxOrVaisseau];
 
-		for (let b = vaisseau.bullets.length - 1; b >= 0; b--) {
-			const bullet = vaisseau.bullets[b];
-			for (let m = meteorites.length - 1; m >= 0; m--) {
-				const meteorite = meteorites[m];
-				const collision = game.collisionUtils.rectCircleFromCenter(
-					bullet.x, bullet.y, 10, 2,
-					meteorite.x, meteorite.y,
-					meteorite.largeur / 2
-				);
-				if (collision) {
+		for (const vaisseau of vaisseaux) {
+			for (let b = vaisseau.bullets.length - 1; b >= 0; b--) {
+				const bullet = vaisseau.bullets[b];
+				for (let m = meteorites.length - 1; m >= 0; m--) {
+					const meteorite = meteorites[m];
+					const collision = game.collisionUtils.rectCircleFromCenter(
+						bullet.x, bullet.y, 10, 2,
+						meteorite.x, meteorite.y,
+						meteorite.largeur / 2
+					);
+					if (!collision) continue;
+
+					// Cas spécial : vaisseau PHASE détruit directement la météorite
 					if (vaisseau.type === TYPE_VAISSEAU.PHASE) {
 						spawnImpactParticles(game.particles, meteorite);
 						meteorites.splice(m, 1);
-
 						if (game.onMeteoriteDestroyed) {
 							game.onMeteoriteDestroyed(meteorite);
 						}
-
 						const goldEarned = this.getGoldForMeteorite(meteorite.type);
 						game.player.addGold(goldEarned);
-
 						vaisseau.bullets.splice(b, 1);
 						break;
 					}
 
-
+					// Météorite NUAGE : transforme en nuage sans dégâts directs
 					if (meteorite.type === TYPE_METEORITE.NUAGE) {
 						this.spawnCloudZone(meteorite);
 						spawnImpactParticles(game.particles, meteorite);
@@ -200,6 +215,7 @@ export default class EntityManager {
 						break;
 					}
 
+					// Vaisseau SPLIT : duplique la balle en deux
 					if (vaisseau.type === TYPE_VAISSEAU.SPLIT && !bullet.hasSplit) {
 						const baseAngle = bullet.angle;
 						const splitAngle = Math.PI / 6;
@@ -216,6 +232,7 @@ export default class EntityManager {
 						break;
 					}
 
+					// Météorite ECLATS qui peut se diviser
 					if (meteorite.type === TYPE_METEORITE.ECLATS && meteorite.canSplit) {
 						spawnImpactParticles(game.particles, meteorite);
 						meteorites.splice(m, 1);
@@ -226,6 +243,7 @@ export default class EntityManager {
 						break;
 					}
 
+					// Cas général : on enlève des PV à la météorite
 					spawnImpactParticles(game.particles, meteorite);
 					meteorite.pv -= 1;
 					if (meteorite.pv <= 0) {
@@ -246,13 +264,19 @@ export default class EntityManager {
 		}
 	}
 
-	updateGadgets(vaisseau) {
+	updateGadgets(vaisseauxOrVaisseau) {
 		const game = this.game;
+		const vaisseaux = Array.isArray(vaisseauxOrVaisseau)
+			? vaisseauxOrVaisseau.filter(v => !!v)
+			: [vaisseauxOrVaisseau];
 		for (let i = game.gadgets.length - 1; i >= 0; i--) {
 			const g = game.gadgets[i];
 			g.update();
-			if (g.canPickup(vaisseau)) {
-				g.pickup(vaisseau, { canvasWidth: game.canvas.width, canvasHeight: game.canvas.height });
+			for (const v of vaisseaux) {
+				if (g.canPickup(v)) {
+					g.pickup(v, { canvasWidth: game.canvas.width, canvasHeight: game.canvas.height });
+					break;
+				}
 			}
 			if (g.consumed || g.shouldDespawn(game.canvas.height)) {
 				game.gadgets.splice(i, 1);
@@ -321,65 +345,75 @@ export default class EntityManager {
 		game.ennemis.push(ennemi);
 	}
 
-	updateEnnemis(vaisseau) {
+	updateEnnemis(vaisseauxOrVaisseau) {
 		const game = this.game;
 		const now = Date.now();
+		const vaisseaux = Array.isArray(vaisseauxOrVaisseau)
+			? vaisseauxOrVaisseau.filter(v => !!v)
+			: [vaisseauxOrVaisseau];
 
-		for (let i = game.ennemis.length - 1; i >= 0; i--) {
+ 		for (let i = game.ennemis.length - 1; i >= 0; i--) {
 			const ennemi = game.ennemis[i];
+			const target = vaisseaux[0];
 
-			ennemi.update(game.canvas.width, vaisseau.x, vaisseau.y);
-			ennemi.shoot(now, vaisseau.x, vaisseau.y);
+			ennemi.update(game.canvas.width, target.x, target.y);
+			ennemi.shoot(now, target.x, target.y);
 			ennemi.updateBullets(game.canvas.width, game.canvas.height);
 
 			// Collision bullets joueur -> ennemi
-			for (let b = vaisseau.bullets.length - 1; b >= 0; b--) {
-				const bullet = vaisseau.bullets[b];
-
-				const collision = game.collisionUtils.rectCircleFromCenter(
-					bullet.x,
-					bullet.y,
-					10,
-					2,
-					ennemi.x,
-					ennemi.y,
-					ennemi.largeur / 2
-				);
-
-				if (collision) {
-					ennemi.perdreVie(1);
-					ennemi.startShake();
-					setTimeout(() => ennemi.stopShake(), 200);
-
-					vaisseau.bullets.splice(b, 1);
-
-					if (ennemi.estMort()) {
-						game.ennemis.splice(i, 1);
-					}
-					break;
-				}
-			}
-
-			// Collision bullets ennemi -> joueur
-			if (i < game.ennemis.length) {
-				for (let b = ennemi.bullets.length - 1; b >= 0; b--) {
-					const bullet = ennemi.bullets[b];
+			for (const vaisseau of vaisseaux) {
+				for (let b = vaisseau.bullets.length - 1; b >= 0; b--) {
+					const bullet = vaisseau.bullets[b];
 
 					const collision = game.collisionUtils.rectCircleFromCenter(
 						bullet.x,
 						bullet.y,
 						10,
 						2,
-						vaisseau.x,
-						vaisseau.y,
-						vaisseau.largeur / 2
+						ennemi.x,
+						ennemi.y,
+						ennemi.largeur / 2
 					);
 
-					if (collision && game.gameState === "playing") {
-						ennemi.bullets.splice(b, 1);
-						game.gestionDegats.appliquerCoup(vaisseau, game);
+					if (collision) {
+						ennemi.perdreVie(1);
+						ennemi.startShake();
+						setTimeout(() => ennemi.stopShake(), 200);
+
+						vaisseau.bullets.splice(b, 1);
+
+						if (ennemi.estMort()) {
+							game.ennemis.splice(i, 1);
+						}
 						break;
 					}
+				}
+			}
+
+			// Collision bullets ennemi -> joueurs
+			if (i < game.ennemis.length) {
+				for (let b = ennemi.bullets.length - 1; b >= 0; b--) {
+					const bullet = ennemi.bullets[b];
+					let hit = false;
+					for (const v of vaisseaux) {
+						const collision = game.collisionUtils.rectCircleFromCenter(
+							bullet.x,
+							bullet.y,
+							10,
+							2,
+							v.x,
+							v.y,
+							v.largeur / 2
+						);
+
+						if (collision && game.gameState === "playing") {
+							ennemi.bullets.splice(b, 1);
+							game.gestionDegats.appliquerCoup(v, game);
+							hit = true;
+							break;
+						}
+					}
+					if (hit) break;
 				}
 			}
 		}

@@ -37,6 +37,7 @@ let labelJ1;
 let labelJ2;
 
 let settingsOverlay;
+let duoSettingsOverlay;
 let settingsClose;
 let menuButtons;
 let modeButtons;
@@ -65,6 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
     canvas = document.getElementById('monCanvas');
     ctx = canvas.getContext('2d');
     settingsOverlay = document.querySelector('.settings-overlay');
+    duoSettingsOverlay = document.querySelector('.settings-overlay-j2');
     gameOverOverlay = document.querySelector('.gameover-overlay');
     settingsClose = document.getElementById('close-settings');
     menuButtons = document.querySelector('div.boutton');
@@ -99,8 +101,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btnDuo) {
             btnDuo.addEventListener('click', () => {
                 if (etat !== ETAT.CHOIX_MODE) return;
-                startGameDuo();
-                setEtat(ETAT.JEU);
+				// Ouvrir d'abord l'overlay de configuration du Joueur 2
+				if (duoSettingsOverlay) {
+					duoSettingsOverlay.classList.add('active');
+					duoSettingsOverlay.setAttribute('aria-hidden', 'false');
+				} else {
+					startGameDuo();
+					setEtat(ETAT.JEU);
+				}
             });
         }
 
@@ -129,6 +137,30 @@ document.addEventListener('DOMContentLoaded', () => {
             settingsOverlay.classList.remove('active');
             settingsOverlay.setAttribute('aria-hidden', 'true');
         });
+    }
+
+    // Boutons de l'overlay de configuration Joueur 2
+    if (duoSettingsOverlay) {
+        const duoCancelBtn = duoSettingsOverlay.querySelector('.btn-duo-cancel');
+        const duoStartBtn = duoSettingsOverlay.querySelector('.btn-duo-start');
+
+        if (duoCancelBtn) {
+            duoCancelBtn.addEventListener('click', () => {
+                duoSettingsOverlay.classList.remove('active');
+                duoSettingsOverlay.setAttribute('aria-hidden', 'true');
+            });
+        }
+
+        if (duoStartBtn) {
+            duoStartBtn.addEventListener('click', () => {
+                // Recharger les touches configurées du Joueur 2
+                reloadCustomKeys2FromStorage();
+                duoSettingsOverlay.classList.remove('active');
+                duoSettingsOverlay.setAttribute('aria-hidden', 'true');
+                startGameDuo();
+                setEtat(ETAT.JEU);
+            });
+        }
     }
 
     // Bouton Boutique - Redirection vers page boutique
@@ -173,6 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
     defineListeners({
         getEtat: () => etat,
         getCustomKeys: () => customKeys,
+        getCustomKeys2: () => customKeys2,
         getVaisseau: () => monVaisseau,
         getVaisseau2: () => monVaisseau2,
         getMode: () => modeActuel
@@ -201,6 +234,15 @@ let customKeys = {
     shoot: localStorage.getItem('key_shoot') || 'Entrée'
 };
 
+// Touches configurables pour le Joueur 2 (par défaut ZQSD, même touche de tir que J1)
+let customKeys2 = {
+    up: 'z',
+    left: 'q',
+    down: 's',
+    right: 'd',
+    shoot: 'Entrée'
+};
+
 // Convertir les symboles de flèches en touches réelles
 function getActualKey(savedKey) {
     const keyMap = {
@@ -222,8 +264,24 @@ function reloadCustomKeysFromStorage() {
     customKeys.shoot = getActualKey(localStorage.getItem('key_shoot') || 'Entrée');
 }
 
+function reloadCustomKeys2FromStorage() {
+    // Fallback ZQSD si aucune touche Joueur 2 n'a été définie
+    customKeys2.up = getActualKey(localStorage.getItem('key2_up') || 'z');
+    customKeys2.left = getActualKey(localStorage.getItem('key2_left') || 'q');
+    customKeys2.down = getActualKey(localStorage.getItem('key2_down') || 's');
+    customKeys2.right = getActualKey(localStorage.getItem('key2_right') || 'd');
+    const savedShoot2 = localStorage.getItem('key2_shoot');
+    if (savedShoot2) {
+        customKeys2.shoot = getActualKey(savedShoot2);
+    } else {
+        // Par défaut même touche de tir que le Joueur 1
+        customKeys2.shoot = customKeys.shoot;
+    }
+}
+
 // Convertir toutes les touches personnalisées au démarrage
 reloadCustomKeysFromStorage();
+reloadCustomKeys2FromStorage();
 
 // Définis les assets à charger
 var assetsToLoadURLs = {
@@ -326,7 +384,8 @@ function startGameDuo() {
     levelManager = null;
     gameManager = null;
 
-    gameManagerDuo = new GameManagerDuo(canvas);
+    // GameManagerDuo a maintenant besoin du player et des assets pour gérer les entités comme en solo
+    gameManagerDuo = new GameManagerDuo(canvas, player, loadedAssets || {});
 
     const type1 = TYPE_VAISSEAU.NORMAL;
     const type2 = TYPE_VAISSEAU.NORMAL;
@@ -410,28 +469,47 @@ function updateGameState() {
     }
 }
 
-// Mise à jour très simple pour le duo : deux vaisseaux qui se déplacent
 function updateGameStateDuo() {
-    if (!monVaisseau || !monVaisseau2 || !gameManagerDuo) return;
+    // Si le gestionnaire duo n'existe pas, on ne fait rien
+    if (!gameManagerDuo) return;
 
-    // Joueur 1 : touches personnalisées
+    // Joueur 1 : touches personnalisées (uniquement si le vaisseau existe encore)
     let dx1 = 0;
     let dy1 = 0;
-    if (keys[customKeys.up]) dy1 = -1;
-    if (keys[customKeys.down]) dy1 = 1;
-    if (keys[customKeys.left]) dx1 = -1;
-    if (keys[customKeys.right]) dx1 = 1;
+    if (monVaisseau) {
+        if (keys[customKeys.up]) dy1 = -1;
+        if (keys[customKeys.down]) dy1 = 1;
+        if (keys[customKeys.left]) dx1 = -1;
+        if (keys[customKeys.right]) dx1 = 1;
+    }
 
-    // Joueur 2 : ZSQD (clavier FR)
+    // Joueur 2 : touches configurables (fallback ZQSD) si le vaisseau existe
     let dx2 = 0;
     let dy2 = 0;
-    if (keys['z']) dy2 = -1;
-    if (keys['s']) dy2 = 1;
-    if (keys['q']) dx2 = -1;
-    if (keys['d']) dx2 = 1;
+    if (monVaisseau2) {
+        if (keys[customKeys2.up]) dy2 = -1;
+        if (keys[customKeys2.down]) dy2 = 1;
+        if (keys[customKeys2.left]) dx2 = -1;
+        if (keys[customKeys2.right]) dx2 = 1;
+    }
 
     gameManagerDuo.update(monVaisseau, monVaisseau2, dx1, dy1, dx2, dy2);
+
+    // Après la mise à jour des collisions, vérifier si un des deux vaisseaux est mort
+    if (monVaisseau && typeof monVaisseau.estMort === 'function' && monVaisseau.estMort()) {
+        monVaisseau = null;
+    }
+    if (monVaisseau2 && typeof monVaisseau2.estMort === 'function' && monVaisseau2.estMort()) {
+        monVaisseau2 = null;
+    }
+
     updateBarreDeVie();
+
+    // Si les deux vaisseaux sont maintenant morts/absents, on déclenche le game over duo
+    if (!monVaisseau && !monVaisseau2) {
+        setEtat(ETAT.GAME_OVER);
+        console.log('Game Over Duo : les deux joueurs sont morts');
+    }
 }
 
 function updateBarreDeVie() {
@@ -499,6 +577,10 @@ function setEtat(nouvelEtat) {
         settingsOverlay.classList.remove('active');
         settingsOverlay.setAttribute('aria-hidden', 'true');
     }
+	if (duoSettingsOverlay) {
+		duoSettingsOverlay.classList.remove('active');
+		duoSettingsOverlay.setAttribute('aria-hidden', 'true');
+	}
     if (shopOverlay) {
         shopOverlay.classList.remove('active');
         shopOverlay.setAttribute('aria-hidden', 'true');
@@ -626,17 +708,25 @@ function drawPlaying() {
 }
 
 function drawPlayingDuo() {
-    if (!monVaisseau || !monVaisseau2 || !gameManagerDuo) return;
+    // Si le gestionnaire duo n'existe pas, on ne dessine rien
+    if (!gameManagerDuo) return;
+    // Si les deux vaisseaux sont absents (morts), rien à dessiner
+    if (!monVaisseau && !monVaisseau2) return;
+
     gameManagerDuo.draw(ctx, monVaisseau, monVaisseau2);
 
-    // Dessiner les bullets des deux joueurs (même logique que le solo)
-    for (let i = monVaisseau.bullets.length - 1; i >= 0; i--) {
-        const bullet = monVaisseau.bullets[i];
-        bullet.draw(ctx);
+    // Dessiner les bullets uniquement pour les vaisseaux encore présents
+    if (monVaisseau) {
+        for (let i = monVaisseau.bullets.length - 1; i >= 0; i--) {
+            const bullet = monVaisseau.bullets[i];
+            bullet.draw(ctx);
+        }
     }
-    for (let i = monVaisseau2.bullets.length - 1; i >= 0; i--) {
-        const bullet = monVaisseau2.bullets[i];
-        bullet.draw(ctx);
+    if (monVaisseau2) {
+        for (let i = monVaisseau2.bullets.length - 1; i >= 0; i--) {
+            const bullet = monVaisseau2.bullets[i];
+            bullet.draw(ctx);
+        }
     }
 }
 

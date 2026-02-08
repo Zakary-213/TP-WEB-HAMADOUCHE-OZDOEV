@@ -26,10 +26,14 @@ export default class GestionDegats {
             vaisseau.perdreVie(1);
         }
 
-        // Game over si le vaisseau est mort
+        // Game over si le vaisseau est mort (solo) ; en duo, il n'y a pas de setGameOver
         if (typeof vaisseau.estMort === 'function' && vaisseau.estMort()) {
-            if (typeof gameManager.setGameOver === 'function') gameManager.setGameOver();
-            return;
+            if (typeof gameManager.setGameOver === 'function') {
+                gameManager.setGameOver();
+            }
+            // On ne fait pas de "return" ici pour laisser le timeout
+            // remettre éventuellement l'état à "playing" pour les modes
+            // qui ne gèrent pas de game over global (ex: duo).
         }
 
         // Fin de l'état "hit" après la durée
@@ -37,6 +41,9 @@ export default class GestionDegats {
             if (typeof vaisseau.stopShake === 'function') {
                 vaisseau.stopShake();
             }
+            // En solo, isGameOver() existe et empêche le retour à "playing".
+            // En duo, isGameOver n'existe pas, donc on repasse en "playing"
+            // pour que les collisions continuent de fonctionner pour le survivant.
             if (!gameManager.isGameOver || (typeof gameManager.isGameOver === 'function' && !gameManager.isGameOver())) {
                 gameManager.gameState = "playing";
             }
