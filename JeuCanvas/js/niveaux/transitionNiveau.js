@@ -62,8 +62,8 @@ export default class TransitionNiveau {
 		}, 1000);
 	}
 
-	// Affichage spécial pour la fin du jeu (niveau 3 terminé)
-	showFinalEndGame(onComplete) {
+	// Affichage spécial pour la fin du jeu (mode solo ou duo terminé)
+	showFinalEndGame(onComplete, { mode = 'solo' } = {}) {
 		if (!this.overlay) {
 			if (onComplete) onComplete();
 			return;
@@ -80,7 +80,10 @@ export default class TransitionNiveau {
 			this.titleEl.textContent = 'BRAVO !';
 		}
 		if (this.subtitleEl) {
-			this.subtitleEl.textContent = 'Vous avez terminé le mode solo !';
+			this.subtitleEl.textContent =
+				mode === 'duo'
+					? 'Vous avez terminé le mode duo !'
+					: 'Vous avez terminé le mode solo !';
 		}
 		if (this.hintEl) {
 			this.hintEl.textContent = `Retour automatique au menu dans ${this.remainingSeconds}s`;

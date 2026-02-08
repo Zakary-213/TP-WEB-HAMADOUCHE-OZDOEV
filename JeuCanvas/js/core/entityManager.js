@@ -327,10 +327,12 @@ export default class EntityManager {
 		game.meteorites.push(meteorite);
 	}
 
-	spawnEnnemi() {
+	spawnEnnemi(options = {}) {
 		const game = this.game;
-		const x = game.canvas.width / 2;
-		const y = 60;
+		const {
+			x = game.canvas.width / 2,
+			y = 60
+		} = options;
 
 		const ennemi = new Ennemi(
 			x,
@@ -354,7 +356,14 @@ export default class EntityManager {
 
  		for (let i = game.ennemis.length - 1; i >= 0; i--) {
 			const ennemi = game.ennemis[i];
-			const target = vaisseaux[0];
+			if (!vaisseaux.length) {
+				continue;
+			}
+			// Ciblage : en solo, il n'y a qu'un vaisseau.
+			// En duo, on fait viser le joueur 1 par le premier ennemi,
+			// et le joueur 2 par le second (par index).
+			const targetIndex = Math.min(i, vaisseaux.length - 1);
+			const target = vaisseaux[targetIndex];
 
 			ennemi.update(game.canvas.width, target.x, target.y);
 			ennemi.shoot(now, target.x, target.y);

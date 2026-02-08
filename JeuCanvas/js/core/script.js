@@ -6,12 +6,10 @@ import { TYPE_VAISSEAU } from '../entities/typeVaisseau.js';
 import Player from '../entities/player.js';
 import Boutique, { BoutiqueUI } from '../ui/boutique.js';
 import { drawEclairBar, drawShieldBubble, drawRafaleBar } from '../systems/effectsGadget.js';
-import niveau1 from '../niveaux/niveau1.js';
-import niveau2 from '../niveaux/niveau2.js';
-import niveau3 from '../niveaux/niveau3.js';
 import LevelManager from '../niveaux/levelManagerSolo.js';
 import TransitionNiveau from '../niveaux/transitionNiveau.js';
 import { defineListeners, inputStates } from './ecouteur.js';
+import { ETAT, LEVELS, LEVELS_DUO, customKeys, customKeys2, reloadCustomKeysFromStorage, reloadCustomKeys2FromStorage } from './gameState.js';
 
 let canvas;
 let ctx;
@@ -19,7 +17,6 @@ let monVaisseau;
 let monVaisseau2; // pour le mode duo
 let gameManager;
 let gameManagerDuo;
-const ETAT = { MENU: 'MENU ACCUEIL', CHOIX_MODE: 'CHOIX MODE', JEU: 'JEU EN COURS', GAME_OVER: 'GAME OVER', TRANSITION: 'TRANSITION NIVEAU' };
 let etat = ETAT.MENU;
 let modeActuel = 'solo'; // 'solo' ou 'duo'
 let loadedAssets; // Déclaration de la variable
@@ -52,12 +49,7 @@ let meteoriteCountElement;
 let levelTransition;
 let destroyedMeteorites = 0;
 let levelManager;
-
-const LEVELS = [
-    niveau1,
-    niveau2,
-    niveau3
-];
+let levelManagerDuo;
 
 
 
@@ -226,62 +218,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Lancer la boucle d'animation dès le menu
     requestAnimationFrame(gameLoop);
 });
-let customKeys = {
-    up: localStorage.getItem('key_up') || '↑',
-    left: localStorage.getItem('key_left') || '←',
-    down: localStorage.getItem('key_down') || '↓',
-    right: localStorage.getItem('key_right') || '→',
-    shoot: localStorage.getItem('key_shoot') || 'Entrée'
-};
-
-// Touches configurables pour le Joueur 2 (par défaut ZQSD, même touche de tir que J1)
-let customKeys2 = {
-    up: 'z',
-    left: 'q',
-    down: 's',
-    right: 'd',
-    shoot: 'Entrée'
-};
-
-// Convertir les symboles de flèches en touches réelles
-function getActualKey(savedKey) {
-    const keyMap = {
-        '↑': 'ArrowUp',
-        '↓': 'ArrowDown',
-        '←': 'ArrowLeft',
-        '→': 'ArrowRight',
-        'Entrée': 'Enter',
-        'Espace': ' '
-    };
-    return keyMap[savedKey] || savedKey.toLowerCase();
-}
-
-function reloadCustomKeysFromStorage() {
-    customKeys.up = getActualKey(localStorage.getItem('key_up') || '↑');
-    customKeys.left = getActualKey(localStorage.getItem('key_left') || '←');
-    customKeys.down = getActualKey(localStorage.getItem('key_down') || '↓');
-    customKeys.right = getActualKey(localStorage.getItem('key_right') || '→');
-    customKeys.shoot = getActualKey(localStorage.getItem('key_shoot') || 'Entrée');
-}
-
-function reloadCustomKeys2FromStorage() {
-    // Fallback ZQSD si aucune touche Joueur 2 n'a été définie
-    customKeys2.up = getActualKey(localStorage.getItem('key2_up') || 'z');
-    customKeys2.left = getActualKey(localStorage.getItem('key2_left') || 'q');
-    customKeys2.down = getActualKey(localStorage.getItem('key2_down') || 's');
-    customKeys2.right = getActualKey(localStorage.getItem('key2_right') || 'd');
-    const savedShoot2 = localStorage.getItem('key2_shoot');
-    if (savedShoot2) {
-        customKeys2.shoot = getActualKey(savedShoot2);
-    } else {
-        // Par défaut même touche de tir que le Joueur 1
-        customKeys2.shoot = customKeys.shoot;
-    }
-}
-
-// Convertir toutes les touches personnalisées au démarrage
-reloadCustomKeysFromStorage();
-reloadCustomKeys2FromStorage();
 
 // Définis les assets à charger
 var assetsToLoadURLs = {
@@ -382,6 +318,7 @@ function startGame() {
 function startGameDuo() {
     modeActuel = 'duo';
     levelManager = null;
+    levelManagerDuo = null;
     gameManager = null;
 
     // GameManagerDuo a maintenant besoin du player et des assets pour gérer les entités comme en solo
@@ -413,6 +350,39 @@ function startGameDuo() {
     );
 
     updateBarreDeVie();
+
+    // Démarrer la gestion de niveaux pour le mode duo
+    levelManagerDuo = new LevelManager(
+        gameManagerDuo,
+        LEVELS_DUO,
+        () => {
+            // Callback de début de niveau duo : on peut réinitialiser un compteur si besoin
+        },
+        (levelIndex, doneCallback) => {
+            if (!levelTransition) {
+                doneCallback();
+                return;
+            }
+
+            const isLastLevelDuo = (levelIndex === LEVELS_DUO.length - 1);
+            setEtat(ETAT.TRANSITION);
+
+            if (isLastLevelDuo) {
+                // Fin du dernier niveau duo : transition finale spécifique au mode duo
+                levelTransition.showFinalEndGame(() => {
+                    setEtat(ETAT.MENU);
+                    doneCallback();
+                }, { mode: 'duo' });
+            } else {
+                // Transitions normales (niveau1Duo -> niveau2Duo)
+                levelTransition.showForLevel(levelIndex + 1, () => {
+                    setEtat(ETAT.JEU);
+                    doneCallback();
+                });
+            }
+        }
+    );
+    levelManagerDuo.start();
 }
 
 function gameLoop() {
@@ -437,63 +407,38 @@ function updateGameState() {
         return;
     }
 
-    if (gameManager.isHit()) return;
+    if (!gameManager || !monVaisseau || !levelManager) return;
 
-    // Calculer la direction basée sur les touches personnalisées (joueur solo)
-    let dx = 0;
-    let dy = 0;
-
-    if (keys[customKeys.up]) dy = -1;
-    if (keys[customKeys.down]) dy = 1;
-    if (keys[customKeys.left]) dx = -1;
-    if (keys[customKeys.right]) dx = 1;
-
-    monVaisseau.moveInDirection(dx, dy);
-
-    // Mettre à jour les collisions via GameManager
-    levelManager.update();
-    gameManager.update(monVaisseau);
-
-    const level = levelManager.getCurrentLevel();
-    if (level) {
-        chronometre.textContent = formatTime(level.getElapsedTime());
-    }
-
-    updateBarreDeVie();
-
-    // Si le GameManager vient de passer en gameover pendant l'update
-    if (gameManager.isGameOver()) {
-        setEtat(ETAT.GAME_OVER);
-        console.log("Game Over détecté");
-        return;
-    }
+    gameManager.updateGameState({
+        vaisseau: monVaisseau,
+        levelManager,
+        keys,
+        customKeys,
+        setEtat,
+        ETAT,
+        updateBarreDeVie,
+        chronometre,
+        formatTime
+    });
 }
 
 function updateGameStateDuo() {
     // Si le gestionnaire duo n'existe pas, on ne fait rien
     if (!gameManagerDuo) return;
 
-    // Joueur 1 : touches personnalisées (uniquement si le vaisseau existe encore)
-    let dx1 = 0;
-    let dy1 = 0;
-    if (monVaisseau) {
-        if (keys[customKeys.up]) dy1 = -1;
-        if (keys[customKeys.down]) dy1 = 1;
-        if (keys[customKeys.left]) dx1 = -1;
-        if (keys[customKeys.right]) dx1 = 1;
-    }
-
-    // Joueur 2 : touches configurables (fallback ZQSD) si le vaisseau existe
-    let dx2 = 0;
-    let dy2 = 0;
-    if (monVaisseau2) {
-        if (keys[customKeys2.up]) dy2 = -1;
-        if (keys[customKeys2.down]) dy2 = 1;
-        if (keys[customKeys2.left]) dx2 = -1;
-        if (keys[customKeys2.right]) dx2 = 1;
-    }
-
-    gameManagerDuo.update(monVaisseau, monVaisseau2, dx1, dy1, dx2, dy2);
+    gameManagerDuo.updateGameStateDuo({
+        vaisseau1: monVaisseau,
+        vaisseau2: monVaisseau2,
+        levelManagerDuo,
+        keys,
+        customKeys,
+        customKeys2,
+        setEtat,
+        ETAT,
+        updateBarreDeVie,
+        chronometre,
+        formatTime
+    });
 
     // Après la mise à jour des collisions, vérifier si un des deux vaisseaux est mort
     if (monVaisseau && typeof monVaisseau.estMort === 'function' && monVaisseau.estMort()) {
@@ -504,6 +449,14 @@ function updateGameStateDuo() {
     }
 
     updateBarreDeVie();
+
+	// Mettre à jour le chronomètre en fonction du niveau duo courant
+	if (levelManagerDuo) {
+		const level = levelManagerDuo.getCurrentLevel();
+		if (level && chronometre) {
+			chronometre.textContent = formatTime(level.getElapsedTime());
+		}
+	}
 
     // Si les deux vaisseaux sont maintenant morts/absents, on déclenche le game over duo
     if (!monVaisseau && !monVaisseau2) {
@@ -737,5 +690,3 @@ function formatTime(ms) {
 
     return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
-
-

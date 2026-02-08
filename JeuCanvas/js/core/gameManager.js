@@ -131,6 +131,55 @@ export default class GameManager {
         //this.handleSpawns();
     }
 
+    // Logique complète de mise à jour du jeu solo à partir des inputs et du niveau.
+    // Cette méthode reprend ce qui était auparavant dans updateGameState() de script.js.
+    updateGameState({
+        vaisseau,
+        levelManager,
+        keys,
+        customKeys,
+        setEtat,
+        ETAT,
+        updateBarreDeVie,
+        chronometre,
+        formatTime
+    }) {
+        // Si le jeu n'est pas en cours, on ne fait rien ici
+        if (this.gameState !== 'playing') return;
+        if (this.isHit()) return;
+        if (!vaisseau || !levelManager) return;
+
+        // Calculer la direction basée sur les touches personnalisées (joueur solo)
+        let dx = 0;
+        let dy = 0;
+
+        if (keys[customKeys.up]) dy = -1;
+        if (keys[customKeys.down]) dy = 1;
+        if (keys[customKeys.left]) dx = -1;
+        if (keys[customKeys.right]) dx = 1;
+
+        vaisseau.moveInDirection(dx, dy);
+
+        // Mettre à jour les collisions via GameManager
+        levelManager.update();
+        this.update(vaisseau);
+
+        const level = levelManager.getCurrentLevel();
+        if (level && chronometre && typeof formatTime === 'function') {
+            chronometre.textContent = formatTime(level.getElapsedTime());
+        }
+
+        if (typeof updateBarreDeVie === 'function') {
+            updateBarreDeVie();
+        }
+
+        // Si le GameManager vient de passer en gameover pendant l'update
+        if (this.isGameOver() && typeof setEtat === 'function' && ETAT) {
+            setEtat(ETAT.GAME_OVER);
+            console.log('Game Over détecté');
+        }
+    }
+
     handleSpawns() {
         const now = Date.now();
 
@@ -157,8 +206,8 @@ export default class GameManager {
         this.entityManager.spawnMeteorrite(type);
     }
 
-    spawnEnnemi() {
-        this.entityManager.spawnEnnemi();
+    spawnEnnemi(options) {
+        this.entityManager.spawnEnnemi(options);
     }
 
     spawnGadgetEclair() {

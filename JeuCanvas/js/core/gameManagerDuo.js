@@ -71,13 +71,72 @@ export default class GameManagerDuo {
 		this.entityManager.updateAll([vaisseau1, vaisseau2]);
 		if (vaisseau1) this.updateBullets(vaisseau1);
 		if (vaisseau2) this.updateBullets(vaisseau2);
+	}
 
-		// Spawns simples de météorites normales en mode duo
-		const now = Date.now();
-		if (now > this.nextMeteoriteSpawn) {
-			// Sans paramètre -> TYPE_METEORITE.NORMAL par défaut dans EntityManager
-			this.spawnMeteorrite();
-			this.nextMeteoriteSpawn = now + 1200; // une météorite environ toutes les 1.2s
+	// Logique complète de mise à jour du jeu en duo à partir des inputs et du levelManagerDuo.
+	// Cette méthode reprend ce qui était auparavant dans updateGameStateDuo() de script.js.
+	updateGameStateDuo({
+		vaisseau1,
+		vaisseau2,
+		levelManagerDuo,
+		keys,
+		customKeys,
+		customKeys2,
+		setEtat,
+		ETAT,
+		updateBarreDeVie,
+		chronometre,
+		formatTime
+	}) {
+		// Si le gestionnaire duo est en game over, on ne fait rien
+		if (this.gameState === 'gameover') return;
+
+		// Joueur 1 : touches personnalisées (uniquement si le vaisseau existe encore)
+		let dx1 = 0;
+		let dy1 = 0;
+		if (vaisseau1) {
+			if (keys[customKeys.up]) dy1 = -1;
+			if (keys[customKeys.down]) dy1 = 1;
+			if (keys[customKeys.left]) dx1 = -1;
+			if (keys[customKeys.right]) dx1 = 1;
+		}
+
+		// Joueur 2 : touches configurables (fallback ZQSD) si le vaisseau existe
+		let dx2 = 0;
+		let dy2 = 0;
+		if (vaisseau2) {
+			if (keys[customKeys2.up]) dy2 = -1;
+			if (keys[customKeys2.down]) dy2 = 1;
+			if (keys[customKeys2.left]) dx2 = -1;
+			if (keys[customKeys2.right]) dx2 = 1;
+		}
+
+		// Mettre à jour le niveau duo (spawns météorites / gadgets)
+		if (levelManagerDuo) {
+			levelManagerDuo.update();
+		}
+
+		// Mise à jour des entités et déplacements
+		this.update(vaisseau1, vaisseau2, dx1, dy1, dx2, dy2);
+
+		if (typeof updateBarreDeVie === 'function') {
+			updateBarreDeVie();
+		}
+
+		// Mettre à jour le chronomètre en fonction du niveau duo courant
+		if (levelManagerDuo) {
+			const level = levelManagerDuo.getCurrentLevel();
+			if (level && chronometre && typeof formatTime === 'function') {
+				chronometre.textContent = formatTime(level.getElapsedTime());
+			}
+		}
+
+		// La gestion du fait de rendre vaisseau1 / vaisseau2 "null"
+		// (pour arrêter l'affichage / les contrôles) reste gérée à l'extérieur,
+		// car les références sont dans script.js.
+		if (!vaisseau1 && !vaisseau2 && typeof setEtat === 'function' && ETAT) {
+			setEtat(ETAT.GAME_OVER);
+			console.log('Game Over Duo : les deux joueurs sont morts');
 		}
 	}
 
@@ -104,8 +163,8 @@ export default class GameManagerDuo {
 		this.entityManager.spawnMeteorrite(type);
 	}
 
-	spawnEnnemi() {
-		this.entityManager.spawnEnnemi();
+	spawnEnnemi(options) {
+		this.entityManager.spawnEnnemi(options);
 	}
 
 	spawnGadgetEclair() {
