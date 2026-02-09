@@ -165,15 +165,23 @@ function normalizeKey(key) {
 }
 
 function isKeyUsed(keyLabel) {
-    return Object.values(BUTTONS).some(
+    const usedByJ1 = Object.values(BUTTONS).some(
         btn => btn && btn !== currentButton && btn.textContent === keyLabel
     );
+    const usedByJ2 = Object.values(BUTTONS_J2).some(
+        btn => btn && btn.textContent === keyLabel && btn.textContent !== ''
+    );
+    return usedByJ1 || usedByJ2;
 }
 
 function isKeyUsedJ2(keyLabel) {
-    return Object.values(BUTTONS_J2).some(
+    const usedByJ2 = Object.values(BUTTONS_J2).some(
         btn => btn && btn !== currentButtonJ2 && btn.textContent === keyLabel
     );
+    const usedByJ1 = Object.values(BUTTONS).some(
+        btn => btn && btn.textContent === keyLabel
+    );
+    return usedByJ2 || usedByJ1;
 }
 
 function showError() {

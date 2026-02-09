@@ -51,8 +51,8 @@ let destroyedMeteorites = 0;
 let levelManager;
 let levelManagerDuo;
 
-
-
+const BASE_CANVAS_WIDTH = 500;
+const BASE_CANVAS_HEIGHT = 600;
 
 document.addEventListener('DOMContentLoaded', () => {
     canvas = document.getElementById('monCanvas');
@@ -71,9 +71,53 @@ document.addEventListener('DOMContentLoaded', () => {
     levelTransition = new TransitionNiveau(canvas);
     setEtat(ETAT.MENU);
 
+    const applyResponsiveCanvasSize = () => {
+        if (!canvas) return;
+        const wrapper = document.querySelector('.canvas-wrapper');
+        const header = document.querySelector('h1');
+        const menu = document.querySelector('div.boutton');
+        const modes = document.querySelector('.mode-buttons');
+
+        const occupiedHeight =
+            (header?.offsetHeight || 0) +
+            (menu?.offsetHeight || 0) +
+            (modes?.offsetHeight || 0) +
+            48;
+
+        const availableHeight = Math.max(220, window.innerHeight - occupiedHeight);
+        const availableWidth = Math.max(260, Math.min(window.innerWidth - 24, BASE_CANVAS_WIDTH));
+
+        const scale = Math.min(
+            availableWidth / BASE_CANVAS_WIDTH,
+            availableHeight / BASE_CANVAS_HEIGHT,
+            1
+        );
+
+        const displayWidth = Math.floor(BASE_CANVAS_WIDTH * scale);
+        const displayHeight = Math.floor(BASE_CANVAS_HEIGHT * scale);
+
+        canvas.style.width = `${displayWidth}px`;
+        canvas.style.height = `${displayHeight}px`;
+
+        if (wrapper) {
+            wrapper.style.maxWidth = `${displayWidth}px`;
+        }
+
+        if (canvas.width !== BASE_CANVAS_WIDTH) {
+            canvas.width = BASE_CANVAS_WIDTH;
+        }
+        if (canvas.height !== BASE_CANVAS_HEIGHT) {
+            canvas.height = BASE_CANVAS_HEIGHT;
+        }
+    };
+
+    applyResponsiveCanvasSize();
+    window.addEventListener('resize', applyResponsiveCanvasSize);
+
     document.querySelector('.startBoutton').addEventListener('click', () => {
         if (etat !== ETAT.MENU && etat !== ETAT.GAME_OVER) return;
         setEtat(ETAT.CHOIX_MODE);
+        applyResponsiveCanvasSize();
     });
 
     // Boutons de choix de mode (Solo / Duo / Duel)
@@ -215,7 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Lancer la boucle d'animation dès le menu
+    // On lance la boucle d'animation dès le menu
     requestAnimationFrame(gameLoop);
 });
 

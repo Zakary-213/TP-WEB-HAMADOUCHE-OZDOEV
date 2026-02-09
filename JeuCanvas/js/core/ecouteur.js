@@ -6,19 +6,22 @@ let inputStates = {};
 let lastKeyPress = {};
 const DOUBLE_TAP_DELAY = 250; // ms
 
-/**
- * Définit les écouteurs clavier globaux.
- *
- * @param {Object} deps
- * @param {() => string} deps.getEtat - fonction qui retourne l'état courant (par ex. 'JEU EN COURS').
- * @param {() => {up:string,left:string,down:string,right:string,shoot:string}} deps.getCustomKeys - renvoie les touches personnalisées déjà "normalisées" (ArrowUp, 'w', 'Enter', ...).
- * @param {() => {up:string,left:string,down:string,right:string,shoot:string}} [deps.getCustomKeys2] - renvoie les touches personnalisées du joueur 2 (si configurées).
- * @param {() => any} deps.getVaisseau - fonction qui renvoie le vaisseau du joueur 1.
- * @param {() => any} [deps.getVaisseau2] - fonction optionnelle qui renvoie le vaisseau du joueur 2 (mode duo).
- * @param {() => string} [deps.getMode] - fonction optionnelle qui renvoie le mode actuel ('solo' ou 'duo').
- */
 function defineListeners({ getEtat, getCustomKeys, getCustomKeys2, getVaisseau, getVaisseau2, getMode }) {
 	console.log("Définition des écouteurs clavier (ecouteur.js)");
+
+	const scrollKeys = new Set([
+		'ArrowUp',
+		'ArrowDown',
+		'ArrowLeft',
+		'ArrowRight',
+		' ',
+		'Space',
+		'Spacebar',
+		'PageUp',
+		'PageDown',
+		'Home',
+		'End'
+	]);
 
 	document.addEventListener('keydown', (event) => {
 		if (event.repeat) return;
@@ -32,8 +35,13 @@ function defineListeners({ getEtat, getCustomKeys, getCustomKeys2, getVaisseau, 
 			inputStates[normalizedKey] = true;
 		}
 
+		const etat = getEtat();
+		if (etat === 'JEU EN COURS' && scrollKeys.has(event.key)) {
+			event.preventDefault();
+		}
+
 		// Pas d'action de gameplay si on n'est pas en jeu
-		if (getEtat() !== 'JEU EN COURS') return;
+		if (etat !== 'JEU EN COURS') return;
 
 		const customKeys = getCustomKeys();
 		const customKeys2 = typeof getCustomKeys2 === 'function' ? getCustomKeys2() : null;
@@ -102,6 +110,10 @@ function defineListeners({ getEtat, getCustomKeys, getCustomKeys2, getVaisseau, 
 	});
 
 	document.addEventListener('keyup', (event) => {
+		const etat = getEtat();
+		if (etat === 'JEU EN COURS' && scrollKeys.has(event.key)) {
+			event.preventDefault();
+		}
 		const rawKey = event.key;
 		const normalizedKey = rawKey.length === 1 ? rawKey.toLowerCase() : rawKey;
 		inputStates[rawKey] = false;
