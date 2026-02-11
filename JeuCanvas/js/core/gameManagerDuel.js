@@ -3,15 +3,15 @@ import CollisionUtils from '../systems/collisionUtils.js';
 import ParticleManager from '../systems/particles.js';
 import GestionDegats from '../systems/gestionDegats.js';
 import EntityManager from './entityManager.js';
+import { TYPE_GADGET } from '../entities/typeGadget.js';
+import { pickByWeight } from '../systems/random.js';
 
-
-export default class GameManagerDuo {
+export default class GameManagerDuel {
 	constructor(canvas, player, assets = {}) {
 		this.canvas = canvas;
 		this.player = player;
 		this.assets = assets;
 
-		// Listes d'entités, comme en solo
 		this.meteorites = [];
 		this.ennemis = [];
 		this.gadgets = [];
@@ -23,13 +23,29 @@ export default class GameManagerDuo {
 		this.gestionDegats = new GestionDegats(this.HIT_DURATION);
 		this.lastVaisseauX = null;
 		this.lastVaisseauY = null;
-		this.nextMeteoriteSpawn = Date.now() + 1000; // première météorite dans ~1s
 
-		// Gestion centralisée des entités (météorites, gadgets, ennemis...)
+		this.nextGadgetSpawn = Date.now() + 1500;
+		this.gadgetSpawnDelay = 9000;
+
+		this.gadgetSpawnTable = [
+			{ type: TYPE_GADGET.COEUR, weight: 10 },
+			{ type: TYPE_GADGET.BOUCLIER, weight: 25 },
+			{ type: TYPE_GADGET.ECLAIR, weight: 20 },
+			{ type: TYPE_GADGET.RAFALE, weight: 20 },
+			{ type: TYPE_GADGET.MIRROIRE, weight: 25 }
+		];
+
 		this.entityManager = new EntityManager(this);
+	}
 
-		// Callback optionnelle quand une météorite est détruite
-		this.onMeteoriteDestroyed = null;
+	resetRound() {
+		this.meteorites.length = 0;
+		this.ennemis.length = 0;
+		this.gadgets.length = 0;
+		this.cloudZones.length = 0;
+		this.particles.particles.length = 0;
+		this.gameState = 'playing';
+		this.nextGadgetSpawn = Date.now() + 1500;
 	}
 
 	clampVaisseauToCanvas(vaisseau) {
@@ -52,6 +68,47 @@ export default class GameManagerDuo {
 		}
 	}
 
+	handleBulletVaisseauCollisions(attacker, target) {
+		if (!attacker || !target) return;
+		if (!attacker.bullets || !attacker.bullets.length) return;
+		for (let i = attacker.bullets.length - 1; i >= 0; i--) {
+			const bullet = attacker.bullets[i];
+			const collision = this.collisionUtils.rectCircleFromCenter(
+				target.x,
+				target.y,
+				target.largeur,
+				target.hauteur,
+				bullet.x,
+				bullet.y,
+				5
+			);
+			if (!collision) continue;
+
+			this.gestionDegats.appliquerCoup(target, this);
+			attacker.bullets.splice(i, 1);
+		}
+	}
+
+	spawnGadgetByType(type) {
+		switch (type) {
+			case TYPE_GADGET.COEUR:
+				this.spawnGadgetCoeur();
+				break;
+			case TYPE_GADGET.BOUCLIER:
+				this.spawnGadgetBouclier();
+				break;
+			case TYPE_GADGET.ECLAIR:
+				this.spawnGadgetEclair();
+				break;
+			case TYPE_GADGET.RAFALE:
+				this.spawnGadgetRafale();
+				break;
+			case TYPE_GADGET.MIRROIRE:
+				this.spawnGadgetMirroire();
+				break;
+		}
+	}
+
 	update(vaisseau1, vaisseau2, dx1, dy1, dx2, dy2) {
 		if (this.gameState === 'gameover') return;
 
@@ -64,32 +121,26 @@ export default class GameManagerDuo {
 		if (vaisseau2) {
 			vaisseau2.moveInDirection(dx2, dy2);
 			this.clampVaisseauToCanvas(vaisseau2);
-			// Pour l'instant on garde la dernière position du joueur 1
 		}
 
-		// Mise à jour des entités et des collisions pour le joueur 1
 		this.entityManager.updateAll([vaisseau1, vaisseau2]);
-		if (vaisseau1) this.updateBullets(vaisseau1);
-		if (vaisseau2) this.updateBullets(vaisseau2);
+		this.updateBullets(vaisseau1);
+		this.updateBullets(vaisseau2);
+
+		this.handleBulletVaisseauCollisions(vaisseau1, vaisseau2);
+		this.handleBulletVaisseauCollisions(vaisseau2, vaisseau1);
 	}
 
-	updateGameStateDuo({
+	updateGameStateDuel({
 		vaisseau1,
 		vaisseau2,
-		levelManagerDuo,
 		keys,
 		customKeys,
 		customKeys2,
-		setEtat,
-		ETAT,
-		updateBarreDeVie,
-		chronometre,
-		formatTime
+		updateBarreDeVie
 	}) {
-		// Si le gestionnaire duo est en game over, on ne fait rien
 		if (this.gameState === 'gameover') return;
 
-		// Joueur 1 : touches personnalisées (uniquement si le vaisseau existe encore)
 		let dx1 = 0;
 		let dy1 = 0;
 		if (vaisseau1) {
@@ -99,7 +150,6 @@ export default class GameManagerDuo {
 			if (keys[customKeys.right]) dx1 = 1;
 		}
 
-		// Joueur 2 : touches configurables (fallback ZQSD) si le vaisseau existe
 		let dx2 = 0;
 		let dy2 = 0;
 		if (vaisseau2) {
@@ -109,37 +159,21 @@ export default class GameManagerDuo {
 			if (keys[customKeys2.right]) dx2 = 1;
 		}
 
-		// Mettre à jour le niveau duo (spawns météorites / gadgets)
-		if (levelManagerDuo) {
-			levelManagerDuo.update();
+		const now = Date.now();
+		if (now >= this.nextGadgetSpawn) {
+			const gadgetType = pickByWeight(this.gadgetSpawnTable);
+			this.spawnGadgetByType(gadgetType);
+			this.nextGadgetSpawn = now + this.gadgetSpawnDelay;
 		}
 
-		// Mise à jour des entités et déplacements
 		this.update(vaisseau1, vaisseau2, dx1, dy1, dx2, dy2);
 
 		if (typeof updateBarreDeVie === 'function') {
 			updateBarreDeVie();
 		}
-
-		// Mettre à jour le chronomètre en fonction du niveau duo courant
-		if (levelManagerDuo) {
-			const level = levelManagerDuo.getCurrentLevel();
-			if (level && chronometre && typeof formatTime === 'function') {
-				chronometre.textContent = formatTime(level.getElapsedTime());
-			}
-		}
-
-		// La gestion du fait de rendre vaisseau1 / vaisseau2 "null"
-		// (pour arrêter l'affichage / les contrôles) reste gérée à l'extérieur,
-		// car les références sont dans script.js.
-		if (!vaisseau1 && !vaisseau2 && typeof setEtat === 'function' && ETAT) {
-			setEtat(ETAT.GAME_OVER);
-			console.log('Game Over Duo : les deux joueurs sont morts');
-		}
 	}
 
 	draw(ctx, vaisseau1, vaisseau2) {
-		// Dessiner toutes les entités (météorites, ennemis, gadgets, nuages, particules)
 		this.entityManager.draw(ctx);
 
 		if (vaisseau1) {
@@ -155,14 +189,6 @@ export default class GameManagerDuo {
 			drawEclairBar(ctx, vaisseau2);
 			drawRafaleBar(ctx, vaisseau2);
 		}
-	}
-
-	spawnMeteorrite(type) {
-		this.entityManager.spawnMeteorrite(type);
-	}
-
-	spawnEnnemi(options) {
-		this.entityManager.spawnEnnemi(options);
 	}
 
 	spawnGadgetEclair() {

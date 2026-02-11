@@ -168,6 +168,4 @@ export default class Vaisseau extends ObjetGraphique {
 
     requestAnimationFrame(dashLoop);
 }
-
-
 }

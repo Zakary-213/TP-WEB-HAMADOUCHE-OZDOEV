@@ -144,5 +144,4 @@ export default class Niveau2 extends Niveau {
 
         this.lastGadgetSpawn = now;
     }
-
 }

@@ -18,13 +18,6 @@ export default class Bullet {
         ctx.restore();
     }
 
-  
-    /*
-    move() {
-        this.x += 10 * Math.cos(this.angle);
-        this.y += 10 * Math.sin(this.angle);
-    }
-    */
 
     move(canvasWidth, canvasHeight) {
         // Déplacement normal

@@ -3,9 +3,6 @@ import { TYPE_METEORITE } from '../entities/typeMeteorite.js';
 import { pickByWeight } from '../systems/random.js';
 import { TYPE_GADGET } from '../entities/typeGadget.js';
 
-// Niveau 2 pour le mode Duo :
-// même logique que Niveau2 solo, mais avec le double
-// de météorites/gadgets générés.
 export default class Niveau2Duo extends Niveau {
 	constructor(gameManagerDuo) {
 		super(gameManagerDuo);

@@ -3,10 +3,6 @@ import { TYPE_METEORITE } from '../entities/typeMeteorite.js';
 import { TYPE_GADGET } from '../entities/typeGadget.js';
 import { pickByWeight } from '../systems/random.js';
 
-// Niveau 3 pour le mode Duo :
-// même logique que Niveau3 solo, mais avec le double
-// d'intensité (plus de météorites nuage, plus de gadgets),
-// tout en conservant la condition de victoire (ennemi détruit).
 export default class Niveau3Duo extends Niveau {
     constructor(gameManagerDuo) {
         super(gameManagerDuo);

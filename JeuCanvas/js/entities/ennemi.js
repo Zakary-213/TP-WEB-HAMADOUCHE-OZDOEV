@@ -71,4 +71,5 @@ export default class Ennemi extends ObjetGraphique {
     stopShake() { // Arrêter le tremblement
         this.isShaking = false;
     }
+    
 }

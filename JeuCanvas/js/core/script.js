@@ -8,6 +8,7 @@ import Boutique, { BoutiqueUI } from '../ui/boutique.js';
 import { drawEclairBar, drawShieldBubble, drawRafaleBar } from '../systems/effectsGadget.js';
 import LevelManager from '../niveaux/levelManagerSolo.js';
 import TransitionNiveau from '../niveaux/transitionNiveau.js';
+import { startDuel, updateDuelGameState, drawDuel, resetDuelState } from '../niveaux/duel.js';
 import { defineListeners, inputStates } from './ecouteur.js';
 import { ETAT, LEVELS, LEVELS_DUO, customKeys, customKeys2, reloadCustomKeysFromStorage, reloadCustomKeys2FromStorage } from './gameState.js';
 
@@ -18,7 +19,7 @@ let monVaisseau2; // pour le mode duo
 let gameManager;
 let gameManagerDuo;
 let etat = ETAT.MENU;
-let modeActuel = 'solo'; // 'solo' ou 'duo'
+let modeActuel = 'solo'; // 'solo' | 'duo' | 'duel'
 let loadedAssets; // Déclaration de la variable
 const player = new Player();
 const DEBUG_HITBOX = true;
@@ -51,8 +52,23 @@ let destroyedMeteorites = 0;
 let levelManager;
 let levelManagerDuo;
 
+let pendingMode = 'duo';
+
+let gameOverTitle;
+let gameOverSubtitle;
+let gameOverHint;
+let duoSettingsTitle;
+let duoStartBtn;
+
 const BASE_CANVAS_WIDTH = 500;
 const BASE_CANVAS_HEIGHT = 600;
+
+const setVaisseaux = (vaisseau1, vaisseau2) => {
+    monVaisseau = vaisseau1;
+    monVaisseau2 = vaisseau2;
+};
+
+const getVaisseaux = () => ({ vaisseau1: monVaisseau, vaisseau2: monVaisseau2 });
 
 document.addEventListener('DOMContentLoaded', () => {
     canvas = document.getElementById('monCanvas');
@@ -60,6 +76,9 @@ document.addEventListener('DOMContentLoaded', () => {
     settingsOverlay = document.querySelector('.settings-overlay');
     duoSettingsOverlay = document.querySelector('.settings-overlay-j2');
     gameOverOverlay = document.querySelector('.gameover-overlay');
+    gameOverTitle = document.querySelector('.gameover-title');
+    gameOverSubtitle = document.querySelector('.gameover-subtitle');
+    gameOverHint = document.querySelector('.gameover-hint');
     settingsClose = document.getElementById('close-settings');
     menuButtons = document.querySelector('div.boutton');
     modeButtons = document.querySelector('.mode-buttons');
@@ -129,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btnSolo) {
             btnSolo.addEventListener('click', () => {
                 if (etat !== ETAT.CHOIX_MODE) return;
-                startGame();
+                startGame('solo');
                 setEtat(ETAT.JEU);
             });
         }
@@ -137,12 +156,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btnDuo) {
             btnDuo.addEventListener('click', () => {
                 if (etat !== ETAT.CHOIX_MODE) return;
-				// Ouvrir d'abord l'overlay de configuration du Joueur 2
+                pendingMode = 'duo';
 				if (duoSettingsOverlay) {
+                    if (duoSettingsTitle) duoSettingsTitle.textContent = 'Contrôles Joueur 2';
+                    if (duoStartBtn) duoStartBtn.textContent = 'Lancer le duo';
 					duoSettingsOverlay.classList.add('active');
 					duoSettingsOverlay.setAttribute('aria-hidden', 'false');
 				} else {
-					startGameDuo();
+					startGame('duo');
 					setEtat(ETAT.JEU);
 				}
             });
@@ -150,8 +171,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (btnDuel) {
             btnDuel.addEventListener('click', () => {
-                // Logique du mode duel à implémenter plus tard
-                console.log('Mode Duel non implémenté pour le moment');
+                if (etat !== ETAT.CHOIX_MODE) return;
+                pendingMode = 'duel';
+                // Afficher les réglages Joueur 2 pour le duel
+                if (duoSettingsOverlay) {
+                    if (duoSettingsTitle) duoSettingsTitle.textContent = 'Contrôles Duel';
+                    if (duoStartBtn) duoStartBtn.textContent = 'Lancer le duel';
+                    duoSettingsOverlay.classList.add('active');
+                    duoSettingsOverlay.setAttribute('aria-hidden', 'false');
+                } else {
+                    startGame('duel');
+                    setEtat(ETAT.DUEL);
+                }
             });
         }
     }
@@ -178,7 +209,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Boutons de l'overlay de configuration Joueur 2
     if (duoSettingsOverlay) {
         const duoCancelBtn = duoSettingsOverlay.querySelector('.btn-duo-cancel');
-        const duoStartBtn = duoSettingsOverlay.querySelector('.btn-duo-start');
+        duoStartBtn = duoSettingsOverlay.querySelector('.btn-duo-start');
+        duoSettingsTitle = duoSettingsOverlay.querySelector('h2');
 
         if (duoCancelBtn) {
             duoCancelBtn.addEventListener('click', () => {
@@ -193,8 +225,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 reloadCustomKeys2FromStorage();
                 duoSettingsOverlay.classList.remove('active');
                 duoSettingsOverlay.setAttribute('aria-hidden', 'true');
-                startGameDuo();
-                setEtat(ETAT.JEU);
+                if (pendingMode === 'duel') {
+                    startGame('duel');
+                    setEtat(ETAT.DUEL);
+				} else {
+					startGame('duo');
+					setEtat(ETAT.JEU);
+				}
             });
         }
     }
@@ -295,143 +332,131 @@ async function loadAssetsOnStart() {
     }
 }
 
-function startGame() {
-    modeActuel = 'solo';
-    monVaisseau2 = null;
-
-    gameManager = new GameManager(canvas, player, loadedAssets);
-    gameManager.onMeteoriteDestroyed = () => {
-        destroyedMeteorites++;
-        meteoriteCountElement.textContent = destroyedMeteorites;
-    };
-    levelManager = new LevelManager(
-        gameManager,
-        LEVELS,
-        () => {
-            destroyedMeteorites = 0;
-            meteoriteCountElement.textContent = "0";
-        },
-        (levelIndex, doneCallback) => {
-            if (!levelTransition) {
-                doneCallback();
-                return;
-            }
-
-            const isLastLevel = (levelIndex === LEVELS.length - 1);
-            setEtat(ETAT.TRANSITION);
-
-            if (isLastLevel) {
-                // Fin du niveau 3 : thème or + feux d'artifice + retour menu
-                levelTransition.showFinalEndGame(() => {
-                    setEtat(ETAT.MENU);
-                    doneCallback();
-                });
-            } else {
-                // Transitions normales (niveau 1 -> 2, niveau 2 -> 3)
-                levelTransition.showForLevel(levelIndex + 1, () => {
-                    setEtat(ETAT.JEU);
-                    doneCallback();
-                });
-            }
-        }
-    );
-    levelManager.start();
-
-
-    let shipType = player.getEquippedShip();
-    
-    monVaisseau = new Vaisseau(
-        canvas.width / 2,
-        canvas.height / 2,
-        loadedAssets[shipType],  
-        50,  
-        50, 
-        1.5, // Vitesse du vaisseau
-        3, // Points de vie du vaisseau
-        shipType  // Type du vaisseau équippé par le joueur
-    );
-
-    console.log("Type du vaisseau :", monVaisseau.type);
-
-    updateBarreDeVie();
-
-    // Pas de première météorite (désactivé)
+function handleSoloLevelTransition(levelIndex, doneCallback) {
+    if (!levelTransition) {
+        doneCallback();
+        return;
+    }
+    const isLastLevel = (levelIndex === LEVELS.length - 1);
+    setEtat(ETAT.TRANSITION);
+    if (isLastLevel) {
+        levelTransition.showFinalEndGame(() => {
+            setEtat(ETAT.MENU);
+            doneCallback();
+        });
+    } else {
+        levelTransition.showForLevel(levelIndex + 1, () => {
+            setEtat(ETAT.JEU);
+            doneCallback();
+        });
+    }
 }
 
-// Mode duo très simple : deux vaisseaux qui se baladent
-function startGameDuo() {
-    modeActuel = 'duo';
-    levelManager = null;
-    levelManagerDuo = null;
-    gameManager = null;
+function handleDuoLevelTransition(levelIndex, doneCallback) {
+    if (!levelTransition) {
+        doneCallback();
+        return;
+    }
+    const isLastLevelDuo = (levelIndex === LEVELS_DUO.length - 1);
+    setEtat(ETAT.TRANSITION);
+    if (isLastLevelDuo) {
+        levelTransition.showFinalEndGame(() => {
+            setEtat(ETAT.MENU);
+            doneCallback();
+        }, { mode: 'duo' });
+    } else {
+        levelTransition.showForLevel(levelIndex + 1, () => {
+            setEtat(ETAT.JEU);
+            doneCallback();
+        });
+    }
+}
 
-    // GameManagerDuo a maintenant besoin du player et des assets pour gérer les entités comme en solo
-    gameManagerDuo = new GameManagerDuo(canvas, player, loadedAssets || {});
+function startGame(mode) {
+    modeActuel = mode;
+    resetDuelState();
 
-    const type1 = TYPE_VAISSEAU.NORMAL;
-    const type2 = TYPE_VAISSEAU.NORMAL;
-
-    monVaisseau = new Vaisseau(
-        canvas.width / 3,
-        canvas.height / 2,
-        loadedAssets[type1],
-        50,
-        50,
-        1.5,
-        3,
-        type1
-    );
-
-    monVaisseau2 = new Vaisseau(
-        (canvas.width * 2) / 3,
-        canvas.height / 2,
-        loadedAssets[type2],
-        50,
-        50,
-        1.5,
-        3,
-        type2
-    );
+    if (mode === 'solo') {
+        monVaisseau2 = null;
+        gameManager = new GameManager(canvas, player, loadedAssets);
+        gameManager.onMeteoriteDestroyed = () => {
+            destroyedMeteorites++;
+            meteoriteCountElement.textContent = destroyedMeteorites;
+        };
+        levelManager = new LevelManager(
+            gameManager,
+            LEVELS,
+            () => {
+                destroyedMeteorites = 0;
+                meteoriteCountElement.textContent = "0";
+            },
+            handleSoloLevelTransition
+        );
+        levelManager.start();
+        const shipType = player.getEquippedShip();
+        monVaisseau = new Vaisseau(
+            canvas.width / 2,
+            canvas.height / 2,
+            loadedAssets[shipType],
+            50,
+            50,
+            1.5,
+            3,
+            shipType
+        );
+    } else if (mode === 'duo') {
+        levelManager = null;
+        gameManager = null;
+        gameManagerDuo = new GameManagerDuo(canvas, player, loadedAssets || {});
+        const type1 = TYPE_VAISSEAU.NORMAL;
+        const type2 = TYPE_VAISSEAU.NORMAL;
+        monVaisseau = new Vaisseau(
+            canvas.width / 3,
+            canvas.height / 2,
+            loadedAssets[type1],
+            50,
+            50,
+            1.5,
+            3,
+            type1
+        );
+        monVaisseau2 = new Vaisseau(
+            (canvas.width * 2) / 3,
+            canvas.height / 2,
+            loadedAssets[type2],
+            50,
+            50,
+            1.5,
+            3,
+            type2
+        );
+        levelManagerDuo = new LevelManager(
+            gameManagerDuo,
+            LEVELS_DUO,
+            () => {},
+            handleDuoLevelTransition
+        );
+        levelManagerDuo.start();
+    } else if (mode === 'duel') {
+        levelManager = null;
+        levelManagerDuo = null;
+        gameManager = null;
+        gameManagerDuo = null;
+        startDuel({
+            canvas,
+            player,
+            loadedAssets,
+            setVaisseaux,
+            updateBarreDeVie
+        });
+    }
 
     updateBarreDeVie();
-
-    // Démarrer la gestion de niveaux pour le mode duo
-    levelManagerDuo = new LevelManager(
-        gameManagerDuo,
-        LEVELS_DUO,
-        () => {
-            // Callback de début de niveau duo : on peut réinitialiser un compteur si besoin
-        },
-        (levelIndex, doneCallback) => {
-            if (!levelTransition) {
-                doneCallback();
-                return;
-            }
-
-            const isLastLevelDuo = (levelIndex === LEVELS_DUO.length - 1);
-            setEtat(ETAT.TRANSITION);
-
-            if (isLastLevelDuo) {
-                // Fin du dernier niveau duo : transition finale spécifique au mode duo
-                levelTransition.showFinalEndGame(() => {
-                    setEtat(ETAT.MENU);
-                    doneCallback();
-                }, { mode: 'duo' });
-            } else {
-                // Transitions normales (niveau1Duo -> niveau2Duo)
-                levelTransition.showForLevel(levelIndex + 1, () => {
-                    setEtat(ETAT.JEU);
-                    doneCallback();
-                });
-            }
-        }
-    );
-    levelManagerDuo.start();
 }
 
 function gameLoop() {
     // Ne dessiner le canvas que quand il est visible
-    if (etat === ETAT.JEU || etat === ETAT.GAME_OVER || etat === ETAT.TRANSITION) {
+    if (etat === ETAT.JEU || etat === ETAT.DUEL || etat === ETAT.GAME_OVER || etat === ETAT.TRANSITION) {
         ctx.fillStyle = '#1a1a2e';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         drawPlaying();
@@ -445,9 +470,23 @@ function gameLoop() {
 }
 
 function updateGameState() {
-    if (etat !== ETAT.JEU) return;
+    if (etat !== ETAT.JEU && etat !== ETAT.DUEL) return;
     if (modeActuel === 'duo') {
         updateGameStateDuo();
+        return;
+    }
+    if (modeActuel === 'duel') {
+        updateDuelGameState({
+            keys,
+            customKeys,
+            customKeys2,
+            getVaisseaux,
+            setVaisseaux,
+            updateBarreDeVie,
+            setEtat,
+            ETAT,
+            setDuelGameOverText
+        });
         return;
     }
 
@@ -509,6 +548,12 @@ function updateGameStateDuo() {
     }
 }
 
+function setDuelGameOverText(winnerLabel) {
+    if (gameOverTitle) gameOverTitle.textContent = 'DUEL TERMINÉ';
+    if (gameOverSubtitle) gameOverSubtitle.textContent = `${winnerLabel} gagne la partie`;
+    if (gameOverHint) gameOverHint.textContent = 'Clique sur le canvas pour revenir';
+}
+
 function updateBarreDeVie() {
     if (!coeursJ1) return;
 
@@ -532,8 +577,8 @@ function updateBarreDeVie() {
         return;
     }
 
-    // Mode DUO : deux barres avec labels
-    if (modeActuel === 'duo') {
+    // Mode DUO / DUEL : deux barres avec labels
+    if (modeActuel === 'duo' || modeActuel === 'duel') {
         if (barreVieJ1) barreVieJ1.style.display = 'flex';
         if (barreVieJ2) barreVieJ2.style.display = 'flex';
         if (labelJ1) labelJ1.style.display = '';
@@ -584,6 +629,23 @@ function setEtat(nouvelEtat) {
     }
 
     if (etat === ETAT.JEU) {
+        canvasEl.classList.add('game-active');
+        if (gameOverOverlay) {
+            gameOverOverlay.classList.remove('active');
+            gameOverOverlay.setAttribute('aria-hidden', 'true');
+        }
+        if (menuButtons) {
+            menuButtons.style.display = 'none';
+        }
+        if (modeButtons) {
+            modeButtons.style.display = 'none';
+            modeButtons.setAttribute('aria-hidden', 'true');
+        }
+        // En jeu uniquement : les barres de vie sont gérées par updateBarreDeVie
+        return;
+    }
+
+    if (etat === ETAT.DUEL) {
         canvasEl.classList.add('game-active');
         if (gameOverOverlay) {
             gameOverOverlay.classList.remove('active');
@@ -659,6 +721,9 @@ function setEtat(nouvelEtat) {
 
     // MENU
     canvasEl.classList.remove('game-active');
+    if (gameOverTitle) gameOverTitle.textContent = 'GAME OVER';
+    if (gameOverSubtitle) gameOverSubtitle.textContent = 'Revenir à l’accueil';
+    if (gameOverHint) gameOverHint.textContent = 'Clique sur le canvas pour revenir';
     if (gameOverOverlay) {
         gameOverOverlay.classList.remove('active');
         gameOverOverlay.setAttribute('aria-hidden', 'true');
@@ -680,6 +745,10 @@ function setEtat(nouvelEtat) {
 function drawPlaying() {
     if (modeActuel === 'duo') {
         drawPlayingDuo();
+        return;
+    }
+    if (modeActuel === 'duel') {
+        drawPlayingDuel();
         return;
     }
 
@@ -725,6 +794,10 @@ function drawPlayingDuo() {
             bullet.draw(ctx);
         }
     }
+}
+
+function drawPlayingDuel() {
+    drawDuel(ctx, getVaisseaux);
 }
 
 function formatTime(ms) {

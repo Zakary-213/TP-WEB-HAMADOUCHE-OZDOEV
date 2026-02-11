@@ -36,12 +36,13 @@ function defineListeners({ getEtat, getCustomKeys, getCustomKeys2, getVaisseau, 
 		}
 
 		const etat = getEtat();
-		if (etat === 'JEU EN COURS' && scrollKeys.has(event.key)) {
+		const isPlaying = etat === 'JEU EN COURS' || etat === 'JEU DUEL';
+		if (isPlaying && scrollKeys.has(event.key)) {
 			event.preventDefault();
 		}
 
 		// Pas d'action de gameplay si on n'est pas en jeu
-		if (etat !== 'JEU EN COURS') return;
+		if (!isPlaying) return;
 
 		const customKeys = getCustomKeys();
 		const customKeys2 = typeof getCustomKeys2 === 'function' ? getCustomKeys2() : null;
@@ -67,8 +68,8 @@ function defineListeners({ getEtat, getCustomKeys, getCustomKeys2, getVaisseau, 
 				vaisseau1.startDash(dx1, dy1);
 			}
 
-			// Dash joueur 2 (mode duo, touches configurables, fallback ZQSD)
-			if (mode === 'duo' && vaisseau2 && typeof vaisseau2.startDash === 'function') {
+			// Dash joueur 2 (mode duo/duel, touches configurables, fallback ZQSD)
+			if ((mode === 'duo' || mode === 'duel') && vaisseau2 && typeof vaisseau2.startDash === 'function') {
 				let dx2 = 0;
 				let dy2 = 0;
 
@@ -99,10 +100,10 @@ function defineListeners({ getEtat, getCustomKeys, getCustomKeys2, getVaisseau, 
 			if (vaisseau1 && typeof vaisseau1.addBullet === 'function') {
 				vaisseau1.addBullet(performance.now());
 			}
-			if (mode === 'duo' && vaisseau2 && typeof vaisseau2.addBullet === 'function' && normalizedKey === shootKey2) {
+			if ((mode === 'duo' || mode === 'duel') && vaisseau2 && typeof vaisseau2.addBullet === 'function' && normalizedKey === shootKey2) {
 				vaisseau2.addBullet(performance.now());
 			}
-		} else if (mode === 'duo' && normalizedKey === shootKey2) {
+		} else if ((mode === 'duo' || mode === 'duel') && normalizedKey === shootKey2) {
 			if (vaisseau2 && typeof vaisseau2.addBullet === 'function') {
 				vaisseau2.addBullet(performance.now());
 			}
@@ -111,7 +112,8 @@ function defineListeners({ getEtat, getCustomKeys, getCustomKeys2, getVaisseau, 
 
 	document.addEventListener('keyup', (event) => {
 		const etat = getEtat();
-		if (etat === 'JEU EN COURS' && scrollKeys.has(event.key)) {
+		const isPlaying = etat === 'JEU EN COURS' || etat === 'JEU DUEL';
+		if (isPlaying && scrollKeys.has(event.key)) {
 			event.preventDefault();
 		}
 		const rawKey = event.key;
