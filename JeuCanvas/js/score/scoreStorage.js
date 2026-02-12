@@ -1,14 +1,11 @@
 const STORAGE_KEY = 'meteorite_scores';
 
-
 function getDefaultStructure() {
     return {
         solo: [],
-        duo: [],
-        duel: []
+        duo: []
     };
 }
-
 
 export function getAllScores() {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -35,7 +32,6 @@ export function getAllScores() {
 export function saveAllScores(data) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
-
 
 export function clearAllScores() {
     localStorage.removeItem(STORAGE_KEY);

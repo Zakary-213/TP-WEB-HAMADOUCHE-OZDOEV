@@ -264,32 +264,33 @@ document.addEventListener('DOMContentLoaded', () => {
             const mouseY = event.clientY - rect.top;
 
             const cardY = (canvas.height - 520) / 2;
-            const tabY = cardY + 40;
+            const tabY = cardY + 45;
 
             const centerX = canvas.width / 2;
-            const tabSpacing = 120;
+            const tabOffset = 60;
 
+            const soloX = centerX - tabOffset;
+            const duoX = centerX + tabOffset;
+
+            // Zone verticale cliquable des onglets
             if (mouseY >= tabY - 20 && mouseY <= tabY + 10) {
 
-                if (Math.abs(mouseX - (centerX - tabSpacing)) < 60) {
+                // SOLO
+                if (Math.abs(mouseX - soloX) < 50) {
                     scoreMode = 'solo';
                     scoreScrollOffset = 0;
                     return;
                 }
 
-                if (Math.abs(mouseX - centerX) < 60) {
+                // DUO
+                if (Math.abs(mouseX - duoX) < 50) {
                     scoreMode = 'duo';
-                    scoreScrollOffset = 0;
-                    return;
-                }
-
-                if (Math.abs(mouseX - (centerX + tabSpacing)) < 60) {
-                    scoreMode = 'duel';
                     scoreScrollOffset = 0;
                     return;
                 }
             }
 
+            // Sinon retour menu
             setEtat(ETAT.MENU);
             return;
         }
@@ -691,65 +692,66 @@ function drawScoreScreen() {
     const contentPadding = 40;
     const lineHeight = 22;
 
-    // --- FOND ---
+    // =========================
+    // ===== FOND CARTE ========
+    // =========================
     ctx.fillStyle = '#1f2235';
     ctx.beginPath();
     ctx.roundRect(cardX, cardY, cardWidth, cardHeight, 20);
     ctx.fill();
 
     // =========================
-    // === ONGLET ZONE CLICK ===
+    // ===== ONGLET TABS =======
     // =========================
 
-    const tabY = cardY + 40;
-    const tabSpacing = 120;
     const centerX = canvas.width / 2;
+    const tabY = cardY + 45;
 
-    const tabs = [
-        { mode: 'solo', x: centerX - tabSpacing },
-        { mode: 'duo', x: centerX },
-        { mode: 'duel', x: centerX + tabSpacing }
-    ];
+    const tabOffset = 60; // Distance par rapport au centre
+
+    const soloX = centerX - tabOffset;
+    const duoX = centerX + tabOffset;
 
     ctx.font = '18px Arial';
     ctx.textAlign = 'center';
 
-    tabs.forEach(tab => {
-        ctx.fillStyle = scoreMode === tab.mode ? '#f1c40f' : 'white';
-        ctx.fillText(tab.mode.toUpperCase(), tab.x, tabY);
-    });
+    ctx.fillStyle = scoreMode === 'solo' ? '#f1c40f' : 'white';
+    ctx.fillText('SOLO', soloX, tabY);
 
-    // --- TITRE ---
+    ctx.fillStyle = scoreMode === 'duo' ? '#f1c40f' : 'white';
+    ctx.fillText('DUO', duoX, tabY);
+
+    // =========================
+    // ===== TITRE ============
+    // =========================
     ctx.fillStyle = 'white';
     ctx.font = '24px Arial';
-    ctx.fillText('CLASSEMENT', canvas.width / 2, cardY + 85);
+    ctx.fillText('CLASSEMENT', centerX, cardY + 90);
 
-    // --- ZONE CONTENU ---
+    // =========================
+    // ===== ZONE CONTENU =====
+    // =========================
+
     const contentX = cardX + contentPadding;
     const contentY = cardY + 110;
     const contentWidth = cardWidth - contentPadding * 2;
     const contentHeight = cardHeight - 170;
 
-    // 🔥 Calcul hauteur totale
     let totalContentHeight = 0;
 
     scores.forEach(score => {
+
         if (scoreMode === 'solo') {
             totalContentHeight += 25;
             totalContentHeight += score.niveaux.length * lineHeight;
             totalContentHeight += 35;
         }
+
         else if (scoreMode === 'duo') {
-
-            totalContentHeight += 25; // titre
-
-            // 2 increments par niveau
+            totalContentHeight += 25;
             totalContentHeight += score.niveaux.length * (lineHeight * 2);
-
-            // TOTAL :
             totalContentHeight += lineHeight * 2;
-
-            totalContentHeight += 15; // marge finale
+            totalContentHeight += 20;
         }
     });
 
@@ -758,7 +760,6 @@ function drawScoreScreen() {
     if (scoreScrollOffset > maxScroll) scoreScrollOffset = maxScroll;
     if (scoreScrollOffset < 0) scoreScrollOffset = 0;
 
-    // --- CLIP ---
     ctx.save();
     ctx.beginPath();
     ctx.rect(contentX, contentY, contentWidth, contentHeight);
@@ -766,14 +767,11 @@ function drawScoreScreen() {
 
     ctx.textAlign = 'left';
 
-    // 🔥 EXACTEMENT comme solo
     let y = contentY + 20 - scoreScrollOffset;
 
     scores.forEach((score, index) => {
 
-        // =====================
-        // ======== SOLO =======
-        // =====================
+        // ================= SOLO =================
         if (scoreMode === 'solo') {
 
             if (!score.pseudo) return;
@@ -817,9 +815,7 @@ function drawScoreScreen() {
             y += 35;
         }
 
-        // =====================
-        // ======== DUO ========
-        // =====================
+        // ================= DUO =================
         else if (scoreMode === 'duo') {
 
             const joueur1 = score.joueurs[0];
@@ -829,25 +825,21 @@ function drawScoreScreen() {
 
             ctx.font = '18px Arial';
 
-            // 🔥 Numéro en BLANC
             ctx.fillStyle = 'white';
             ctx.fillText(`${index + 1}.`, contentX, y);
 
             const numberWidth = ctx.measureText(`${index + 1}. `).width;
 
-            // J1 bleu
             ctx.fillStyle = '#3498db';
             ctx.fillText(joueur1.pseudo, contentX + numberWidth, y);
 
             const pseudoWidth = ctx.measureText(joueur1.pseudo).width;
 
-            // &
             ctx.fillStyle = 'white';
             ctx.fillText(" & ", contentX + numberWidth + pseudoWidth, y);
 
             const andWidth = ctx.measureText(" & ").width;
 
-            // J2 rouge
             ctx.fillStyle = '#e74c3c';
             ctx.fillText(
                 joueur2.pseudo,
@@ -857,7 +849,6 @@ function drawScoreScreen() {
 
             y += 25;
 
-            // ----- NIVEAUX -----
             score.niveaux.forEach((lvlTime, i) => {
 
                 const minutes = Math.floor(lvlTime.time / 60000);
@@ -871,6 +862,7 @@ function drawScoreScreen() {
                     contentX + 20,
                     y
                 );
+
                 y += lineHeight;
 
                 ctx.fillStyle = '#3498db';
@@ -890,7 +882,6 @@ function drawScoreScreen() {
                 y += lineHeight;
             });
 
-            // ----- TOTAL -----
             const totalMinutes = Math.floor(score.totalTime / 60000);
             const totalSeconds = Math.floor((score.totalTime % 60000) / 1000);
             const totalFormatted =
@@ -926,13 +917,12 @@ function drawScoreScreen() {
 
     ctx.restore();
 
-    // --- FOOTER ---
     ctx.textAlign = 'center';
     ctx.fillStyle = 'white';
     ctx.font = '14px Arial';
     ctx.fillText(
         'Molette pour scroller • Clique pour revenir',
-        canvas.width / 2,
+        centerX,
         cardY + cardHeight - 20
     );
 }

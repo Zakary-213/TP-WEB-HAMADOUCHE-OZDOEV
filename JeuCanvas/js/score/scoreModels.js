@@ -39,29 +39,4 @@ export function createDuoScore({ joueur1, joueur2, niveauxTime }) {
     };
 }
 
-export function createDuelScore({ joueur1, joueur2 }) {
 
-    let totalDiff = 0;
-
-    for (let i = 0; i < joueur1.manches.length; i++) {
-        totalDiff += joueur1.manches[i] - joueur2.manches[i];
-    }
-
-    const winner = totalDiff >= 0 ? joueur1.pseudo : joueur2.pseudo;
-
-    return {
-        joueurs: [
-            {
-                pseudo: joueur1.pseudo,
-                manches: joueur1.manches
-            },
-            {
-                pseudo: joueur2.pseudo,
-                manches: joueur2.manches
-            }
-        ],
-        totalDiff,
-        winner,
-        date: Date.now()
-    };
-}
