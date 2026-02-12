@@ -251,9 +251,9 @@ export default class EntityManager {
 						meteorites.splice(m, 1);
 						
 						// COMPTEUR SOLO
-						if (!Array.isArray(vaisseauxOrVaisseau)) {
+						if (game.playerDestroyedMeteorites !== undefined) {
 							game.playerDestroyedMeteorites++;
-							console.log("Météorites détruites SOLO :", game.playerDestroyedMeteorites);
+							console.log("SOLO kill :", game.playerDestroyedMeteorites);
 						}
 						if (game.onMeteoriteDestroyed) {
 							game.onMeteoriteDestroyed(meteorite);

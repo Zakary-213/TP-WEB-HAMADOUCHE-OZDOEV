@@ -1,3 +1,5 @@
+import {addSoloScore} from '../score/scoreManager.js'
+
 export default class LevelManager {
     constructor(gameManager, levels, onLevelStart = null, onLevelEnd = null) {
         this.gameManager = gameManager;
@@ -73,6 +75,21 @@ export default class LevelManager {
             this.goToNextLevel();
         } else {
             console.log("Tous les niveaux terminés !");
+            console.log("DATA FINALE SOLO :", this.completedLevelsData);
+            const pseudo = prompt("Bravo ! Entrez votre pseudo :");
+
+            if (pseudo && pseudo.trim() !== "") {
+                addSoloScore({
+                    pseudo: pseudo.trim(),
+                    niveaux: this.completedLevelsData
+                });
+
+                console.log("Score enregistré !");
+            } else {
+                console.log("Pseudo invalide, score non enregistré.");
+            }
+
+            console.log("Score sauvegardé !");
         }
     }
 

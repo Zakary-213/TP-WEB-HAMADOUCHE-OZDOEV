@@ -12,7 +12,8 @@ export const ETAT = {
     JEU: 'JEU EN COURS',
     DUEL: 'JEU DUEL',
     GAME_OVER: 'GAME OVER',
-    TRANSITION: 'TRANSITION NIVEAU'
+    TRANSITION: 'TRANSITION NIVEAU',
+    SCORE: 'score'
 };
 
 // Listes de niveaux pour le solo et le duo
@@ -148,6 +149,16 @@ export function setEtat(
         hideLifeBars?.();
         return nouvelEtat;
     }
+
+    if (nouvelEtat === ETAT.SCORE) {
+        setCanvasActive?.(true);
+        setOverlayVisibility?.(gameOverOverlay, false);
+        setMenuButtonsVisible?.(false);
+        setModeButtonsVisible?.(false);
+        hideLifeBars?.();
+        return nouvelEtat;
+    }
+
 
     setCanvasActive?.(false);
     if (gameOverTitle) gameOverTitle.textContent = 'GAME OVER';

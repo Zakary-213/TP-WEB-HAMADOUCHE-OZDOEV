@@ -11,6 +11,7 @@ import TransitionNiveau, { transitionSoloLevel, transitionDuoLevel } from '../ni
 import { startDuel, updateDuelGameState, drawDuel, resetDuelState } from '../niveaux/duel.js';
 import { defineListeners, inputStates } from './ecouteur.js';
 import { ETAT, LEVELS, LEVELS_DUO, customKeys, customKeys2, reloadCustomKeysFromStorage, reloadCustomKeys2FromStorage, setEtat as appliquerEtat } from './gameState.js';
+import { getScores } from '../score/scoreManager.js';
 
 let canvas, ctx;
 
@@ -215,6 +216,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Bouton Score - Redirection vers la page score
+    document.querySelector('.Score').addEventListener('click', () => {
+        console.log("CLICK SCORE");
+        if (etat !== ETAT.MENU) return;
+        setEtat(ETAT.SCORE);
+        console.log("ETAT APRES CLICK :", etat);
+    });
+
 
     // Barres de vie et cœurs pour Joueur 1 / Joueur 2
     barreVieJ1 = document.querySelector('.barreDeVie-j1');
@@ -243,6 +252,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Clic sur le canvas : gérer game over et transition de niveau
     canvas.addEventListener('click', () => {
+        if (etat === ETAT.SCORE) {
+            setEtat(ETAT.MENU);
+            return;
+        }
+
         if (etat === ETAT.GAME_OVER) {
             setEtat(ETAT.MENU);
             return;
@@ -391,10 +405,15 @@ function startGame(mode) {
 
 function gameLoop() {
     // Ne dessiner le canvas que quand il est visible
-    if (etat === ETAT.JEU || etat === ETAT.DUEL || etat === ETAT.GAME_OVER || etat === ETAT.TRANSITION) {
+    if (etat === ETAT.JEU || etat === ETAT.DUEL || etat === ETAT.GAME_OVER || etat === ETAT.TRANSITION || etat === ETAT.SCORE) {
         ctx.fillStyle = '#1a1a2e';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        drawPlaying();
+        if (etat === ETAT.SCORE) {
+        drawScoreScreen();
+        } else {
+            drawPlaying();
+        }
+        //drawPlaying();
     }
 
     // Mettre à jour l'état du jeu
@@ -601,4 +620,43 @@ function formatTime(ms) {
     const seconds = totalSeconds % 60;
 
     return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+function drawScoreScreen() {
+
+    const scores = getScores('solo');
+
+    ctx.fillStyle = 'white';
+    ctx.textAlign = 'center';
+    ctx.font = '32px Arial';
+    ctx.fillText('CLASSEMENT SOLO', canvas.width / 2, 70);
+
+    ctx.font = '20px Arial';
+    ctx.textAlign = 'left';
+
+    let y = 130;
+
+    if (scores.length === 0) {
+        ctx.fillText('Aucun score enregistré.', 50, y);
+        return;
+    }
+
+    scores.forEach((score, index) => {
+
+        const minutes = Math.floor(score.totalTime / 60000);
+        const seconds = Math.floor((score.totalTime % 60000) / 1000);
+
+        const timeFormatted =
+            `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+        const line =
+            `${index + 1}. ${score.pseudo}  -  ${timeFormatted}  -  ${score.totalMeteorites}`;
+
+        ctx.fillText(line, 50, y);
+        y += 35;
+    });
+
+    ctx.textAlign = 'center';
+    ctx.font = '16px Arial';
+    ctx.fillText('Clique sur le canvas pour revenir', canvas.width / 2, canvas.height - 40);
 }

@@ -21,10 +21,27 @@ function limitScores(scores) {
 
 export function addSoloScore(data) {
     const allScores = getAllScores();
-
     const newScore = createSoloScore(data);
 
-    allScores.solo.push(newScore);
+    // Chercher si le pseudo existe déjà
+    const existingIndex = allScores.solo.findIndex(
+        score => score.pseudo === newScore.pseudo
+    );
+
+    if (existingIndex !== -1) {
+        const existingScore = allScores.solo[existingIndex];
+
+        // On remplace seulement si le nouveau est meilleur (temps plus petit)
+        if (newScore.totalTime < existingScore.totalTime) {
+            allScores.solo[existingIndex] = newScore;
+        } else {
+            console.log("Score non amélioré, pas remplacé.");
+            return;
+        }
+    } else {
+        // Nouveau pseudo
+        allScores.solo.push(newScore);
+    }
 
     const sorted = sortScores('solo', allScores.solo);
     allScores.solo = limitScores(sorted);
