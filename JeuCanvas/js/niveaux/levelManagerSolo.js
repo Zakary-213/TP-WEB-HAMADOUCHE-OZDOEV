@@ -8,10 +8,14 @@ export default class LevelManager {
         this.currentIndex = 0;
         this.currentLevel = null;
         this.isWaitingForTransition = false;
+
+        this.completedLevelsData = [];
+
     }
 
     start() {
         this.currentIndex = 0;
+        this.completedLevelsData = [];
         this.startLevel();
     }
 
@@ -23,7 +27,7 @@ export default class LevelManager {
         if (this.onLevelStart) {
             this.onLevelStart(this.currentIndex);
         }
-
+        this.gameManager.playerDestroyedMeteorites = 0;
         console.log(`Début du niveau ${this.currentIndex + 1}`);
     }
 
@@ -37,6 +41,19 @@ export default class LevelManager {
 
         if (this.currentLevel.isFinished() && !this.currentLevel.hasEnded) {
             this.currentLevel.hasEnded = true;
+
+            /* Recupération des données */ 
+            const levelTime = this.currentLevel.getElapsedTime();
+            const meteoritesDestroyed = this.gameManager.playerDestroyedMeteorites || 0;
+
+            this.completedLevelsData.push({
+                niveau: this.currentIndex + 1,
+                time: levelTime,
+                meteorites: meteoritesDestroyed
+            });
+
+            // Reset compteur pour le prochain niveau 
+            this.gameManager.playerDestroyedMeteorites = 0;
 
             // Transition de fin de niveau (y compris dernier niveau) gérée par onLevelEnd
             if (this.onLevelEnd) {

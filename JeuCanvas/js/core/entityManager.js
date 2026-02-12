@@ -249,6 +249,12 @@ export default class EntityManager {
 					if (meteorite.pv <= 0) {
 						spawnExplosionParticles(game.particles, meteorite);
 						meteorites.splice(m, 1);
+						
+						// COMPTEUR SOLO
+						if (!Array.isArray(vaisseauxOrVaisseau)) {
+							game.playerDestroyedMeteorites++;
+							console.log("Météorites détruites SOLO :", game.playerDestroyedMeteorites);
+						}
 						if (game.onMeteoriteDestroyed) {
 							game.onMeteoriteDestroyed(meteorite);
 						}

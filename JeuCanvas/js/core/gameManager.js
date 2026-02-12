@@ -22,6 +22,7 @@ export default class GameManager {
         this.nextGadgetSpawn = Date.now() + 500; // premier gadget rapidement
         this.lastVaisseauX = null;
         this.lastVaisseauY = null;
+        this.playerDestroyedMeteorites = 0;
 
         // Gestion centralisée des entités et de leurs interactions
         this.entityManager = new EntityManager(this);
