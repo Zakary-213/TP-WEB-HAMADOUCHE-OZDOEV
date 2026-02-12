@@ -32,6 +32,9 @@ let gameOverTitle, gameOverSubtitle, gameOverHint, duoSettingsTitle, duoStartBtn
 let chronometre, meteoriteCountElement, levelTransition, destroyedMeteorites = 0;
 let levelManager, levelManagerDuo, pendingMode = 'duo';
 
+let scoreMode = 'solo';
+let scoreScrollOffset = 0;
+
 const setOverlayVisibility = (overlay, active) => {
     if (!overlay) return;
     overlay.classList.toggle('active', active);
@@ -218,11 +221,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Bouton Score - Redirection vers la page score
     document.querySelector('.Score').addEventListener('click', () => {
-        console.log("CLICK SCORE");
         if (etat !== ETAT.MENU) return;
+
+        scoreMode = 'solo';
+        scoreScrollOffset = 0; 
         setEtat(ETAT.SCORE);
-        console.log("ETAT APRES CLICK :", etat);
     });
+
 
 
     // Barres de vie et cœurs pour Joueur 1 / Joueur 2
@@ -251,8 +256,40 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Clic sur le canvas : gérer game over et transition de niveau
-    canvas.addEventListener('click', () => {
+    canvas.addEventListener('click', (event) => {
         if (etat === ETAT.SCORE) {
+
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = event.clientX - rect.left;
+            const mouseY = event.clientY - rect.top;
+
+            const cardY = (canvas.height - 520) / 2;
+            const tabY = cardY + 40;
+
+            const centerX = canvas.width / 2;
+            const tabSpacing = 120;
+
+            if (mouseY >= tabY - 20 && mouseY <= tabY + 10) {
+
+                if (Math.abs(mouseX - (centerX - tabSpacing)) < 60) {
+                    scoreMode = 'solo';
+                    scoreScrollOffset = 0;
+                    return;
+                }
+
+                if (Math.abs(mouseX - centerX) < 60) {
+                    scoreMode = 'duo';
+                    scoreScrollOffset = 0;
+                    return;
+                }
+
+                if (Math.abs(mouseX - (centerX + tabSpacing)) < 60) {
+                    scoreMode = 'duel';
+                    scoreScrollOffset = 0;
+                    return;
+                }
+            }
+
             setEtat(ETAT.MENU);
             return;
         }
@@ -266,6 +303,17 @@ document.addEventListener('DOMContentLoaded', () => {
             levelTransition.completeManually();
         }
     });
+
+    canvas.addEventListener('wheel', (event) => {
+        if (etat !== ETAT.SCORE) return;
+
+        scoreScrollOffset += event.deltaY * 0.5;
+
+        if (scoreScrollOffset < 0) scoreScrollOffset = 0;
+
+        event.preventDefault();
+    });
+
 
     // On lance la boucle d'animation dès le menu
     requestAnimationFrame(gameLoop);
@@ -624,39 +672,139 @@ function formatTime(ms) {
 
 function drawScoreScreen() {
 
-    const scores = getScores('solo');
+    const scores = getScores(scoreMode);
 
-    ctx.fillStyle = 'white';
+    const cardWidth = 440;
+    const cardHeight = 520;
+
+    const cardX = (canvas.width - cardWidth) / 2;
+    const cardY = (canvas.height - cardHeight) / 2;
+
+    const contentPadding = 70;
+    const lineHeight = 22;
+
+    // --- FOND ---
+    ctx.fillStyle = '#1f2235';
+    ctx.beginPath();
+    ctx.roundRect(cardX, cardY, cardWidth, cardHeight, 20);
+    ctx.fill();
+
+    // =========================
+    // === ONGLET ZONE CLICK ===
+    // =========================
+
+    const tabY = cardY + 40;
+    const tabWidth = 100;
+    const tabSpacing = 120;
+    const centerX = canvas.width / 2;
+
+    const tabs = [
+        { mode: 'solo', x: centerX - tabSpacing },
+        { mode: 'duo', x: centerX },
+        { mode: 'duel', x: centerX + tabSpacing }
+    ];
+
+    ctx.font = '18px Arial';
     ctx.textAlign = 'center';
-    ctx.font = '32px Arial';
-    ctx.fillText('CLASSEMENT SOLO', canvas.width / 2, 70);
 
-    ctx.font = '20px Arial';
+    tabs.forEach(tab => {
+        ctx.fillStyle = scoreMode === tab.mode ? '#f1c40f' : 'white';
+        ctx.fillText(tab.mode.toUpperCase(), tab.x, tabY);
+    });
+
+    // --- TITRE ---
+    ctx.fillStyle = 'white';
+    ctx.font = '24px Arial';
+    ctx.fillText('CLASSEMENT', canvas.width / 2, cardY + 85);
+
+    // --- ZONE CONTENU ---
+    const contentX = cardX + contentPadding;
+    const contentY = cardY + 120;
+    const contentWidth = cardWidth - contentPadding * 2;
+    const contentHeight = cardHeight - 170;
+
+    // 🔥 Calcul hauteur totale AVANT affichage
+    let totalContentHeight = 0;
+
+    scores.forEach(score => {
+        totalContentHeight += 25; // pseudo
+        totalContentHeight += score.niveaux.length * lineHeight;
+        totalContentHeight += 35; // total
+    });
+
+    const maxScroll = Math.max(0, totalContentHeight - contentHeight);
+
+    if (scoreScrollOffset > maxScroll) scoreScrollOffset = maxScroll;
+    if (scoreScrollOffset < 0) scoreScrollOffset = 0;
+
+    // --- CLIP ---
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(contentX, contentY, contentWidth, contentHeight);
+    ctx.clip();
+
     ctx.textAlign = 'left';
 
-    let y = 130;
-
-    if (scores.length === 0) {
-        ctx.fillText('Aucun score enregistré.', 50, y);
-        return;
-    }
+    let y = contentY + 10 - scoreScrollOffset;
 
     scores.forEach((score, index) => {
 
-        const minutes = Math.floor(score.totalTime / 60000);
-        const seconds = Math.floor((score.totalTime % 60000) / 1000);
+        if (!score.pseudo) return; // sécurité
 
-        const timeFormatted =
-            `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        // --- PSEUDO ---
+        ctx.fillStyle = '#f1c40f';
+        ctx.font = '18px Arial';
+        ctx.fillText(`${index + 1}. ${score.pseudo}`, contentX, y);
+        y += 25;
 
-        const line =
-            `${index + 1}. ${score.pseudo}  -  ${timeFormatted}  -  ${score.totalMeteorites}`;
+        // --- NIVEAUX ---
+        ctx.fillStyle = 'white';
+        ctx.font = '15px Arial';
 
-        ctx.fillText(line, 50, y);
+        score.niveaux.forEach(lvl => {
+
+            const minutes = Math.floor(lvl.time / 60000);
+            const seconds = Math.floor((lvl.time % 60000) / 1000);
+
+            const timeFormatted =
+                `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+            ctx.fillText(
+                `N${lvl.niveau} : ${timeFormatted} - ${lvl.meteorites} météorites`,
+                contentX + 20,
+                y
+            );
+
+            y += lineHeight;
+        });
+
+        // --- TOTAL ---
+        const totalMinutes = Math.floor(score.totalTime / 60000);
+        const totalSeconds = Math.floor((score.totalTime % 60000) / 1000);
+
+        const totalFormatted =
+            `${String(totalMinutes).padStart(2, '0')}:${String(totalSeconds).padStart(2, '0')}`;
+
+        ctx.fillStyle = '#00ffaa';
+        ctx.fillText(
+            `TOTAL : ${totalFormatted} - ${score.totalMeteorites} météorites`,
+            contentX + 20,
+            y
+        );
+
         y += 35;
     });
 
+    ctx.restore();
+
+    // --- FOOTER ---
     ctx.textAlign = 'center';
-    ctx.font = '16px Arial';
-    ctx.fillText('Clique sur le canvas pour revenir', canvas.width / 2, canvas.height - 40);
+    ctx.fillStyle = 'white';
+    ctx.font = '14px Arial';
+    ctx.fillText(
+        'Molette pour scroller • Clique pour revenir',
+        canvas.width / 2,
+        cardY + cardHeight - 20
+    );
 }
+

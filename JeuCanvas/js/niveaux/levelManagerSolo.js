@@ -100,11 +100,12 @@ export default class LevelManager {
         this.gameManager.gadgets.length = 0;
         this.gameManager.ennemis.length = 0;
 
+        /*
         if (this.currentIndex >= this.levels.length) {
             console.log("Tous les niveaux terminés !");
             return;
         }
-
+        */
         this.startLevel();
     }
 
