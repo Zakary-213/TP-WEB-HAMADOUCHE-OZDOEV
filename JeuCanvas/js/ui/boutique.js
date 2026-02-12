@@ -13,12 +13,6 @@ export default class Boutique {
                 price: 0
             },
             {
-                id: TYPE_VAISSEAU.PHASE,
-                name: "Vaisseau phase",
-                description: "Traverse certaines les météorites.",
-                price: 0
-            },
-            {
                 id: TYPE_VAISSEAU.SPLIT,
                 name: "Vaisseau split",
                 description: "Tirs qui se divisent en 2 à l’impact.",
