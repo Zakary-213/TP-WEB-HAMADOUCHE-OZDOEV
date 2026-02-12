@@ -7,61 +7,60 @@ import Player from '../entities/player.js';
 import Boutique, { BoutiqueUI } from '../ui/boutique.js';
 import { drawEclairBar, drawShieldBubble, drawRafaleBar } from '../systems/effectsGadget.js';
 import LevelManager from '../niveaux/levelManagerSolo.js';
-import TransitionNiveau from '../niveaux/transitionNiveau.js';
+import TransitionNiveau, { transitionSoloLevel, transitionDuoLevel } from '../niveaux/transitionNiveau.js';
 import { startDuel, updateDuelGameState, drawDuel, resetDuelState } from '../niveaux/duel.js';
 import { defineListeners, inputStates } from './ecouteur.js';
-import { ETAT, LEVELS, LEVELS_DUO, customKeys, customKeys2, reloadCustomKeysFromStorage, reloadCustomKeys2FromStorage } from './gameState.js';
+import { ETAT, LEVELS, LEVELS_DUO, customKeys, customKeys2, reloadCustomKeysFromStorage, reloadCustomKeys2FromStorage, setEtat as appliquerEtat } from './gameState.js';
 
-let canvas;
-let ctx;
-let monVaisseau;
-let monVaisseau2; // pour le mode duo
-let gameManager;
-let gameManagerDuo;
-let etat = ETAT.MENU;
-let modeActuel = 'solo'; // 'solo' | 'duo' | 'duel'
-let loadedAssets; // Déclaration de la variable
-const player = new Player();
-const DEBUG_HITBOX = true;
+let canvas, ctx;
 
-// Gestion des touches pressées (déléguée à ecouteur.js)
-let keys = inputStates;
+let monVaisseau, monVaisseau2, gameManager, gameManagerDuo;
 
-let coeursJ1;
-let coeursJ2;
-let barreVieJ1;
-let barreVieJ2;
-let labelJ1;
-let labelJ2;
+let etat = ETAT.MENU, modeActuel = 'solo', loadedAssets, keys = inputStates;
 
-let settingsOverlay;
-let duoSettingsOverlay;
-let settingsClose;
-let menuButtons;
-let modeButtons;
-let gameOverOverlay;
-let shopOverlay;
-let shopClose;
-let btnBoutique;
-let boutiqueUI = null;
+const player = new Player(), DEBUG_HITBOX = true;
+const BASE_CANVAS_WIDTH = 500, BASE_CANVAS_HEIGHT = 600;
 
-let chronometre;
-let meteoriteCountElement;
-let levelTransition;
-let destroyedMeteorites = 0;
-let levelManager;
-let levelManagerDuo;
+let coeursJ1, coeursJ2, barreVieJ1, barreVieJ2, labelJ1, labelJ2;
 
-let pendingMode = 'duo';
+let settingsOverlay, duoSettingsOverlay, settingsClose, menuButtons, modeButtons;
+let gameOverOverlay, shopOverlay, shopClose, btnBoutique, boutiqueUI = null;
 
-let gameOverTitle;
-let gameOverSubtitle;
-let gameOverHint;
-let duoSettingsTitle;
-let duoStartBtn;
+let gameOverTitle, gameOverSubtitle, gameOverHint, duoSettingsTitle, duoStartBtn;
 
-const BASE_CANVAS_WIDTH = 500;
-const BASE_CANVAS_HEIGHT = 600;
+let chronometre, meteoriteCountElement, levelTransition, destroyedMeteorites = 0;
+let levelManager, levelManagerDuo, pendingMode = 'duo';
+
+const setOverlayVisibility = (overlay, active) => {
+    if (!overlay) return;
+    overlay.classList.toggle('active', active);
+    overlay.setAttribute('aria-hidden', active ? 'false' : 'true');
+};
+
+const setDisplay = (el, value) => {
+    if (el) el.style.display = value;
+};
+
+const setMenuButtonsVisible = (visible) => {
+    setDisplay(menuButtons, visible ? 'flex' : 'none');
+};
+
+const setModeButtonsVisible = (visible) => {
+    if (!modeButtons) return;
+    modeButtons.style.display = visible ? 'flex' : 'none';
+    modeButtons.setAttribute('aria-hidden', visible ? 'false' : 'true');
+};
+
+const setCanvasActive = (active) => {
+    const canvasEl = document.getElementById('monCanvas');
+    if (!canvasEl) return;
+    canvasEl.classList.toggle('game-active', active);
+};
+
+const hideLifeBars = () => {
+    setDisplay(barreVieJ1, 'none');
+    setDisplay(barreVieJ2, 'none');
+};
 
 const setVaisseaux = (vaisseau1, vaisseau2) => {
     monVaisseau = vaisseau1;
@@ -89,54 +88,12 @@ document.addEventListener('DOMContentLoaded', () => {
     meteoriteCountElement = document.getElementById('meteorite-count');
     levelTransition = new TransitionNiveau(canvas);
     setEtat(ETAT.MENU);
-
-    const applyResponsiveCanvasSize = () => {
-        if (!canvas) return;
-        const wrapper = document.querySelector('.canvas-wrapper');
-        const header = document.querySelector('h1');
-        const menu = document.querySelector('div.boutton');
-        const modes = document.querySelector('.mode-buttons');
-
-        const occupiedHeight =
-            (header?.offsetHeight || 0) +
-            (menu?.offsetHeight || 0) +
-            (modes?.offsetHeight || 0) +
-            48;
-
-        const availableHeight = Math.max(220, window.innerHeight - occupiedHeight);
-        const availableWidth = Math.max(260, Math.min(window.innerWidth - 24, BASE_CANVAS_WIDTH));
-
-        const scale = Math.min(
-            availableWidth / BASE_CANVAS_WIDTH,
-            availableHeight / BASE_CANVAS_HEIGHT,
-            1
-        );
-
-        const displayWidth = Math.floor(BASE_CANVAS_WIDTH * scale);
-        const displayHeight = Math.floor(BASE_CANVAS_HEIGHT * scale);
-
-        canvas.style.width = `${displayWidth}px`;
-        canvas.style.height = `${displayHeight}px`;
-
-        if (wrapper) {
-            wrapper.style.maxWidth = `${displayWidth}px`;
-        }
-
-        if (canvas.width !== BASE_CANVAS_WIDTH) {
-            canvas.width = BASE_CANVAS_WIDTH;
-        }
-        if (canvas.height !== BASE_CANVAS_HEIGHT) {
-            canvas.height = BASE_CANVAS_HEIGHT;
-        }
-    };
-
-    applyResponsiveCanvasSize();
-    window.addEventListener('resize', applyResponsiveCanvasSize);
+    canvas.width = BASE_CANVAS_WIDTH;
+    canvas.height = BASE_CANVAS_HEIGHT;
 
     document.querySelector('.startBoutton').addEventListener('click', () => {
         if (etat !== ETAT.MENU && etat !== ETAT.GAME_OVER) return;
         setEtat(ETAT.CHOIX_MODE);
-        applyResponsiveCanvasSize();
     });
 
     // Boutons de choix de mode (Solo / Duo / Duel)
@@ -300,7 +257,6 @@ document.addEventListener('DOMContentLoaded', () => {
     requestAnimationFrame(gameLoop);
 });
 
-// Définis les assets à charger
 var assetsToLoadURLs = {
     [TYPE_VAISSEAU.NORMAL]: { url: './assets/img/vaisseaux/NORMAL.png' },
     [TYPE_VAISSEAU.PHASE]: { url: './assets/img/vaisseaux/PHASE.png' },
@@ -322,7 +278,6 @@ var assetsToLoadURLs = {
     gameMusic: { url: './assets/audio/ingame.mp3', buffer: true, loop: true, volume: 0.5 }
 };
 
-// Charger les assets au démarrage (avant le jeu)
 async function loadAssetsOnStart() {
     loadedAssets = await loadAssets(assetsToLoadURLs);
     window.applyMusicVolume = applyMusicVolume;
@@ -332,45 +287,25 @@ async function loadAssetsOnStart() {
     }
 }
 
-function handleSoloLevelTransition(levelIndex, doneCallback) {
-    if (!levelTransition) {
-        doneCallback();
-        return;
-    }
-    const isLastLevel = (levelIndex === LEVELS.length - 1);
-    setEtat(ETAT.TRANSITION);
-    if (isLastLevel) {
-        levelTransition.showFinalEndGame(() => {
-            setEtat(ETAT.MENU);
-            doneCallback();
-        });
-    } else {
-        levelTransition.showForLevel(levelIndex + 1, () => {
-            setEtat(ETAT.JEU);
-            doneCallback();
-        });
-    }
-}
+const transitionSolo = (levelIndex, doneCallback) =>
+    transitionSoloLevel({
+        levelIndex,
+        doneCallback,
+        levelTransition,
+        LEVELS,
+        ETAT,
+        setEtat
+    });
 
-function handleDuoLevelTransition(levelIndex, doneCallback) {
-    if (!levelTransition) {
-        doneCallback();
-        return;
-    }
-    const isLastLevelDuo = (levelIndex === LEVELS_DUO.length - 1);
-    setEtat(ETAT.TRANSITION);
-    if (isLastLevelDuo) {
-        levelTransition.showFinalEndGame(() => {
-            setEtat(ETAT.MENU);
-            doneCallback();
-        }, { mode: 'duo' });
-    } else {
-        levelTransition.showForLevel(levelIndex + 1, () => {
-            setEtat(ETAT.JEU);
-            doneCallback();
-        });
-    }
-}
+const transitionDuo = (levelIndex, doneCallback) =>
+    transitionDuoLevel({
+        levelIndex,
+        doneCallback,
+        levelTransition,
+        LEVELS_DUO,
+        ETAT,
+        setEtat
+    });
 
 function startGame(mode) {
     modeActuel = mode;
@@ -390,7 +325,7 @@ function startGame(mode) {
                 destroyedMeteorites = 0;
                 meteoriteCountElement.textContent = "0";
             },
-            handleSoloLevelTransition
+            transitionSolo
         );
         levelManager.start();
         const shipType = player.getEquippedShip();
@@ -434,7 +369,7 @@ function startGame(mode) {
             gameManagerDuo,
             LEVELS_DUO,
             () => {},
-            handleDuoLevelTransition
+            transitionDuo
         );
         levelManagerDuo.start();
     } else if (mode === 'duel') {
@@ -605,199 +540,59 @@ function applyMusicVolume(value) {
 }
 
 function setEtat(nouvelEtat) {
-    etat = nouvelEtat;
-
-    // Anti touches "collées" lors du changement d'état
-    for (const key of Object.keys(keys)) {
-        keys[key] = false;
-    }
-
-    const canvasEl = document.getElementById('monCanvas');
-
-    // Fermer systématiquement les overlays non liés au core state
-    if (settingsOverlay) {
-        settingsOverlay.classList.remove('active');
-        settingsOverlay.setAttribute('aria-hidden', 'true');
-    }
-	if (duoSettingsOverlay) {
-		duoSettingsOverlay.classList.remove('active');
-		duoSettingsOverlay.setAttribute('aria-hidden', 'true');
-	}
-    if (shopOverlay) {
-        shopOverlay.classList.remove('active');
-        shopOverlay.setAttribute('aria-hidden', 'true');
-    }
-
-    if (etat === ETAT.JEU) {
-        canvasEl.classList.add('game-active');
-        if (gameOverOverlay) {
-            gameOverOverlay.classList.remove('active');
-            gameOverOverlay.setAttribute('aria-hidden', 'true');
-        }
-        if (menuButtons) {
-            menuButtons.style.display = 'none';
-        }
-        if (modeButtons) {
-            modeButtons.style.display = 'none';
-            modeButtons.setAttribute('aria-hidden', 'true');
-        }
-        // En jeu uniquement : les barres de vie sont gérées par updateBarreDeVie
-        return;
-    }
-
-    if (etat === ETAT.DUEL) {
-        canvasEl.classList.add('game-active');
-        if (gameOverOverlay) {
-            gameOverOverlay.classList.remove('active');
-            gameOverOverlay.setAttribute('aria-hidden', 'true');
-        }
-        if (menuButtons) {
-            menuButtons.style.display = 'none';
-        }
-        if (modeButtons) {
-            modeButtons.style.display = 'none';
-            modeButtons.setAttribute('aria-hidden', 'true');
-        }
-        // En jeu uniquement : les barres de vie sont gérées par updateBarreDeVie
-        return;
-    }
-
-    if (etat === ETAT.GAME_OVER) {
-        canvasEl.classList.add('game-active');
-        if (gameOverOverlay) {
-            gameOverOverlay.classList.add('active');
-            gameOverOverlay.setAttribute('aria-hidden', 'false');
-        }
-        if (menuButtons) {
-            menuButtons.style.display = 'none';
-        }
-        if (modeButtons) {
-            modeButtons.style.display = 'none';
-            modeButtons.setAttribute('aria-hidden', 'true');
-        }
-        // Hors jeu : masquer les barres de vie
-        if (barreVieJ1) barreVieJ1.style.display = 'none';
-        if (barreVieJ2) barreVieJ2.style.display = 'none';
-        return;
-    }
-
-    if (etat === ETAT.TRANSITION) {
-        canvasEl.classList.add('game-active');
-        if (gameOverOverlay) {
-            gameOverOverlay.classList.remove('active');
-            gameOverOverlay.setAttribute('aria-hidden', 'true');
-        }
-        if (menuButtons) {
-            menuButtons.style.display = 'none';
-        }
-        if (modeButtons) {
-            modeButtons.style.display = 'none';
-            modeButtons.setAttribute('aria-hidden', 'true');
-        }
-        // Hors jeu : masquer les barres de vie
-        if (barreVieJ1) barreVieJ1.style.display = 'none';
-        if (barreVieJ2) barreVieJ2.style.display = 'none';
-        return;
-    }
-
-    // CHOIX DU MODE : on masque le canvas et on affiche uniquement les boutons de mode
-    if (etat === ETAT.CHOIX_MODE) {
-        canvasEl.classList.remove('game-active');
-        if (gameOverOverlay) {
-            gameOverOverlay.classList.remove('active');
-            gameOverOverlay.setAttribute('aria-hidden', 'true');
-        }
-        if (menuButtons) {
-            menuButtons.style.display = 'none';
-        }
-        if (modeButtons) {
-            modeButtons.style.display = 'flex';
-            modeButtons.setAttribute('aria-hidden', 'false');
-        }
-		if (barreVieJ1) barreVieJ1.style.display = 'none';
-		if (barreVieJ2) barreVieJ2.style.display = 'none';
-        return;
-    }
-
-    // MENU
-    canvasEl.classList.remove('game-active');
-    if (gameOverTitle) gameOverTitle.textContent = 'GAME OVER';
-    if (gameOverSubtitle) gameOverSubtitle.textContent = 'Revenir à l’accueil';
-    if (gameOverHint) gameOverHint.textContent = 'Clique sur le canvas pour revenir';
-    if (gameOverOverlay) {
-        gameOverOverlay.classList.remove('active');
-        gameOverOverlay.setAttribute('aria-hidden', 'true');
-    }
-    if (menuButtons) {
-        menuButtons.style.display = 'flex';
-    }
-
-    if (modeButtons) {
-        modeButtons.style.display = 'none';
-        modeButtons.setAttribute('aria-hidden', 'true');
-    }
-
-    // En MENU : masquer les barres de vie
-    if (barreVieJ1) barreVieJ1.style.display = 'none';
-    if (barreVieJ2) barreVieJ2.style.display = 'none';
+    etat = appliquerEtat(
+        nouvelEtat,
+        keys,
+        settingsOverlay,
+        duoSettingsOverlay,
+        shopOverlay,
+        gameOverOverlay,
+        gameOverTitle,
+        gameOverSubtitle,
+        gameOverHint,
+        setOverlayVisibility,
+        setCanvasActive,
+        setMenuButtonsVisible,
+        setModeButtonsVisible,
+        hideLifeBars
+    );
 }
 
-function drawPlaying() {
-    if (modeActuel === 'duo') {
-        drawPlayingDuo();
-        return;
+const drawBullets = (vaisseau) => {
+    if (!vaisseau) return;
+    for (let i = vaisseau.bullets.length - 1; i >= 0; i--) {
+        const bullet = vaisseau.bullets[i];
+        bullet.draw(ctx);
     }
+};
+
+function drawPlaying() {
     if (modeActuel === 'duel') {
-        drawPlayingDuel();
+        drawDuel(ctx, getVaisseaux);
         return;
     }
 
+    if (modeActuel === 'duo') {
+        if (!gameManagerDuo) return;
+        if (!monVaisseau && !monVaisseau2) return;
+        gameManagerDuo.draw(ctx, monVaisseau, monVaisseau2);
+        drawBullets(monVaisseau);
+        drawBullets(monVaisseau2);
+        return;
+    }
+
+    if (!gameManager || !monVaisseau) return;
     if (gameManager.isHit()) {
         monVaisseau.draw(ctx);
         return;
     }
 
-    // Dessiner les météorites
     gameManager.draw(ctx);
-
-    // Dessiner le vaisseau
     monVaisseau.draw(ctx);
     drawShieldBubble(ctx, monVaisseau);
     drawEclairBar(ctx, monVaisseau);
     drawRafaleBar(ctx, monVaisseau);
-    
-    // Dessiner les bullets
-    for (let i = monVaisseau.bullets.length - 1; i >= 0; i--) {
-        const bullet = monVaisseau.bullets[i];
-        bullet.draw(ctx);
-    }
-}
-
-function drawPlayingDuo() {
-    // Si le gestionnaire duo n'existe pas, on ne dessine rien
-    if (!gameManagerDuo) return;
-    // Si les deux vaisseaux sont absents (morts), rien à dessiner
-    if (!monVaisseau && !monVaisseau2) return;
-
-    gameManagerDuo.draw(ctx, monVaisseau, monVaisseau2);
-
-    // Dessiner les bullets uniquement pour les vaisseaux encore présents
-    if (monVaisseau) {
-        for (let i = monVaisseau.bullets.length - 1; i >= 0; i--) {
-            const bullet = monVaisseau.bullets[i];
-            bullet.draw(ctx);
-        }
-    }
-    if (monVaisseau2) {
-        for (let i = monVaisseau2.bullets.length - 1; i >= 0; i--) {
-            const bullet = monVaisseau2.bullets[i];
-            bullet.draw(ctx);
-        }
-    }
-}
-
-function drawPlayingDuel() {
-    drawDuel(ctx, getVaisseaux);
+    drawBullets(monVaisseau);
 }
 
 function formatTime(ms) {

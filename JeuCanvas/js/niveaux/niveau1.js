@@ -12,7 +12,7 @@ export default class Niveau1 extends Niveau {
         this.spawnStep = 150;        
         this.spawnDecreaseEvery = 15000; 
         this.lastDifficultyUpdate = 0;
-        this.duration = 90000;
+        this.duration = 9000;
         this.gadgetSpawnDelay = 20000; // 20 secondes
         this.lastGadgetSpawn = 0;
 

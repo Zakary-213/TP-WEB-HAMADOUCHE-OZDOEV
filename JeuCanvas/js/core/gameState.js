@@ -85,3 +85,78 @@ export function reloadCustomKeys2FromStorage() {
 // Initialiser la configuration clavier dès le chargement du module
 reloadCustomKeysFromStorage();
 reloadCustomKeys2FromStorage();
+
+export function setEtat(
+    nouvelEtat,
+    keys,
+    settingsOverlay,
+    duoSettingsOverlay,
+    shopOverlay,
+    gameOverOverlay,
+    gameOverTitle,
+    gameOverSubtitle,
+    gameOverHint,
+    setOverlayVisibility,
+    setCanvasActive,
+    setMenuButtonsVisible,
+    setModeButtonsVisible,
+    hideLifeBars
+) {
+    if (keys) {
+        for (const key of Object.keys(keys)) {
+            keys[key] = false;
+        }
+    }
+
+    if (setOverlayVisibility) {
+        setOverlayVisibility(settingsOverlay, false);
+        setOverlayVisibility(duoSettingsOverlay, false);
+        setOverlayVisibility(shopOverlay, false);
+    }
+
+    if (nouvelEtat === ETAT.JEU || nouvelEtat === ETAT.DUEL) {
+        setCanvasActive?.(true);
+        setOverlayVisibility?.(gameOverOverlay, false);
+        setMenuButtonsVisible?.(false);
+        setModeButtonsVisible?.(false);
+        return nouvelEtat;
+    }
+
+    if (nouvelEtat === ETAT.GAME_OVER) {
+        setCanvasActive?.(true);
+        setOverlayVisibility?.(gameOverOverlay, true);
+        setMenuButtonsVisible?.(false);
+        setModeButtonsVisible?.(false);
+        hideLifeBars?.();
+        return nouvelEtat;
+    }
+
+    if (nouvelEtat === ETAT.TRANSITION) {
+        setCanvasActive?.(true);
+        setOverlayVisibility?.(gameOverOverlay, false);
+        setMenuButtonsVisible?.(false);
+        setModeButtonsVisible?.(false);
+        hideLifeBars?.();
+        return nouvelEtat;
+    }
+
+    if (nouvelEtat === ETAT.CHOIX_MODE) {
+        setCanvasActive?.(false);
+        setOverlayVisibility?.(gameOverOverlay, false);
+        setMenuButtonsVisible?.(false);
+        setModeButtonsVisible?.(true);
+        hideLifeBars?.();
+        return nouvelEtat;
+    }
+
+    setCanvasActive?.(false);
+    if (gameOverTitle) gameOverTitle.textContent = 'GAME OVER';
+    if (gameOverSubtitle) gameOverSubtitle.textContent = 'Revenir à l’accueil';
+    if (gameOverHint) gameOverHint.textContent = 'Clique sur le canvas pour revenir';
+    setOverlayVisibility?.(gameOverOverlay, false);
+    setMenuButtonsVisible?.(true);
+    setModeButtonsVisible?.(false);
+    hideLifeBars?.();
+
+    return nouvelEtat;
+}

@@ -141,3 +141,43 @@ export default class TransitionNiveau {
 		this.complete();
 	}
 }
+
+export const transitionSoloLevel = ({ levelIndex, doneCallback, levelTransition, LEVELS, ETAT, setEtat }) => {
+	if (!levelTransition) {
+		doneCallback();
+		return;
+	}
+	const isLastLevel = levelIndex === LEVELS.length - 1;
+	setEtat(ETAT.TRANSITION);
+	if (isLastLevel) {
+		levelTransition.showFinalEndGame(() => {
+			setEtat(ETAT.MENU);
+			doneCallback();
+		});
+	} else {
+		levelTransition.showForLevel(levelIndex + 1, () => {
+			setEtat(ETAT.JEU);
+			doneCallback();
+		});
+	}
+};
+
+export const transitionDuoLevel = ({ levelIndex, doneCallback, levelTransition, LEVELS_DUO, ETAT, setEtat }) => {
+	if (!levelTransition) {
+		doneCallback();
+		return;
+	}
+	const isLastLevelDuo = levelIndex === LEVELS_DUO.length - 1;
+	setEtat(ETAT.TRANSITION);
+	if (isLastLevelDuo) {
+		levelTransition.showFinalEndGame(() => {
+			setEtat(ETAT.MENU);
+			doneCallback();
+		}, { mode: 'duo' });
+	} else {
+		levelTransition.showForLevel(levelIndex + 1, () => {
+			setEtat(ETAT.JEU);
+			doneCallback();
+		});
+	}
+};
