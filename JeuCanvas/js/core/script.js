@@ -357,17 +357,17 @@ const transitionSolo = (levelIndex, doneCallback) =>
         LEVELS,
         ETAT,
         setEtat
-    });
+});
 
 const transitionDuo = (levelIndex, doneCallback) =>
-    transitionDuoLevel({
-        levelIndex,
-        doneCallback,
-        levelTransition,
-        LEVELS_DUO,
-        ETAT,
-        setEtat
-    });
+transitionDuoLevel({
+    levelIndex,
+    doneCallback,
+    levelTransition,
+    LEVELS_DUO,
+    ETAT,
+    setEtat
+});
 
 function startGame(mode) {
     modeActuel = mode;
@@ -401,10 +401,15 @@ function startGame(mode) {
             3,
             shipType
         );
-    } else if (mode === 'duo') {
+    } 
+    else if (mode === 'duo') {
         levelManager = null;
         gameManager = null;
         gameManagerDuo = new GameManagerDuo(canvas, player, loadedAssets || {});
+        gameManagerDuo.onMeteoriteDestroyed = () => {
+            destroyedMeteorites++;
+            meteoriteCountElement.textContent = destroyedMeteorites;
+        };
         const type1 = TYPE_VAISSEAU.NORMAL;
         const type2 = TYPE_VAISSEAU.NORMAL;
         monVaisseau = new Vaisseau(
@@ -430,7 +435,10 @@ function startGame(mode) {
         levelManagerDuo = new LevelManager(
             gameManagerDuo,
             LEVELS_DUO,
-            () => {},
+            () => {
+                destroyedMeteorites = 0;
+                meteoriteCountElement.textContent = "0";
+            },
             transitionDuo
         );
         levelManagerDuo.start();
@@ -680,7 +688,7 @@ function drawScoreScreen() {
     const cardX = (canvas.width - cardWidth) / 2;
     const cardY = (canvas.height - cardHeight) / 2;
 
-    const contentPadding = 70;
+    const contentPadding = 40;
     const lineHeight = 22;
 
     // --- FOND ---
@@ -694,7 +702,6 @@ function drawScoreScreen() {
     // =========================
 
     const tabY = cardY + 40;
-    const tabWidth = 100;
     const tabSpacing = 120;
     const centerX = canvas.width / 2;
 
@@ -719,17 +726,31 @@ function drawScoreScreen() {
 
     // --- ZONE CONTENU ---
     const contentX = cardX + contentPadding;
-    const contentY = cardY + 120;
+    const contentY = cardY + 110;
     const contentWidth = cardWidth - contentPadding * 2;
     const contentHeight = cardHeight - 170;
 
-    // 🔥 Calcul hauteur totale AVANT affichage
+    // 🔥 Calcul hauteur totale
     let totalContentHeight = 0;
 
     scores.forEach(score => {
-        totalContentHeight += 25; // pseudo
-        totalContentHeight += score.niveaux.length * lineHeight;
-        totalContentHeight += 35; // total
+        if (scoreMode === 'solo') {
+            totalContentHeight += 25;
+            totalContentHeight += score.niveaux.length * lineHeight;
+            totalContentHeight += 35;
+        }
+        else if (scoreMode === 'duo') {
+
+            totalContentHeight += 25; // titre
+
+            // 2 increments par niveau
+            totalContentHeight += score.niveaux.length * (lineHeight * 2);
+
+            // TOTAL :
+            totalContentHeight += lineHeight * 2;
+
+            totalContentHeight += 15; // marge finale
+        }
     });
 
     const maxScroll = Math.max(0, totalContentHeight - contentHeight);
@@ -745,54 +766,162 @@ function drawScoreScreen() {
 
     ctx.textAlign = 'left';
 
-    let y = contentY + 10 - scoreScrollOffset;
+    // 🔥 EXACTEMENT comme solo
+    let y = contentY + 20 - scoreScrollOffset;
 
     scores.forEach((score, index) => {
 
-        if (!score.pseudo) return; // sécurité
+        // =====================
+        // ======== SOLO =======
+        // =====================
+        if (scoreMode === 'solo') {
 
-        // --- PSEUDO ---
-        ctx.fillStyle = '#f1c40f';
-        ctx.font = '18px Arial';
-        ctx.fillText(`${index + 1}. ${score.pseudo}`, contentX, y);
-        y += 25;
+            if (!score.pseudo) return;
 
-        // --- NIVEAUX ---
-        ctx.fillStyle = 'white';
-        ctx.font = '15px Arial';
+            ctx.fillStyle = '#f1c40f';
+            ctx.font = '18px Arial';
+            ctx.fillText(`${index + 1}. ${score.pseudo}`, contentX, y);
+            y += 25;
 
-        score.niveaux.forEach(lvl => {
+            ctx.fillStyle = 'white';
+            ctx.font = '15px Arial';
 
-            const minutes = Math.floor(lvl.time / 60000);
-            const seconds = Math.floor((lvl.time % 60000) / 1000);
+            score.niveaux.forEach(lvl => {
 
-            const timeFormatted =
-                `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                const minutes = Math.floor(lvl.time / 60000);
+                const seconds = Math.floor((lvl.time % 60000) / 1000);
+                const timeFormatted =
+                    `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
+                ctx.fillText(
+                    `N${lvl.niveau} : ${timeFormatted} - ${lvl.meteorites} météorites`,
+                    contentX + 20,
+                    y
+                );
+
+                y += lineHeight;
+            });
+
+            const totalMinutes = Math.floor(score.totalTime / 60000);
+            const totalSeconds = Math.floor((score.totalTime % 60000) / 1000);
+            const totalFormatted =
+                `${String(totalMinutes).padStart(2, '0')}:${String(totalSeconds).padStart(2, '0')}`;
+
+            ctx.fillStyle = '#00ffaa';
             ctx.fillText(
-                `N${lvl.niveau} : ${timeFormatted} - ${lvl.meteorites} météorites`,
+                `TOTAL : ${totalFormatted} - ${score.totalMeteorites} météorites`,
+                contentX + 20,
+                y
+            );
+
+            y += 35;
+        }
+
+        // =====================
+        // ======== DUO ========
+        // =====================
+        else if (scoreMode === 'duo') {
+
+            const joueur1 = score.joueurs[0];
+            const joueur2 = score.joueurs[1];
+
+            if (!joueur1 || !joueur2) return;
+
+            ctx.font = '18px Arial';
+
+            // 🔥 Numéro en BLANC
+            ctx.fillStyle = 'white';
+            ctx.fillText(`${index + 1}.`, contentX, y);
+
+            const numberWidth = ctx.measureText(`${index + 1}. `).width;
+
+            // J1 bleu
+            ctx.fillStyle = '#3498db';
+            ctx.fillText(joueur1.pseudo, contentX + numberWidth, y);
+
+            const pseudoWidth = ctx.measureText(joueur1.pseudo).width;
+
+            // &
+            ctx.fillStyle = 'white';
+            ctx.fillText(" & ", contentX + numberWidth + pseudoWidth, y);
+
+            const andWidth = ctx.measureText(" & ").width;
+
+            // J2 rouge
+            ctx.fillStyle = '#e74c3c';
+            ctx.fillText(
+                joueur2.pseudo,
+                contentX + numberWidth + pseudoWidth + andWidth,
+                y
+            );
+
+            y += 25;
+
+            // ----- NIVEAUX -----
+            score.niveaux.forEach((lvlTime, i) => {
+
+                const minutes = Math.floor(lvlTime.time / 60000);
+                const seconds = Math.floor((lvlTime.time % 60000) / 1000);
+                const timeFormatted =
+                    `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+                ctx.fillStyle = 'white';
+                ctx.fillText(
+                    `N${lvlTime.niveau} : ${timeFormatted}`,
+                    contentX + 20,
+                    y
+                );
+                y += lineHeight;
+
+                ctx.fillStyle = '#3498db';
+                ctx.fillText(
+                    `${joueur1.pseudo} : ${joueur1.niveaux[i].meteorites}`,
+                    contentX + 40,
+                    y
+                );
+
+                ctx.fillStyle = '#e74c3c';
+                ctx.fillText(
+                    `${joueur2.pseudo} : ${joueur2.niveaux[i].meteorites}`,
+                    contentX + 220,
+                    y
+                );
+
+                y += lineHeight;
+            });
+
+            // ----- TOTAL -----
+            const totalMinutes = Math.floor(score.totalTime / 60000);
+            const totalSeconds = Math.floor((score.totalTime % 60000) / 1000);
+            const totalFormatted =
+                `${String(totalMinutes).padStart(2, '0')}:${String(totalSeconds).padStart(2, '0')}`;
+
+            ctx.fillStyle = '#00ffaa';
+            ctx.fillText(
+                `TOTAL : ${totalFormatted}`,
                 contentX + 20,
                 y
             );
 
             y += lineHeight;
-        });
 
-        // --- TOTAL ---
-        const totalMinutes = Math.floor(score.totalTime / 60000);
-        const totalSeconds = Math.floor((score.totalTime % 60000) / 1000);
+            ctx.fillStyle = '#3498db';
+            ctx.fillText(
+                `${joueur1.pseudo} : ${joueur1.totalMeteorites}`,
+                contentX + 40,
+                y
+            );
 
-        const totalFormatted =
-            `${String(totalMinutes).padStart(2, '0')}:${String(totalSeconds).padStart(2, '0')}`;
+            ctx.fillStyle = '#e74c3c';
+            ctx.fillText(
+                `${joueur2.pseudo} : ${joueur2.totalMeteorites}`,
+                contentX + 220,
+                y
+            );
 
-        ctx.fillStyle = '#00ffaa';
-        ctx.fillText(
-            `TOTAL : ${totalFormatted} - ${score.totalMeteorites} météorites`,
-            contentX + 20,
-            y
-        );
+            y += 35;
+        }
 
-        y += 35;
     });
 
     ctx.restore();
@@ -807,4 +936,3 @@ function drawScoreScreen() {
         cardY + cardHeight - 20
     );
 }
-

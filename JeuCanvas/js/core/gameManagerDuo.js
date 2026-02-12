@@ -25,11 +25,15 @@ export default class GameManagerDuo {
 		this.lastVaisseauY = null;
 		this.nextMeteoriteSpawn = Date.now() + 1000; // première météorite dans ~1s
 
+		
+
 		// Gestion centralisée des entités (météorites, gadgets, ennemis...)
 		this.entityManager = new EntityManager(this);
 
 		// Callback optionnelle quand une météorite est détruite
 		this.onMeteoriteDestroyed = null;
+		this.player1DestroyedMeteorites = 0;
+		this.player2DestroyedMeteorites = 0;
 	}
 
 	clampVaisseauToCanvas(vaisseau) {

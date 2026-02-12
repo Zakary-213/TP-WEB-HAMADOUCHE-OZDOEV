@@ -1,4 +1,4 @@
-import {addSoloScore} from '../score/scoreManager.js'
+import {addSoloScore, addDuoScore} from '../score/scoreManager.js'
 
 export default class LevelManager {
     constructor(gameManager, levels, onLevelStart = null, onLevelEnd = null) {
@@ -46,16 +46,39 @@ export default class LevelManager {
 
             /* Recupération des données */ 
             const levelTime = this.currentLevel.getElapsedTime();
-            const meteoritesDestroyed = this.gameManager.playerDestroyedMeteorites || 0;
 
-            this.completedLevelsData.push({
-                niveau: this.currentIndex + 1,
-                time: levelTime,
-                meteorites: meteoritesDestroyed
-            });
+            // ===== DUO =====
+            if (this.gameManager.player1DestroyedMeteorites !== undefined &&
+                this.gameManager.player2DestroyedMeteorites !== undefined) {
 
-            // Reset compteur pour le prochain niveau 
-            this.gameManager.playerDestroyedMeteorites = 0;
+                this.completedLevelsData.push({
+                    niveau: this.currentIndex + 1,
+                    time: levelTime,
+                    meteoritesJ1: this.gameManager.player1DestroyedMeteorites,
+                    meteoritesJ2: this.gameManager.player2DestroyedMeteorites
+                });
+                console.log("DATA DUO NIVEAU :", this.completedLevelsData);
+
+                // Reset duo counters
+                this.gameManager.player1DestroyedMeteorites = 0;
+                this.gameManager.player2DestroyedMeteorites = 0;
+
+            }
+            // ===== SOLO =====
+            else {
+
+                const meteoritesDestroyed =
+                    this.gameManager.playerDestroyedMeteorites || 0;
+
+                this.completedLevelsData.push({
+                    niveau: this.currentIndex + 1,
+                    time: levelTime,
+                    meteorites: meteoritesDestroyed
+                });
+
+                this.gameManager.playerDestroyedMeteorites = 0;
+            }
+
 
             // Transition de fin de niveau (y compris dernier niveau) gérée par onLevelEnd
             if (this.onLevelEnd) {
@@ -73,9 +96,48 @@ export default class LevelManager {
         // Si ce n'est pas le dernier niveau, passer au suivant
         if (this.currentIndex < this.levels.length - 1) {
             this.goToNextLevel();
-        } else {
+        } 
+        else 
+        {
             console.log("Tous les niveaux terminés !");
-            console.log("DATA FINALE SOLO :", this.completedLevelsData);
+            //console.log("DATA FINALE SOLO :", this.completedLevelsData);
+            if (this.gameManager.player1DestroyedMeteorites !== undefined) {
+            // MODE DUO
+
+            const pseudo1 = prompt("Bravo ! Pseudo Joueur 1 :");
+            const pseudo2 = prompt("Pseudo Joueur 2 :");
+
+            if (
+                pseudo1 && pseudo1.trim() !== "" &&
+                pseudo2 && pseudo2.trim() !== ""
+            ) {
+                addDuoScore({
+                    joueur1: {
+                        pseudo: pseudo1.trim(),
+                        niveaux: this.completedLevelsData.map(lvl => ({
+                            niveau: lvl.niveau,
+                            meteorites: lvl.meteoritesJ1
+                        }))
+                    },
+                    joueur2: {
+                        pseudo: pseudo2.trim(),
+                        niveaux: this.completedLevelsData.map(lvl => ({
+                            niveau: lvl.niveau,
+                            meteorites: lvl.meteoritesJ2
+                        }))
+                    },
+                    niveauxTime: this.completedLevelsData.map(lvl => ({
+                        niveau: lvl.niveau,
+                        time: lvl.time
+                    }))
+                });
+
+                console.log("Score DUO enregistré !");
+            }
+
+        } else {
+            // MODE SOLO
+
             const pseudo = prompt("Bravo ! Entrez votre pseudo :");
 
             if (pseudo && pseudo.trim() !== "") {
@@ -84,10 +146,10 @@ export default class LevelManager {
                     niveaux: this.completedLevelsData
                 });
 
-                console.log("Score enregistré !");
-            } else {
-                console.log("Pseudo invalide, score non enregistré.");
+                console.log("Score SOLO enregistré !");
             }
+        }
+
 
             console.log("Score sauvegardé !");
         }

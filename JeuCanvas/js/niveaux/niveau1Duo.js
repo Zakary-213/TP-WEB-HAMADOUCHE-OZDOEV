@@ -17,7 +17,7 @@ export default class Niveau1Duo extends Niveau {
         this.spawnStep = 150;
         this.spawnDecreaseEvery = 15000;
         this.lastDifficultyUpdate = 0;
-        this.duration = 50000;
+        this.duration = 5000;
 
         // Gadgets : même timer mais 2 gadgets à chaque fois.
         this.gadgetSpawnDelay = 20000;

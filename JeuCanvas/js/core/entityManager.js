@@ -249,18 +249,41 @@ export default class EntityManager {
 					if (meteorite.pv <= 0) {
 						spawnExplosionParticles(game.particles, meteorite);
 						meteorites.splice(m, 1);
-						
-						// COMPTEUR SOLO
-						if (game.playerDestroyedMeteorites !== undefined) {
+
+						// ===== DUO =====
+						if (game.player1DestroyedMeteorites !== undefined &&
+							game.player2DestroyedMeteorites !== undefined) {
+
+							const [vaisseau1, vaisseau2] = vaisseaux;
+
+							if (vaisseau === vaisseau1) {
+								game.player1DestroyedMeteorites++;
+								console.log("DUO J1 kill :", game.player1DestroyedMeteorites);
+							}
+
+							if (vaisseau === vaisseau2) {
+								game.player2DestroyedMeteorites++;
+								console.log("DUO J2 kill :", game.player2DestroyedMeteorites);
+							}
+
+						}
+						// ===== SOLO =====
+						else if (game.playerDestroyedMeteorites !== undefined) {
 							game.playerDestroyedMeteorites++;
 							console.log("SOLO kill :", game.playerDestroyedMeteorites);
 						}
+
+
 						if (game.onMeteoriteDestroyed) {
 							game.onMeteoriteDestroyed(meteorite);
 						}
+
 						const goldEarned = this.getGoldForMeteorite(meteorite.type);
 						game.player.addGold(goldEarned);
 					}
+
+
+
 					if (vaisseau.type !== TYPE_VAISSEAU.PIERCE) {
 						vaisseau.bullets.splice(b, 1);
 					}
