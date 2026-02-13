@@ -1,13 +1,13 @@
-import Niveau from './niveau.js';
-import { TYPE_METEORITE } from '../entities/typeMeteorite.js';
-import { pickByWeight } from '../systems/random.js';
-import { TYPE_GADGET } from '../entities/typeGadget.js';
+import Niveau from '../niveau.js';
+import { TYPE_METEORITE } from '../../entities/types/typeMeteorite.js';
+import { pickByWeight } from '../../systems/random.js';
+import { TYPE_GADGET } from '../../entities/types/typeGadget.js';
 
 export default class Niveau2 extends Niveau {
     constructor(gameManager) {
         super(gameManager);
 
-        this.targetKills = 1;
+        this.targetKills = 5;
         this.currentKills = 0;
 
         this.maxMeteoritesToSpawn = 100000;

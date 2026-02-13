@@ -1,4 +1,4 @@
-import { TYPE_VAISSEAU } from './typeVaisseau.js';
+import { TYPE_VAISSEAU } from './types/typeVaisseau.js';
 
 export default class Player {
     constructor() {

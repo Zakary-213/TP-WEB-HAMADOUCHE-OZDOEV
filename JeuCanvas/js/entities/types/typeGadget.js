@@ -37,4 +37,3 @@ export const GADGET_CONFIG = {
 		heal: 1, // +1 PV instantané
 	},
 };
-

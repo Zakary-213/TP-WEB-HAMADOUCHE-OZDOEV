@@ -1,7 +1,7 @@
-import Niveau from './niveau.js';
-import { TYPE_METEORITE } from '../entities/typeMeteorite.js';
-import { pickByWeight } from '../systems/random.js';
-import { TYPE_GADGET } from '../entities/typeGadget.js';
+import Niveau from '../niveau.js';
+import { TYPE_METEORITE } from '../../entities/types/typeMeteorite.js';
+import { pickByWeight } from '../../systems/random.js';
+import { TYPE_GADGET } from '../../entities/types/typeGadget.js';
 
 // Niveau 1 pour le mode Duo :
 // même logique que le Niveau1 solo, mais on double

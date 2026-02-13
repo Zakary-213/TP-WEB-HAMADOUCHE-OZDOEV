@@ -1,5 +1,5 @@
 import ObjetGraphique from './objetGraphique.js';
-import { METEORITE_CONFIG, TYPE_METEORITE } from './typeMeteorite.js';
+import { METEORITE_CONFIG, TYPE_METEORITE } from './types/typeMeteorite.js';
 
 export default class Meteorite extends ObjetGraphique {
     

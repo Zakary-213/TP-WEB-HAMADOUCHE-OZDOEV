@@ -1,7 +1,7 @@
-import Niveau from './niveau.js';
-import { TYPE_METEORITE } from '../entities/typeMeteorite.js';
-import { TYPE_GADGET } from '../entities/typeGadget.js';
-import { pickByWeight } from '../systems/random.js';
+import Niveau from '../niveau.js';
+import { TYPE_METEORITE } from '../../entities/types/typeMeteorite.js';
+import { TYPE_GADGET } from '../../entities/types/typeGadget.js';
+import { pickByWeight } from '../../systems/random.js';
 
 export default class Niveau3 extends Niveau {
     constructor(gameManager) {

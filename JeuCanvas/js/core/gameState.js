@@ -1,9 +1,9 @@
-import niveau1 from '../niveaux/niveau1.js';
-import niveau2 from '../niveaux/niveau2.js';
-import niveau3 from '../niveaux/niveau3.js';
-import niveau1Duo from '../niveaux/niveau1Duo.js';
-import niveau2Duo from '../niveaux/niveau2Duo.js';
-import niveau3Duo from '../niveaux/niveau3Duo.js';
+import niveau1 from '../niveaux/solo/niveau1.js';
+import niveau2 from '../niveaux/solo/niveau2.js';
+import niveau3 from '../niveaux/solo/niveau3.js';
+import niveau1Duo from '../niveaux/duo/niveau1Duo.js';
+import niveau2Duo from '../niveaux/duo/niveau2Duo.js';
+import niveau3Duo from '../niveaux/duo/niveau3Duo.js';
 
 // Etats globaux du jeu
 export const ETAT = {

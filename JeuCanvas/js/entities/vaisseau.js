@@ -1,6 +1,6 @@
 import ObjetGraphique from './objetGraphique.js';
 import Bullet from './bullet.js';
-import { TYPE_VAISSEAU } from './typeVaisseau.js';
+import { TYPE_VAISSEAU } from './types/typeVaisseau.js';
 
 export default class Vaisseau extends ObjetGraphique {
     minDist = 10;

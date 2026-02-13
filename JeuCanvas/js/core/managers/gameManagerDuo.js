@@ -1,7 +1,7 @@
-import { drawEclairBar, drawShieldBubble, drawRafaleBar } from '../systems/effectsGadget.js';
-import CollisionUtils from '../systems/collisionUtils.js';
-import ParticleManager from '../systems/particles.js';
-import GestionDegats from '../systems/gestionDegats.js';
+import { drawEclairBar, drawShieldBubble, drawRafaleBar } from '../../systems/effectsGadget.js';
+import CollisionUtils from '../../systems/collisionUtils.js';
+import ParticleManager from '../../systems/particles.js';
+import GestionDegats from '../../systems/gestionDegats.js';
 import EntityManager from './entityManager.js';
 
 

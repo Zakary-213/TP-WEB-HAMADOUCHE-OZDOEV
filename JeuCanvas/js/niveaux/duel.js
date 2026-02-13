@@ -1,6 +1,6 @@
 import Vaisseau from '../entities/vaisseau.js';
-import GameManagerDuel from '../core/gameManagerDuel.js';
-import { TYPE_VAISSEAU } from '../entities/typeVaisseau.js';
+import GameManagerDuel from '../core/managers/gameManagerDuel.js';
+import { TYPE_VAISSEAU } from '../entities/types/typeVaisseau.js';
 import Tour from './tour.js';
 
 let gameManagerDuel = null;

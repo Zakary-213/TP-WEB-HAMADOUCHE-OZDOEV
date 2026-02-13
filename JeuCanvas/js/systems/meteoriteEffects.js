@@ -1,4 +1,4 @@
-import { TYPE_METEORITE } from '../entities/typeMeteorite.js';
+import { TYPE_METEORITE } from '../entities/types/typeMeteorite.js';
 
 // Retourne le bon asset image pour un type de météorite
 export function getMeteoriteImageForType(assets, type) {

@@ -1,5 +1,5 @@
 import ObjetGraphique from './objetGraphique.js';
-import { TYPE_GADGET, GADGET_CONFIG } from './typeGadget.js';
+import { TYPE_GADGET, GADGET_CONFIG } from './types/typeGadget.js';
 import CollisionUtils from '../systems/collisionUtils.js';
 import { applyEclairEffect, applyRafaleEffect } from '../systems/effectsGadget.js';
 

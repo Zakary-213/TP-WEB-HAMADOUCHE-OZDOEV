@@ -282,6 +282,9 @@ function initVolumeControls() {
             const val = Number(e.target.value);
             volumeValue.textContent = val + '%';
             localStorage.setItem('sfx_volume', String(val));
+            if (window.applySfxVolume) {
+                window.applySfxVolume(val);
+            }
         });
     }
 }

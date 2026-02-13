@@ -1,4 +1,4 @@
-import { TYPE_VAISSEAU } from '../entities/typeVaisseau.js';
+import { TYPE_VAISSEAU } from '../entities/types/typeVaisseau.js';
 
 export default class Boutique {
     constructor(player) {
@@ -169,11 +169,17 @@ export class BoutiqueUI{
         const mapShipIdToImage = (shipId) => {
             switch (shipId) {
                 case TYPE_VAISSEAU.NORMAL:
-                    return 'assets/img/NORMAL.png';
+                    return 'assets/img/vaisseaux/NORMAL.png';
                 case TYPE_VAISSEAU.PHASE:
-                    return 'assets/img/PHASE.png';
+                    return 'assets/img/vaisseaux/PHASE.png';
                 case TYPE_VAISSEAU.SPLIT:
-                    return 'assets/img/SPLIT.png';
+                    return 'assets/img/vaisseaux/SPLIT.png';
+                case TYPE_VAISSEAU.SPREAD:
+                    return 'assets/img/vaisseaux/SPREAD.png';
+                case TYPE_VAISSEAU.RICOCHET:
+                    return 'assets/img/vaisseaux/RICOCHET.png';
+                case TYPE_VAISSEAU.PIERCE:
+                    return 'assets/img/vaisseaux/PIERCE.png';
                 default:
                     return 'assets/img/vaisseau.png';
             }

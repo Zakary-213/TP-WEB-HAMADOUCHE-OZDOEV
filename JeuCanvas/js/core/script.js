@@ -1,12 +1,14 @@
 import Vaisseau from '../entities/vaisseau.js';
-import GameManager from './gameManager.js';
-import GameManagerDuo from './gameManagerDuo.js';
+import GameManager from './managers/gameManager.js';
+import GameManagerDuo from './managers/gameManagerDuo.js';
 import { loadAssets } from './assetLoader.js';
-import { TYPE_VAISSEAU } from '../entities/typeVaisseau.js';
+import { TYPE_VAISSEAU } from '../entities/types/typeVaisseau.js';
+import { assetsToLoadURLs } from './helpers/assetsConfig.js';
+import { applyMusicVolume as applyMusicVolumeHelper, applySfxVolume as applySfxVolumeHelper } from './helpers/audioHelpers.js';
 import Player from '../entities/player.js';
 import { BoutiqueUI } from '../ui/boutique.js';
 import { drawEclairBar, drawShieldBubble, drawRafaleBar } from '../systems/effectsGadget.js';
-import LevelManager from '../niveaux/levelManagerSolo.js';
+import LevelManager from '../niveaux/solo/levelManagerSolo.js';
 import TransitionNiveau, { transitionSoloLevel, transitionDuoLevel } from '../niveaux/transitionNiveau.js';
 import { startDuel, updateDuelGameState, drawDuel, resetDuelState } from '../niveaux/duel.js';
 import { defineListeners, inputStates } from './ecouteur.js';
@@ -25,7 +27,7 @@ import {
     scrollScore,
     drawScoreScreen,
     formatTime
-} from './ui.js';
+} from './gameHud.js';
 
 let canvas, ctx;
 
@@ -41,7 +43,7 @@ let gameOverOverlay, shopOverlay, shopClose, btnBoutique, boutiqueUI = null;
 
 let gameOverTitle, gameOverSubtitle, gameOverHint, duoSettingsTitle, duoStartBtn;
 
-let chronometre, meteoriteCountElement, levelTransition, destroyedMeteorites = 0;
+let chronometre, meteoriteCountElement, levelTransition, destroyedMeteorites = 0, gameHud;
 let levelManager, levelManagerDuo, pendingMode = 'duo';
 
 const isJeuState = (state) => {
@@ -62,6 +64,19 @@ const setModeButtonsVisible = (visible) => {
 
 const hideLifeBars = () => {
     hideLifeBarsUI();
+};
+
+const setHudVisible = (visible) => {
+    if (!gameHud) return;
+    gameHud.style.display = visible ? '' : 'none';
+};
+
+const updateHudVisibility = (etatCourant) => {
+    const visible =
+        etatCourant === ETAT.JEU ||
+        etatCourant === ETAT.DUEL ||
+        etatCourant === ETAT.TRANSITION;
+    setHudVisible(visible);
 };
 
 const setVaisseaux = (vaisseau1, vaisseau2) => {
@@ -88,8 +103,10 @@ document.addEventListener('DOMContentLoaded', () => {
     shopClose = shopOverlay.querySelector('.btn-return');
     chronometre = document.getElementById('timer');
     meteoriteCountElement = document.getElementById('meteorite-count');
+    gameHud = document.querySelector('.game-hud');
     levelTransition = new TransitionNiveau(canvas);
     initLifeBars();
+    setHudVisible(false);
     setEtat(ETAT.MENU);
     canvas.width = BASE_CANVAS_WIDTH;
     canvas.height = BASE_CANVAS_HEIGHT;
@@ -268,33 +285,17 @@ document.addEventListener('DOMContentLoaded', () => {
     requestAnimationFrame(gameLoop);
 });
 
-const assetsToLoadURLs = {
-    [TYPE_VAISSEAU.NORMAL]: { url: './assets/img/vaisseaux/NORMAL.png' },
-    [TYPE_VAISSEAU.PHASE]: { url: './assets/img/vaisseaux/PHASE.png' },
-    [TYPE_VAISSEAU.SPLIT]: { url: './assets/img/vaisseaux/SPLIT.png' },
-    [TYPE_VAISSEAU.PIERCE]: { url: './assets/img/vaisseaux/PIERCE.png' },
-    [TYPE_VAISSEAU.RICOCHET]: { url: './assets/img/vaisseaux/RICOCHET.png' },
-    [TYPE_VAISSEAU.SPREAD]: { url: './assets/img/vaisseaux/SPREAD.png' },
-    [TYPE_VAISSEAU.ENEMY]: { url: './assets/img/vaisseaux/ENEMY.png' },
-    meteorite: { url: './assets/img/meteorites/meteorite.png' },
-    dyna: { url: './assets/img/meteorites/dyna.png'  },
-    nuage: { url: './assets/img/meteorites/nuage.png'  },
-    lancer: { url: './assets/img/meteorites/drone.png'},
-    enemy: { url: './assets/img/vaisseaux/ENEMY.png' },
-    vie: { url: './assets/img/vie.png' },
-    eclair: { url: './assets/img/gadgets/eclair.png' },
-    bouclier: { url: './assets/img/gadgets/bouclier.png' },
-    mirroire: { url: './assets/img/gadgets/portail.png' },
-    rafale: { url: './assets/img/gadgets/rafale.png' },
-    gameMusic: { url: './assets/audio/ingame.mp3', buffer: true, loop: true, volume: 0.5 }
-};
-
 async function loadAssetsOnStart() {
     loadedAssets = await loadAssets(assetsToLoadURLs);
-    window.applyMusicVolume = applyMusicVolume;
+    window.applyMusicVolume = (value) => applyMusicVolumeHelper(value, loadedAssets);
+    window.applySfxVolume = (value) => applySfxVolumeHelper(value, loadedAssets);
     const savedMusicVolume = localStorage.getItem('music_volume');
     if (savedMusicVolume !== null) {
-        applyMusicVolume(Number(savedMusicVolume));
+        applyMusicVolumeHelper(Number(savedMusicVolume), loadedAssets);
+    }
+    const savedSfxVolume = localStorage.getItem('sfx_volume');
+    if (savedSfxVolume !== null) {
+        applySfxVolumeHelper(Number(savedSfxVolume), loadedAssets);
     }
 }
 
@@ -350,8 +351,7 @@ function startGame(mode) {
             3,
             shipType
         );
-    } 
-    else if (mode === 'duo') {
+    } else if (mode === 'duo') {
         levelManager = null;
         gameManager = null;
         gameManagerDuo = new GameManagerDuo(canvas, player, loadedAssets || {});
@@ -503,42 +503,8 @@ function updateGameStateDuo() {
     // Si les deux vaisseaux sont maintenant morts/absents, on déclenche le game over duo
     if (!monVaisseau && !monVaisseau2) {
         setEtat(ETAT.GAME_OVER);
+        console.log('Game Over Duo : les deux joueurs sont morts');
     }
-}
-
-function setDuelGameOverText(winnerLabel) {
-    if (gameOverTitle) gameOverTitle.textContent = 'DUEL TERMINÉ';
-    if (gameOverSubtitle) gameOverSubtitle.textContent = `${winnerLabel} gagne la partie`;
-    if (gameOverHint) gameOverHint.textContent = 'Clique sur le canvas pour revenir';
-}
-
-function updateBarreDeVie() {
-    updateLifeBars(modeActuel, monVaisseau, monVaisseau2);
-}
-
-function applyMusicVolume(value) {
-    if (loadedAssets && loadedAssets.gameMusic && typeof loadedAssets.gameMusic.volume === 'function') {
-        loadedAssets.gameMusic.volume(value / 100);
-    }
-}
-
-function setEtat(nouvelEtat) {
-    etat = appliquerEtat(
-        nouvelEtat,
-        keys,
-        settingsOverlay,
-        duoSettingsOverlay,
-        shopOverlay,
-        gameOverOverlay,
-        gameOverTitle,
-        gameOverSubtitle,
-        gameOverHint,
-        setOverlayVisibility,
-        setCanvasActive,
-        setMenuButtonsVisible,
-        setModeButtonsVisible,
-        hideLifeBars
-    );
 }
 
 const drawBullets = (vaisseau) => {
@@ -576,4 +542,35 @@ function drawPlaying() {
     drawEclairBar(ctx, monVaisseau);
     drawRafaleBar(ctx, monVaisseau);
     drawBullets(monVaisseau);
+}
+
+function updateBarreDeVie() {
+    updateLifeBars(modeActuel, monVaisseau, monVaisseau2);
+}
+
+function setEtat(nouvelEtat) {
+    etat = appliquerEtat(
+        nouvelEtat,
+        keys,
+        settingsOverlay,
+        duoSettingsOverlay,
+        shopOverlay,
+        gameOverOverlay,
+        gameOverTitle,
+        gameOverSubtitle,
+        gameOverHint,
+        setOverlayVisibility,
+        setCanvasActive,
+        setMenuButtonsVisible,
+        setModeButtonsVisible,
+        hideLifeBars
+    );
+
+    updateHudVisibility(etat);
+}
+
+function setDuelGameOverText(winnerLabel) {
+    if (gameOverTitle) gameOverTitle.textContent = 'DUEL TERMINÉ';
+    if (gameOverSubtitle) gameOverSubtitle.textContent = `${winnerLabel} gagne la partie`;
+    if (gameOverHint) gameOverHint.textContent = 'Clique sur le canvas pour revenir';
 }

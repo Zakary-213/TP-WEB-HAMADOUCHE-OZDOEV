@@ -1,11 +1,11 @@
-import Meteorite from '../entities/meteorite.js';
-import Bullet from '../entities/bullet.js';
-import Ennemi from '../entities/ennemi.js';
-import { METEORITE_CONFIG, TYPE_METEORITE } from '../entities/typeMeteorite.js';
-import Gadget from '../entities/gadget.js';
-import { TYPE_GADGET } from '../entities/typeGadget.js';
-import { TYPE_VAISSEAU } from '../entities/typeVaisseau.js';
-import { getMeteoriteImageForType, spawnImpactParticles, spawnExplosionParticles } from '../systems/meteoriteEffects.js';
+import Meteorite from '../../entities/meteorite.js';
+import Bullet from '../../entities/bullet.js';
+import Ennemi from '../../entities/ennemi.js';
+import { METEORITE_CONFIG, TYPE_METEORITE } from '../../entities/types/typeMeteorite.js';
+import Gadget from '../../entities/gadget.js';
+import { TYPE_GADGET } from '../../entities/types/typeGadget.js';
+import { TYPE_VAISSEAU } from '../../entities/types/typeVaisseau.js';
+import { getMeteoriteImageForType, spawnImpactParticles, spawnExplosionParticles } from '../../systems/meteoriteEffects.js';
 
 // Responsable de la gestion et des interactions des entités du monde
 export default class EntityManager {
@@ -104,6 +104,9 @@ export default class EntityManager {
 
 			// Explosion des météorites à timer
 			if (meteorite.shouldExplode()) {
+				if (game.assets && game.assets.explosion && typeof game.assets.explosion.play === 'function') {
+					game.assets.explosion.play();
+				}
 				// Comportement spécifique selon le type
 				if (meteorite.type === TYPE_METEORITE.NUAGE) {
 					// Le nuage n'enlève pas de vie à l'explosion :
@@ -195,6 +198,9 @@ export default class EntityManager {
 					if (vaisseau.type === TYPE_VAISSEAU.PHASE) {
 						spawnImpactParticles(game.particles, meteorite);
 						meteorites.splice(m, 1);
+						if (game.assets && game.assets.explosion && typeof game.assets.explosion.play === 'function') {
+							game.assets.explosion.play();
+						}
 						if (game.onMeteoriteDestroyed) {
 							game.onMeteoriteDestroyed(meteorite);
 						}
@@ -247,6 +253,9 @@ export default class EntityManager {
 					spawnImpactParticles(game.particles, meteorite);
 					meteorite.pv -= 1;
 					if (meteorite.pv <= 0) {
+						if (game.assets && game.assets.explosion && typeof game.assets.explosion.play === 'function') {
+							game.assets.explosion.play();
+						}
 						spawnExplosionParticles(game.particles, meteorite);
 						meteorites.splice(m, 1);
 
@@ -303,6 +312,9 @@ export default class EntityManager {
 			g.update();
 			for (const v of vaisseaux) {
 				if (g.canPickup(v)) {
+					if (game.assets && game.assets.gadget && typeof game.assets.gadget.play === 'function') {
+						game.assets.gadget.play();
+					}
 					g.pickup(v, { canvasWidth: game.canvas.width, canvasHeight: game.canvas.height });
 					break;
 				}
@@ -561,4 +573,3 @@ export default class EntityManager {
 		}
 	}
 }
-

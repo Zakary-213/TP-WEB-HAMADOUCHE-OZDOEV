@@ -1,4 +1,4 @@
-import { TYPE_GADGET } from '../entities/typeGadget.js';
+import { TYPE_GADGET } from '../entities/types/typeGadget.js';
 
 export default class Niveau {
     constructor(gameManager) {

@@ -1,4 +1,4 @@
-import {addSoloScore, addDuoScore} from '../score/scoreManager.js'
+import {addSoloScore, addDuoScore} from '../../score/scoreManager.js'
 
 export default class LevelManager {
     constructor(gameManager, levels, onLevelStart = null, onLevelEnd = null) {
@@ -43,6 +43,10 @@ export default class LevelManager {
 
         if (this.currentLevel.isFinished() && !this.currentLevel.hasEnded) {
             this.currentLevel.hasEnded = true;
+
+            if (this.gameManager.assets && this.gameManager.assets.win && typeof this.gameManager.assets.win.play === 'function') {
+                this.gameManager.assets.win.play();
+            }
 
             /* Recupération des données */ 
             const levelTime = this.currentLevel.getElapsedTime();

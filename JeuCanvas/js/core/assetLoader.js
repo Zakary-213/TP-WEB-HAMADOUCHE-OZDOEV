@@ -35,6 +35,7 @@ async function loadAssetsUsingHowlerAndNoXhr(assetsToBeLoaded) {
 
         for (name in assetsToBeLoaded) {
             var url = assetsToBeLoaded[name].url;
+            const assetName = name; // capture correct name in closures
             
             if (isImage(url)) {
                 assetsLoaded[name] = new Image();
@@ -54,11 +55,11 @@ async function loadAssetsUsingHowlerAndNoXhr(assetsToBeLoaded) {
                 assetsLoaded[name].src = url;
             } else if (isAudio(url)) {
                 // We assume the asset is an audio file
-                musicPlayed[name] = false; // Initialiser le flag pour cet audio
+                musicPlayed[assetName] = false; // Initialiser le flag pour cet audio
                 
                 assetsLoaded[name] = new Howl({
                     src: [url],
-                    format: ['mp3'],
+                    format: ['mp3', 'wav'],
                     buffer: assetsToBeLoaded[name].buffer,
                     loop: assetsToBeLoaded[name].loop,
                     autoplay: false,
@@ -67,9 +68,9 @@ async function loadAssetsUsingHowlerAndNoXhr(assetsToBeLoaded) {
                     preload: 'auto',
                     onload: function () {
                         // Jouer la musique si c'est la musique de jeu (une seule fois)
-                        if (name === 'gameMusic' && !musicPlayed[name]) {
-                            musicPlayed[name] = true;
-                            assetsLoaded[name].play();
+                        if (assetName === 'gameMusic' && !musicPlayed[assetName]) {
+                            musicPlayed[assetName] = true;
+                            assetsLoaded[assetName].play();
                         }
                     },
                     onerror: function (errorCode) {
@@ -86,9 +87,9 @@ async function loadAssetsUsingHowlerAndNoXhr(assetsToBeLoaded) {
                 
                 // Fallback timeout: si la musique ne charge pas après 2 secondes, force quand même (une seule fois)
                 setTimeout(() => {
-                    if (name === 'gameMusic' && !musicPlayed[name]) {
-                        musicPlayed[name] = true;
-                        assetsLoaded[name].play();
+                    if (assetName === 'gameMusic' && !musicPlayed[assetName]) {
+                        musicPlayed[assetName] = true;
+                        assetsLoaded[assetName].play();
                     }
                 }, 2000);
             } else {
