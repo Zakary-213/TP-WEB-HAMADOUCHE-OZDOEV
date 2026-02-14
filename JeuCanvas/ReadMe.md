@@ -6,7 +6,7 @@
 - 📌 **Météorite canvas** est un **space shooter en 2D développé en JavaScript avec le canvas HTML5** : le joueur contrôle un vaisseau spatial et affronte des vagues de météorites et d’ennemis dans un environnement entièrement dessiné et animé sur le canvas.
 - 🎯 Le cœur du projet est de proposer un gameplay arcade dynamique : esquive, tir, dash, gestion de plusieurs types de météorites et utilisation de gadgets permettent au joueur de progresser au fil des niveaux.
 - 🌌 Le jeu intègre plusieurs modes (solo, duo, duel), une boutique de vaisseaux aux comportements variés ainsi qu’un système de réglages (touches et audio) pour adapter l’expérience au joueur.
-- 🧪 Ce projet a été réalisé dans le cadre du module **TP-WEB** du professeur Michel Buffa, afin de mettre en pratique la manipulation du canvas, la gestion des collisions, l’organisation du code en modules JavaScript et la conception d’une petite architecture de jeu.
+- 🧪 Ce projet a été réalisé dans le cadre d'un **TP-WEB** du professeur Michel Buffa, afin de mettre en pratique la manipulation du canvas, la gestion des collisions, l’organisation du code en modules JavaScript et la conception d’une petite architecture de jeu.
 
 ## 2. ✨ Fonctionnalités principales
 
@@ -65,7 +65,7 @@
 
 - 🎨 **css/** : regroupe tous les fichiers de **style** du site (mise en forme de la boutique, du menu principal, des différents écrans d’interface, etc.).
 
-- 🧠 **js/core/** : correspond au **cœur logique du jeu**, structuré en **modules ES6** avec `export` et `import` pour séparer clairement les responsabilités. On y trouve notamment :
+- 🧠 **js/core/** : correspond au **cœur logique du jeu**, structuré en **modules** avec `export` et `import` pour séparer clairement les responsabilités. On y trouve notamment :
 	- le dossier **helpers/** qui contient des fonctions utilitaires, par exemple :
 		- `assetsConfig.js` qui regroupe la **configuration de tous les assets** (chemins des images, des sons, association des fichiers aux types de météorites, de gadgets, de vaisseaux, etc.).
 		- `audioHelpers.js` qui centralise la **gestion de l’audio** (chargement des sons, lecture des effets sonores, gestion de la musique en fonction des réglages).
@@ -123,7 +123,18 @@
 		- configuration des touches pour le joueur 1 et le joueur 2 (écoute des pressions de touches, vérification des conflits, sauvegarde dans le `localStorage`) ;
 		- réglage du **volume de la musique** et des **effets sonores** via des sliders, avec affichage des valeurs.
 
-## 9. 💡 Améliorations possibles
+## 9. 🏗️ Ce dont nous sommes fiers
+
+- 🧩 **Une structure de code cohérente** : malgré le grand nombre de fichiers à gérer, nous avons réussi à organiser le projet en **dossiers et modules clairement séparés** (core, entities, niveaux, systems, ui…), ce qui rend le code plus lisible et plus facile à maintenir.
+- 🧬 **Un bon usage de l’héritage** : nous sommes particulièrement fiers d’avoir mis en place une **hiérarchie de classes logique** (par exemple `ObjetGraphique` → `Vaisseau` → `Player` / `Ennemi`, ou encore `Niveau` étendu par les niveaux solo/duo) qui permet de factoriser le comportement commun et d’éviter la duplication de code.
+- 🧠 **Maîtrise de la complexité** : en créant des fichiers spécialisés (managers, systems, modèles de score, types de météorites/gadgets/vaisseaux…), nous avons pu **découper le problème** en petites briques réutilisables et garder une **architecture globale claire**, même avec beaucoup de fonctionnalités.
+
+## 10. 🤖 Utilisation de l’IA dans le projet
+
+- 🎨 **Design et styles CSS** : le professeur ne nous ayant pas demandé de nous concentrer sur la partie graphique, nous avons utilisé l’IA pour **proposer le design général** (mise en page, palettes de couleurs, organisation des menus, certains effets visuels). Nous avons ensuite **adapté et intégré ces propositions** dans nos fichiers CSS et notre interface, en gardant le focus du travail manuel sur la logique de jeu et la structure du code.
+- ✨ **Effets de particules (`particles.js`)** : ne sachant pas comment concevoir un système de particules avancé (classes `Particle` et `ParticleManager`, gestion de la durée de vie, des vitesses, des couleurs, etc.), nous nous sommes **appuyés sur l’IA pour générer une base d’implémentation**. Nous avons ensuite **ajusté ce code** pour qu’il s’intègre à notre architecture (appel depuis `meteoriteEffects.js`, paramètres adaptés aux différents types d’explosions) et corresponde au gameplay voulu.
+
+## 11. 💡 Améliorations possibles
 
 - 🗄️ **Backend pour les scores** : remplacer le stockage local (`localStorage`) par une **API backend** capable d’enregistrer et de servir les scores au format JSON (classement persistant côté serveur, meilleur partage des résultats entre joueurs).
 - 🚀 **Sélection avancée des vaisseaux en multijoueur** : permettre à chaque joueur de **choisir son vaisseau** (type de tir, capacités) dans les modes **Duo** et **Duel**, avant le lancement de la partie.
