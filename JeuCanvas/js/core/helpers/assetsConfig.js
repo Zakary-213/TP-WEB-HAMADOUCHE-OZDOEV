@@ -15,12 +15,12 @@ import { TYPE_VAISSEAU } from '../../entities/types/typeVaisseau.js';
  */
 export const assetsToLoadURLs = {
     // Vaisseaux jouables et ennemi
-    [TYPE_VAISSEAU.NORMAL]: { url: './assets/img/vaisseaux/NORMAL.png' },
-    [TYPE_VAISSEAU.SPLIT]: { url: './assets/img/vaisseaux/SPLIT.png' },
-    [TYPE_VAISSEAU.PIERCE]: { url: './assets/img/vaisseaux/PIERCE.png' },
-    [TYPE_VAISSEAU.RICOCHET]: { url: './assets/img/vaisseaux/RICOCHET.png' },
-    [TYPE_VAISSEAU.SPREAD]: { url: './assets/img/vaisseaux/SPREAD.png' },
-    [TYPE_VAISSEAU.ENEMY]: { url: './assets/img/vaisseaux/ENEMY.png' },
+    [TYPE_VAISSEAU.NORMAL]: { url: './assets/img/vaisseaux/normal.png' },
+    [TYPE_VAISSEAU.SPLIT]: { url: './assets/img/vaisseaux/split.png' },
+    [TYPE_VAISSEAU.PIERCE]: { url: './assets/img/vaisseaux/pierce.png' },
+    [TYPE_VAISSEAU.RICOCHET]: { url: './assets/img/vaisseaux/ricochet.png' },
+    [TYPE_VAISSEAU.SPREAD]: { url: './assets/img/vaisseaux/spread.png' },
+    [TYPE_VAISSEAU.ENEMY]: { url: './assets/img/vaisseaux/enemy.png' },
 
     // Météorites et variantes
     meteorite: { url: './assets/img/meteorites/meteorite.png' },
@@ -29,7 +29,7 @@ export const assetsToLoadURLs = {
     lancer: { url: './assets/img/meteorites/drone.png' },
 
     // Autres sprites
-    enemy: { url: './assets/img/vaisseaux/ENEMY.png' },
+    enemy: { url: './assets/img/vaisseaux/enemy.png' },
     vie: { url: './assets/img/vie.png' },
 
     // Gadgets
