@@ -126,22 +126,6 @@ export default class Vaisseau extends ObjetGraphique {
             this.hauteur
         );
 
-        if ( this.debugHitbox) {
-    ctx.save();
-    ctx.strokeStyle = 'red';
-    ctx.lineWidth = 1;
-
-    ctx.strokeRect(
-        -this.largeur / 2,
-        -this.hauteur / 2,
-        this.largeur,
-        this.hauteur
-    );
-
-    ctx.restore();
-}
-
-
         ctx.restore();
     }
 
