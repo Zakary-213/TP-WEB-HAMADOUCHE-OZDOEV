@@ -121,6 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const btnSolo = modeButtons.querySelector('.btn-mode-solo');
         const btnDuo = modeButtons.querySelector('.btn-mode-duo');
         const btnDuel = modeButtons.querySelector('.btn-mode-duel');
+        const btnBack = modeButtons.querySelector('.btn-mode-back');
 
         if (btnSolo) {
             btnSolo.addEventListener('click', () => {
@@ -160,6 +161,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     startGame('duel');
                     setEtat(ETAT.DUEL);
                 }
+            });
+        }
+
+        if (btnBack) {
+            btnBack.addEventListener('click', () => {
+                // Depuis l'écran de choix de mode, revenir au menu principal
+                if (etat !== ETAT.CHOIX_MODE) return;
+                setEtat(ETAT.MENU);
             });
         }
     }
