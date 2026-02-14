@@ -462,6 +462,14 @@ function updateGameState() {
         chronometre,
         formatTime
     });
+
+	// Sécurité : si le GameManager est en game over mais que
+	// l'état global n'a pas encore été basculé, on force l'affichage.
+	if (gameManager.isGameOver && typeof gameManager.isGameOver === 'function') {
+		if (gameManager.isGameOver() && etat !== ETAT.GAME_OVER) {
+			setEtat(ETAT.GAME_OVER);
+		}
+	}
 }
 
 function updateGameStateDuo() {
