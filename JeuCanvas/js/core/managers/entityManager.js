@@ -123,7 +123,6 @@ export default class EntityManager {
 
 				const explosionRadius = meteorite.explosionRadius ?? (meteorite.largeur * 2);
 				for (const v of vaisseaux) {
-					if (v.type === TYPE_VAISSEAU.PHASE && v.isDashing) continue;
 					const dx = v.x - meteorite.x;
 					const dy = v.y - meteorite.y;
 					const distSq = dx * dx + dy * dy;
@@ -148,9 +147,6 @@ export default class EntityManager {
 				);
 
 				if (collision && game.gameState === "playing") {
-					if (v.type === TYPE_VAISSEAU.PHASE && v.isDashing) {
-						continue;
-					}
 					meteorites.splice(i, 1);
 					game.gestionDegats.appliquerCoup(v, game);
 					meteoriteRemoved = true;
@@ -193,22 +189,6 @@ export default class EntityManager {
 						meteorite.largeur / 2
 					);
 					if (!collision) continue;
-
-					// Cas spécial : vaisseau PHASE détruit directement la météorite
-					if (vaisseau.type === TYPE_VAISSEAU.PHASE) {
-						spawnImpactParticles(game.particles, meteorite);
-						meteorites.splice(m, 1);
-						if (game.assets && game.assets.explosion && typeof game.assets.explosion.play === 'function') {
-							game.assets.explosion.play();
-						}
-						if (game.onMeteoriteDestroyed) {
-							game.onMeteoriteDestroyed(meteorite);
-						}
-						const goldEarned = this.getGoldForMeteorite(meteorite.type);
-						game.player.addGold(goldEarned);
-						vaisseau.bullets.splice(b, 1);
-						break;
-					}
 
 					// Météorite NUAGE : transforme en nuage sans dégâts directs
 					if (meteorite.type === TYPE_METEORITE.NUAGE) {

@@ -114,9 +114,15 @@ export default class GameManager {
     }
 
     updateGameState({ vaisseau, levelManager, keys, customKeys, setEtat, ETAT, updateBarreDeVie, chronometre, formatTime }) {
-        if (this.isGameOver()) return;
+        // Gestion du game over : si le vaisseau est mort ou inexistant,
+        // on déclenche l'état GAME_OVER (une seule fois).
         if (!vaisseau || vaisseau.estMort()) {
-            if (typeof setEtat === 'function' && ETAT) setEtat(ETAT.GAME_OVER);
+            if (!this.isGameOver()) {
+                if (typeof setEtat === 'function' && ETAT) {
+                    setEtat(ETAT.GAME_OVER);
+                }
+                this.setGameOver();
+            }
             return;
         }
 
@@ -165,31 +171,42 @@ export default class GameManager {
             const meteorite = this.meteorites[i];
             meteorite.descendre();
 
-            // DYNAMITE : tremblement avant explosion
-            if (meteorite.type === TYPE_METEORITE.DYNAMITE && meteorite.explodeAfterMs !== null) {
+            // Météorites avec timer d'explosion (dynamite, nuage, ...)
+            if (meteorite.explodeAfterMs !== null) {
                 const elapsed = Date.now() - meteorite.spawnedAt;
                 const remaining = meteorite.explodeAfterMs - elapsed;
+                // Tremblement dans la dernière fenêtre avant explosion
                 if (remaining > 0 && remaining <= this.HIT_DURATION) {
                     meteorite.startShake();
                 }
             }
 
-            // Explosion (DYNAMITE)
+            // Explosion des météorites à timer
             if (meteorite.shouldExplode()) {
                 if (this.assets && this.assets.explosion && typeof this.assets.explosion.play === 'function') {
                     this.assets.explosion.play();
                 }
+
+                // Comportement spécifique selon le type
+                if (meteorite.type === TYPE_METEORITE.NUAGE) {
+                    // Le nuage n'enlève pas de vie à l'explosion :
+                    // il crée seulement une zone de nuage
+                    this.spawnCloudZone(meteorite);
+                    spawnExplosionParticles(this.particles, meteorite);
+                    this.meteorites.splice(i, 1);
+                    continue;
+                }
+
+                // Par défaut (ex : DYNAMITE) : explosion qui peut faire des dégâts
                 spawnExplosionParticles(this.particles, meteorite);
                 this.meteorites.splice(i, 1);
 
-                if (!(vaisseau.type === TYPE_VAISSEAU.PHASE && vaisseau.isDashing)) {
-                    const explosionRadius = meteorite.explosionRadius ?? (meteorite.largeur * 2);
-                    const dx = vaisseau.x - meteorite.x;
-                    const dy = vaisseau.y - meteorite.y;
-                    const distSq = dx * dx + dy * dy;
-                    if (distSq <= explosionRadius * explosionRadius) {
-                        this.gestionDegats.appliquerCoup(vaisseau, this);
-                    }
+                const explosionRadius = meteorite.explosionRadius ?? (meteorite.largeur * 2);
+                const dx = vaisseau.x - meteorite.x;
+                const dy = vaisseau.y - meteorite.y;
+                const distSq = dx * dx + dy * dy;
+                if (distSq <= explosionRadius * explosionRadius) {
+                    this.gestionDegats.appliquerCoup(vaisseau, this);
                 }
                 continue;
             }
@@ -206,9 +223,6 @@ export default class GameManager {
             );
 
             if (collision && this.gameState === "playing") {
-                if (vaisseau.type === TYPE_VAISSEAU.PHASE && vaisseau.isDashing) {
-                    continue;
-                }
                 this.meteorites.splice(i, 1);
                 this.gestionDegats.appliquerCoup(vaisseau, this);
                 continue;
@@ -238,14 +252,6 @@ export default class GameManager {
                     meteorite.largeur / 2
                 );
                 if (collision) {
-                    if (vaisseau.type === TYPE_VAISSEAU.PHASE) {
-                        spawnImpactParticles(this.particles, meteorite);
-                        this.meteorites.splice(m, 1);
-                        if (this.onMeteoriteDestroyed) this.onMeteoriteDestroyed(meteorite);
-                        vaisseau.bullets.splice(b, 1);
-                        break;
-                    }
-
                     if (meteorite.type === TYPE_METEORITE.NUAGE && meteorite.canSplit) {
                         this.spawnCloudZone(meteorite);
                         spawnImpactParticles(this.particles, meteorite);
@@ -345,6 +351,13 @@ export default class GameManager {
 
         const imageForType = getMeteoriteImageForType(this.assets, type);
 
+        // Timer d'explosion aléatoire (>= 5s) pour DYNAMITE et NUAGE
+        const options = { imagePath: imageForType };
+        if (type === TYPE_METEORITE.DYNAMITE || type === TYPE_METEORITE.NUAGE) {
+            const minDelay = 5000; // 5s minimum
+            const maxDelay = 10000; // jusqu'à 10s
+            options.explodeAfterMs = minDelay + Math.random() * (maxDelay - minDelay);
+        }
 
         if (type === TYPE_METEORITE.LANCER && this.lastVaisseauX !== null && this.lastVaisseauY !== null) {
             const dx = this.lastVaisseauX - x;
@@ -364,9 +377,9 @@ export default class GameManager {
             if (config && config.vitesse !== undefined) {
                 speed = config.vitesse;
             }
-            meteorite = new Meteorite(x, y, type, { imagePath: imageForType, vx: vx * speed, vy: vy * speed });
+            meteorite = new Meteorite(x, y, type, { ...options, vx: vx * speed, vy: vy * speed });
         } else {
-            meteorite = new Meteorite(x, y, type, { imagePath: imageForType });
+            meteorite = new Meteorite(x, y, type, options);
         }
 
         this.meteorites.push(meteorite);
