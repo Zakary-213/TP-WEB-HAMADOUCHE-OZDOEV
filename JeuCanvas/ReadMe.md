@@ -122,6 +122,13 @@
 	- `reglage.js` : gère l’**écran de réglages** :
 		- configuration des touches pour le joueur 1 et le joueur 2 (écoute des pressions de touches, vérification des conflits, sauvegarde dans le `localStorage`) ;
 		- réglage du **volume de la musique** et des **effets sonores** via des sliders, avec affichage des valeurs.
+	- `regle.js` : gère l’**interface utilisateur des règles du jeu** :
+		- contrôle l’ouverture/fermeture de l’overlay des règles ;
+		- gère la navigation par onglets entre les différentes sections de règles ;
+		- assure l’accessibilité (attributs ARIA, gestion du focus) ;
+		- code modulaire et commenté pour faciliter la maintenance.
+		- configuration des touches pour le joueur 1 et le joueur 2 (écoute des pressions de touches, vérification des conflits, sauvegarde dans le `localStorage`) ;
+		- réglage du **volume de la musique** et des **effets sonores** via des sliders, avec affichage des valeurs.
 
 ## 9. 🏗️ Ce dont nous sommes fiers
 
