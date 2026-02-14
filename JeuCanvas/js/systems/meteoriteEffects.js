@@ -1,28 +1,49 @@
+/**
+ * @module meteoriteEffects
+ * @description Centralise les effets visuels liés aux météorites.
+ * Gère la sélection des images, les palettes de couleurs pour les systèmes de particules
+ * et les déclencheurs d'effets (impacts et explosions).
+ */
+
 import { TYPE_METEORITE } from '../entities/types/typeMeteorite.js';
 
-// Retourne le bon asset image pour un type de météorite
+/**
+ * Retourne la ressource graphique (Image) correspondant au type de météorite.
+ * @param {Object} assets - L'objet contenant toutes les images préchargées.
+ * @param {string} type - Le type de météorite (issu de TYPE_METEORITE).
+ * @returns {HTMLImageElement} L'asset image correspondant ou une image par défaut.
+ */
 export function getMeteoriteImageForType(assets, type) {
     switch (type) {
         case TYPE_METEORITE.DYNAMITE:
-            return assets.dyna || assets.meteorite;
+            return assets.dyna ?? assets.meteorite;
         case TYPE_METEORITE.NUAGE:
-            return assets.nuage || assets.meteorite;
+            return assets.nuage ?? assets.meteorite;
         case TYPE_METEORITE.LANCER:
-            return assets.lancer || assets.meteorite;
+            return assets.lancer ?? assets.meteorite;
         default:
             return assets.meteorite;
     }
 }
 
-// Palette de couleurs en fonction du type de météorite
+/**
+ * Récupère une palette de couleurs spécifique pour les particules.
+ * @param {string} type - Le type de la météorite.
+ * @param {string} [kind='impact'] - Le type d'effet ('impact' ou 'explosion').
+ * @returns {string[]} Un tableau de codes couleurs hexadécimaux.
+ */
 export function getPaletteForMeteorite(type, kind = 'impact') {
+    // Palettes de base partagées (Nuances de violet et magenta)
     const baseImpact = ['#9D4EDD', '#C77DFF', '#7B2CBF', '#B5179E'];
     const baseExplosion = ['#E0AAFF', '#C77DFF', '#9D4EDD', '#F72585', '#7209B7'];
 
+    /** * Mapping des thèmes colorimétriques par type d'entité.
+     * Permet de distinguer visuellement la dangerosité ou la nature de l'objet.
+     */
     const palettes = {
         [TYPE_METEORITE.DYNAMITE]: {
             impact: baseImpact,
-            explosion: [...baseExplosion, '#FF1493']
+            explosion: [...baseExplosion, '#FF1493'] // Ajout d'un rose vif pour l'aspect explosif
         },
         [TYPE_METEORITE.NORMAL]: {
             impact: baseImpact,
@@ -42,17 +63,34 @@ export function getPaletteForMeteorite(type, kind = 'impact') {
         }
     };
 
-    const entry = palettes[type] || palettes[TYPE_METEORITE.NORMAL];
-    return (entry && entry[kind]) ? entry[kind] : ['#FFFFFF'];
+    const entry = palettes[type] ?? palettes[TYPE_METEORITE.NORMAL];
+    return entry[kind] ?? ['#FFFFFF'];
 }
 
-// Helpers pour déclencher les particules en fonction d'une météorite
+/**
+ * Déclenche un jet de particules d'impact (lorsqu'un projectile touche la météorite).
+ * @param {ParticleSystem} particles - Le gestionnaire de particules.
+ * @param {Meteorite} meteorite - L'instance de la météorite touchée.
+ */
 export function spawnImpactParticles(particles, meteorite) {
     const palette = getPaletteForMeteorite(meteorite.type, 'impact');
-    particles.spawnImpact({ x: meteorite.x, y: meteorite.y, palette });
+    particles.spawnImpact({ 
+        x: meteorite.x, 
+        y: meteorite.y, 
+        palette 
+    });
 }
 
+/**
+ * Déclenche un effet d'explosion massif (lors de la destruction totale).
+ * @param {ParticleSystem} particles - Le gestionnaire de particules.
+ * @param {Meteorite} meteorite - L'instance de la météorite détruite.
+ */
 export function spawnExplosionParticles(particles, meteorite) {
     const palette = getPaletteForMeteorite(meteorite.type, 'explosion');
-    particles.spawnExplosion({ x: meteorite.x, y: meteorite.y, palette });
+    particles.spawnExplosion({ 
+        x: meteorite.x, 
+        y: meteorite.y, 
+        palette 
+    });
 }

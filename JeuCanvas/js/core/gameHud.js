@@ -1,36 +1,83 @@
+
+/**
+ * gameHud.js
+ *
+ * Module de gestion de l'affichage HUD (barres de vie, écrans de score, overlays, menus) pour le jeu.
+ * Centralise les fonctions utilitaires pour manipuler l'interface utilisateur du canvas et des menus.
+ *
+ * @module gameHud
+ */
+
 import { getScores } from '../score/scoreManager.js';
 
+
+/**
+ * Affiche ou masque un overlay (menu, écran de score, etc.).
+ * @param {HTMLElement} overlay - L'élément overlay à manipuler.
+ * @param {boolean} active - true pour afficher, false pour masquer.
+ */
 export const setOverlayVisibility = (overlay, active) => {
     if (!overlay) return;
     overlay.classList.toggle('active', active);
     overlay.setAttribute('aria-hidden', active ? 'false' : 'true');
 };
 
+
+/**
+ * Change le style display d'un élément DOM.
+ * @param {HTMLElement} el - Élément à modifier.
+ * @param {string} value - Valeur CSS pour display.
+ */
 const setDisplay = (el, value) => {
     if (el) el.style.display = value;
 };
 
+
+/**
+ * Active ou désactive le style "game-active" sur le canvas principal.
+ * @param {boolean} active - true pour activer, false pour désactiver.
+ */
 export const setCanvasActive = (active) => {
     const canvasEl = document.getElementById('monCanvas');
     if (!canvasEl) return;
     canvasEl.classList.toggle('game-active', active);
 };
 
+
+/**
+ * Affiche ou masque les boutons du menu principal.
+ * @param {HTMLElement} menuButtons - Conteneur des boutons de menu.
+ * @param {boolean} visible - true pour afficher, false pour masquer.
+ */
 export const setMenuButtonsVisible = (menuButtons, visible) => {
     setDisplay(menuButtons, visible ? 'flex' : 'none');
 };
 
+
+/**
+ * Affiche ou masque les boutons de sélection de mode de jeu.
+ * @param {HTMLElement} modeButtons - Conteneur des boutons de mode.
+ * @param {boolean} visible - true pour afficher, false pour masquer.
+ */
 export const setModeButtonsVisible = (modeButtons, visible) => {
     if (!modeButtons) return;
     modeButtons.style.display = visible ? 'flex' : 'none';
     modeButtons.setAttribute('aria-hidden', visible ? 'false' : 'true');
 };
 
-// Gestion des barres de vie / coeurs
+
+// =============================
+//  Gestion des barres de vie
+// =============================
 let barreVieJ1, barreVieJ2;
 let coeursJ1, coeursJ2;
 let labelJ1, labelJ2;
 
+
+/**
+ * Initialise les barres de vie et cache tous les cœurs au départ.
+ * À appeler au chargement de l'UI ou lors d'un reset.
+ */
 export function initLifeBars() {
     barreVieJ1 = document.querySelector('.barreDeVie-j1');
     barreVieJ2 = document.querySelector('.barreDeVie-j2');
@@ -45,53 +92,50 @@ export function initLifeBars() {
 }
 
 
+
+/**
+ * Met à jour l'affichage des barres de vie et des cœurs selon le mode de jeu et les points de vie des vaisseaux.
+ * @param {string} modeActuel - Mode de jeu actuel ('solo', 'duo', 'duel').
+ * @param {Object} vaisseau1 - Vaisseau du joueur 1.
+ * @param {Object} vaisseau2 - Vaisseau du joueur 2.
+ */
 export function updateLifeBars(modeActuel, vaisseau1, vaisseau2) {
     if (!coeursJ1) return;
 
-    // =========================
-    // ===== MODE SOLO =========
-    // =========================
+    // ===== MODE SOLO =====
     if (modeActuel === 'solo') {
-
         if (barreVieJ1) barreVieJ1.style.display = 'flex';
         if (barreVieJ2) barreVieJ2.style.display = 'none';
-
         if (labelJ1) labelJ1.style.display = 'none';
         if (labelJ2) labelJ2.style.display = 'none';
 
+        // Affiche le bon nombre de cœurs pour le joueur 1
         const pvSolo = vaisseau1 ? vaisseau1.pointsDeVie : 0;
-
         coeursJ1.forEach((c, i) => {
             c.style.display = i < pvSolo ? 'inline-block' : 'none';
         });
-
+        // Cache tous les cœurs du joueur 2
         if (coeursJ2) {
             coeursJ2.forEach(c => {
                 c.style.display = 'none';
             });
         }
-
         return;
     }
 
-    // =========================
-    // ===== MODE DUO / DUEL ===
-    // =========================
+    // ===== MODE DUO / DUEL =====
     if (modeActuel === 'duo' || modeActuel === 'duel') {
-
         if (barreVieJ1) barreVieJ1.style.display = 'flex';
         if (barreVieJ2) barreVieJ2.style.display = 'flex';
-
         if (labelJ1) labelJ1.style.display = '';
         if (labelJ2) labelJ2.style.display = '';
 
+        // Affiche le bon nombre de cœurs pour chaque joueur
         const pv1 = vaisseau1 ? vaisseau1.pointsDeVie : 0;
         const pv2 = vaisseau2 ? vaisseau2.pointsDeVie : 0;
-
         coeursJ1.forEach((c, i) => {
             c.style.display = i < pv1 ? 'inline-block' : 'none';
         });
-
         if (coeursJ2) {
             coeursJ2.forEach((c, i) => {
                 c.style.display = i < pv2 ? 'inline-block' : 'none';
@@ -101,23 +145,33 @@ export function updateLifeBars(modeActuel, vaisseau1, vaisseau2) {
 }
 
 
+
+/**
+ * Masque les barres de vie des deux joueurs.
+ */
 export function hideLifeBars() {
     setDisplay(barreVieJ1, 'none');
     setDisplay(barreVieJ2, 'none');
 }
 
-// ========================
-//  Gestion écran de score
-// ========================
 
-let scoreMode = 'solo';
-let scoreScrollOffset = 0;
+let scoreMode = 'solo'; // 'solo' ou 'duo'
+let scoreScrollOffset = 0; // Décalage vertical pour le scroll
 
+
+/**
+ * Réinitialise l'écran de score (mode solo, scroll en haut).
+ */
 export function resetScoreView() {
     scoreMode = 'solo';
     scoreScrollOffset = 0;
 }
 
+
+/**
+ * Change le mode d'affichage du score (solo ou duo).
+ * @param {string} mode - 'solo' ou 'duo'.
+ */
 export function setScoreMode(mode) {
     if (mode === 'solo' || mode === 'duo') {
         scoreMode = mode;
@@ -125,129 +179,126 @@ export function setScoreMode(mode) {
     }
 }
 
+
+/**
+ * Fait défiler l'écran de score verticalement.
+ * @param {number} deltaY - Variation de la molette ou du scroll.
+ */
 export function scrollScore(deltaY) {
     scoreScrollOffset += deltaY * 0.5;
     if (scoreScrollOffset < 0) scoreScrollOffset = 0;
 }
 
+
+/**
+ * Gère le clic sur l'écran de score (changement d'onglet ou retour menu).
+ * @param {HTMLCanvasElement} canvas - Canvas du jeu.
+ * @param {MouseEvent} event - Événement de clic.
+ * @param {Function} setEtat - Fonction pour changer l'état du jeu.
+ * @param {Object} ETAT - Enum des états du jeu.
+ */
 export function handleScoreScreenClick(canvas, event, setEtat, ETAT) {
     const rect = canvas.getBoundingClientRect();
     const mouseX = event.clientX - rect.left;
     const mouseY = event.clientY - rect.top;
 
+    // Calcul des positions des onglets
     const cardHeight = 520;
     const cardY = (canvas.height - cardHeight) / 2;
     const tabY = cardY + 45;
-
     const centerX = canvas.width / 2;
     const tabOffset = 60;
-
     const soloX = centerX - tabOffset;
     const duoX = centerX + tabOffset;
 
-    // Zone verticale cliquable des onglets
+    // Si clic sur un onglet (solo/duo)
     if (mouseY >= tabY - 20 && mouseY <= tabY + 10) {
         if (Math.abs(mouseX - soloX) < 50) {
             setScoreMode('solo');
             return;
         }
-
         if (Math.abs(mouseX - duoX) < 50) {
             setScoreMode('duo');
             return;
         }
     }
-
-    // Sinon retour menu
+    // Sinon, retour au menu principal
     setEtat(ETAT.MENU);
 }
 
+
+/**
+ * Formate un temps en ms en chaîne "mm:ss".
+ * @param {number} ms - Temps en millisecondes.
+ * @returns {string} Temps formaté.
+ */
 export function formatTime(ms) {
     const totalSeconds = Math.floor(ms / 1000);
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
-
     return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
+
+/**
+ * Dessine l'écran de score (solo ou duo) sur le canvas.
+ * @param {CanvasRenderingContext2D} ctx - Contexte de rendu du canvas.
+ * @param {HTMLCanvasElement} canvas - Canvas du jeu.
+ */
 export function drawScoreScreen(ctx, canvas) {
-
     const scores = getScores(scoreMode);
-
+    // Dimensions de la carte centrale
     const cardWidth = 440;
     const cardHeight = 520;
-
     const cardX = (canvas.width - cardWidth) / 2;
     const cardY = (canvas.height - cardHeight) / 2;
-
     const contentPadding = 40;
     const lineHeight = 22;
 
-    // =========================
-    // ===== FOND CARTE ========
-    // =========================
+    // ===== FOND CARTE =====
     ctx.fillStyle = '#1f2235';
     ctx.beginPath();
     ctx.roundRect(cardX, cardY, cardWidth, cardHeight, 20);
     ctx.fill();
 
-    // =========================
-    // ===== ONGLET TABS =======
-    // =========================
-
+    // ===== ONGLET TABS =====
     const centerX = canvas.width / 2;
     const tabY = cardY + 45;
-
     const tabOffset = 60; // Distance par rapport au centre
-
     const soloX = centerX - tabOffset;
     const duoX = centerX + tabOffset;
-
     ctx.font = '18px Arial';
     ctx.textAlign = 'center';
-
     ctx.fillStyle = scoreMode === 'solo' ? '#f1c40f' : 'white';
     ctx.fillText('SOLO', soloX, tabY);
-
     ctx.fillStyle = scoreMode === 'duo' ? '#f1c40f' : 'white';
     ctx.fillText('DUO', duoX, tabY);
 
-    // =========================
-    // ===== TITRE ============
-    // =========================
+    // ===== TITRE =====
     ctx.fillStyle = 'white';
     ctx.font = '24px Arial';
     ctx.fillText('CLASSEMENT', centerX, cardY + 90);
 
-    // =========================
     // ===== ZONE CONTENU =====
-    // =========================
-
     const contentX = cardX + contentPadding;
     const contentY = cardY + 110;
     const contentWidth = cardWidth - contentPadding * 2;
     const contentHeight = cardHeight - 170;
-
     let totalContentHeight = 0;
-
+    // Calcul de la hauteur totale du contenu pour le scroll
     scores.forEach(score => {
-
         if (scoreMode === 'solo') {
             totalContentHeight += 25;
             totalContentHeight += score.niveaux.length * lineHeight;
             totalContentHeight += 35;
-        }
-
-        else if (scoreMode === 'duo') {
+        } else if (scoreMode === 'duo') {
             totalContentHeight += 25;
             totalContentHeight += score.niveaux.length * (lineHeight * 2);
             totalContentHeight += lineHeight * 2;
             totalContentHeight += 20;
         }
     });
-
     const maxScroll = Math.max(0, totalContentHeight - contentHeight);
-
     if (scoreScrollOffset > maxScroll) scoreScrollOffset = maxScroll;
     if (scoreScrollOffset < 0) scoreScrollOffset = 0;
 
@@ -255,159 +306,119 @@ export function drawScoreScreen(ctx, canvas) {
     ctx.beginPath();
     ctx.rect(contentX, contentY, contentWidth, contentHeight);
     ctx.clip();
-
     ctx.textAlign = 'left';
-
     let y = contentY + 20 - scoreScrollOffset;
 
     scores.forEach((score, index) => {
-
-        // ================= SOLO =================
+        // ===== SOLO =====
         if (scoreMode === 'solo') {
-
             if (!score.pseudo) return;
-
             ctx.fillStyle = '#f1c40f';
             ctx.font = '18px Arial';
             ctx.fillText(`${index + 1}. ${score.pseudo}`, contentX, y);
             y += 25;
-
             ctx.fillStyle = 'white';
             ctx.font = '15px Arial';
-
             score.niveaux.forEach(lvl => {
-
+                // Affichage du temps et du nombre de météorites pour chaque niveau
                 const minutes = Math.floor(lvl.time / 60000);
                 const seconds = Math.floor((lvl.time % 60000) / 1000);
-                const timeFormatted =
-                    `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-
+                const timeFormatted = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
                 ctx.fillText(
                     `N${lvl.niveau} : ${timeFormatted} - ${lvl.meteorites} météorites`,
                     contentX + 20,
                     y
                 );
-
                 y += lineHeight;
             });
-
+            // Affichage du total
             const totalMinutes = Math.floor(score.totalTime / 60000);
             const totalSeconds = Math.floor((score.totalTime % 60000) / 1000);
-            const totalFormatted =
-                `${String(totalMinutes).padStart(2, '0')}:${String(totalSeconds).padStart(2, '0')}`;
-
+            const totalFormatted = `${String(totalMinutes).padStart(2, '0')}:${String(totalSeconds).padStart(2, '0')}`;
             ctx.fillStyle = '#00ffaa';
             ctx.fillText(
                 `TOTAL : ${totalFormatted} - ${score.totalMeteorites} météorites`,
                 contentX + 20,
                 y
             );
-
             y += 35;
         }
-
-        // ================= DUO =================
+        // ===== DUO =====
         else if (scoreMode === 'duo') {
-
             const joueur1 = score.joueurs[0];
             const joueur2 = score.joueurs[1];
-
             if (!joueur1 || !joueur2) return;
-
             ctx.font = '18px Arial';
-
             ctx.fillStyle = 'white';
             ctx.fillText(`${index + 1}.`, contentX, y);
-
             const numberWidth = ctx.measureText(`${index + 1}. `).width;
-
             ctx.fillStyle = '#3498db';
             ctx.fillText(joueur1.pseudo, contentX + numberWidth, y);
-
             const pseudoWidth = ctx.measureText(joueur1.pseudo).width;
-
             ctx.fillStyle = 'white';
             ctx.fillText(" & ", contentX + numberWidth + pseudoWidth, y);
-
             const andWidth = ctx.measureText(" & ").width;
-
             ctx.fillStyle = '#e74c3c';
             ctx.fillText(
                 joueur2.pseudo,
                 contentX + numberWidth + pseudoWidth + andWidth,
                 y
             );
-
             y += 25;
-
             score.niveaux.forEach((lvlTime, i) => {
-
+                // Affichage du temps pour chaque niveau
                 const minutes = Math.floor(lvlTime.time / 60000);
                 const seconds = Math.floor((lvlTime.time % 60000) / 1000);
-                const timeFormatted =
-                    `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-
+                const timeFormatted = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
                 ctx.fillStyle = 'white';
                 ctx.fillText(
                     `N${lvlTime.niveau} : ${timeFormatted}`,
                     contentX + 20,
                     y
                 );
-
                 y += lineHeight;
-
+                // Affichage du nombre de météorites pour chaque joueur
                 ctx.fillStyle = '#3498db';
                 ctx.fillText(
                     `${joueur1.pseudo} : ${joueur1.niveaux[i].meteorites}`,
                     contentX + 40,
                     y
                 );
-
                 ctx.fillStyle = '#e74c3c';
                 ctx.fillText(
                     `${joueur2.pseudo} : ${joueur2.niveaux[i].meteorites}`,
                     contentX + 220,
                     y
                 );
-
                 y += lineHeight;
             });
-
+            // Affichage du total
             const totalMinutes = Math.floor(score.totalTime / 60000);
             const totalSeconds = Math.floor((score.totalTime % 60000) / 1000);
-            const totalFormatted =
-                `${String(totalMinutes).padStart(2, '0')}:${String(totalSeconds).padStart(2, '0')}`;
-
+            const totalFormatted = `${String(totalMinutes).padStart(2, '0')}:${String(totalSeconds).padStart(2, '0')}`;
             ctx.fillStyle = '#00ffaa';
             ctx.fillText(
                 `TOTAL : ${totalFormatted}`,
                 contentX + 20,
                 y
             );
-
             y += lineHeight;
-
             ctx.fillStyle = '#3498db';
             ctx.fillText(
                 `${joueur1.pseudo} : ${joueur1.totalMeteorites}`,
                 contentX + 40,
                 y
             );
-
             ctx.fillStyle = '#e74c3c';
             ctx.fillText(
                 `${joueur2.pseudo} : ${joueur2.totalMeteorites}`,
                 contentX + 220,
                 y
             );
-
             y += 35;
         }
-
     });
-
     ctx.restore();
-
     ctx.textAlign = 'center';
     ctx.fillStyle = 'white';
     ctx.font = '14px Arial';

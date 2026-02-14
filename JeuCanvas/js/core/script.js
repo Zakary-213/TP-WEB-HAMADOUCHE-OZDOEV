@@ -1,3 +1,9 @@
+/**
+ * @module script
+ * Point d'entrée principal du jeu : initialise le canvas, gère les états globaux,
+ * et orchestre les interactions entre les différents modules (GameManager, LevelManager, UI, etc.).
+ */
+
 import Vaisseau from '../entities/vaisseau.js';
 import GameManager from './managers/gameManager.js';
 import GameManagerDuo from './managers/gameManagerDuo.js';
@@ -29,24 +35,33 @@ import {
     formatTime
 } from './gameHud.js';
 
+
+
+/** @type {HTMLCanvasElement} */
 let canvas, ctx;
-
-let monVaisseau, monVaisseau2, gameManager, gameManagerDuo;
-
+/** Vaisseaux actifs (solo ou duo) */
+let monVaisseau, monVaisseau2;
+/** Gestionnaires principaux */
+let gameManager, gameManagerDuo;
+/** État global du jeu */
 let etat = ETAT.MENU, modeActuel = 'solo', loadedAssets, keys = inputStates;
-
+/** Joueur principal (profil, boutique, etc.) */
 const player = new Player();
-// AVANT CANVAS --> W = 500 / H = 600
+/** Dimensions de base du canvas */
 const BASE_CANVAS_WIDTH = 500, BASE_CANVAS_HEIGHT = 600;
-
+/** Éléments d'UI */
 let settingsOverlay, duoSettingsOverlay, settingsClose, menuButtons, modeButtons;
 let gameOverOverlay, shopOverlay, shopClose, btnBoutique, boutiqueUI = null;
-
 let gameOverTitle, gameOverSubtitle, gameOverHint, duoSettingsTitle, duoStartBtn;
-
 let chronometre, meteoriteCountElement, levelTransition, destroyedMeteorites = 0, gameHud;
 let levelManager, levelManagerDuo, pendingMode = 'duo';
 
+
+/**
+ * Vérifie si l'état courant correspond à un état de jeu actif (affichage du canvas).
+ * @param {string} state - État courant.
+ * @returns {boolean}
+ */
 const isJeuState = (state) => {
     return state === ETAT.JEU ||
         state === ETAT.DUEL ||
@@ -55,23 +70,47 @@ const isJeuState = (state) => {
         state === ETAT.SCORE;
 };
 
+
+/**
+ * Affiche ou masque les boutons du menu principal.
+ * @param {boolean} visible
+ */
 const setMenuButtonsVisible = (visible) => {
     setMenuButtonsVisibleUI(menuButtons, visible);
 };
 
+
+/**
+ * Affiche ou masque les boutons de sélection de mode.
+ * @param {boolean} visible
+ */
 const setModeButtonsVisible = (visible) => {
     setModeButtonsVisibleUI(modeButtons, visible);
 };
 
+
+/**
+ * Masque les barres de vie.
+ */
 const hideLifeBars = () => {
     hideLifeBarsUI();
 };
 
+
+/**
+ * Affiche ou masque le HUD du jeu.
+ * @param {boolean} visible
+ */
 const setHudVisible = (visible) => {
     if (!gameHud) return;
     gameHud.style.display = visible ? '' : 'none';
 };
 
+
+/**
+ * Met à jour la visibilité du HUD selon l'état courant.
+ * @param {string} etatCourant
+ */
 const updateHudVisibility = (etatCourant) => {
     const visible =
         etatCourant === ETAT.JEU ||
@@ -80,12 +119,42 @@ const updateHudVisibility = (etatCourant) => {
     setHudVisible(visible);
 };
 
+
+/**
+ * Définit les vaisseaux actifs (solo ou duo).
+ * @param {Object} vaisseau1
+ * @param {Object} vaisseau2
+ */
 const setVaisseaux = (vaisseau1, vaisseau2) => {
     monVaisseau = vaisseau1;
     monVaisseau2 = vaisseau2;
 };
 
+
+/**
+ * Retourne les vaisseaux actifs.
+ * @returns {{vaisseau1: Object, vaisseau2: Object}}
+ */
 const getVaisseaux = () => ({ vaisseau1: monVaisseau, vaisseau2: monVaisseau2 });
+
+
+/**
+ * Démarre la musique de jeu si elle n'est pas déjà en cours.
+ */
+const playGameMusicIfAvailable = () => {
+    if (!loadedAssets || !loadedAssets.gameMusic) return;
+    const music = loadedAssets.gameMusic;
+    if (typeof music.play === 'function') {
+        // Éviter de relancer la musique si elle est déjà en cours
+        if (typeof music.playing === 'function') {
+            if (!music.playing()) {
+                music.play();
+            }
+        } else {
+            music.play();
+        }
+    }
+};
 
 document.addEventListener('DOMContentLoaded', () => {
     canvas = document.getElementById('monCanvas');
@@ -316,8 +385,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // On lance la boucle d'animation dès le menu
     requestAnimationFrame(gameLoop);
+
+    // Démarrer la musique dès la toute première interaction utilisateur
+    const startMusicOnFirstInteraction = () => {
+        playGameMusicIfAvailable();
+        // On enlève ces écouteurs après la première tentative
+        document.removeEventListener('click', startMusicOnFirstInteraction);
+        document.removeEventListener('keydown', startMusicOnFirstInteraction);
+    };
+    document.addEventListener('click', startMusicOnFirstInteraction);
+    document.addEventListener('keydown', startMusicOnFirstInteraction);
 });
 
+
+/**
+ * Charge tous les assets du jeu au démarrage et applique les volumes sauvegardés.
+ * @returns {Promise<void>}
+ */
 async function loadAssetsOnStart() {
     loadedAssets = await loadAssets(assetsToLoadURLs);
     window.applyMusicVolume = (value) => applyMusicVolumeHelper(value, loadedAssets);
@@ -332,6 +416,12 @@ async function loadAssetsOnStart() {
     }
 }
 
+
+/**
+ * Lance la transition de niveau solo.
+ * @param {number} levelIndex
+ * @param {Function} doneCallback
+ */
 const transitionSolo = (levelIndex, doneCallback) =>
     transitionSoloLevel({
         levelIndex,
@@ -342,21 +432,30 @@ const transitionSolo = (levelIndex, doneCallback) =>
         setEtat
 });
 
+/**
+ * Lance la transition de niveau duo.
+ * @param {number} levelIndex
+ * @param {Function} doneCallback
+ */
 const transitionDuo = (levelIndex, doneCallback) =>
-transitionDuoLevel({
-    levelIndex,
-    doneCallback,
-    levelTransition,
-    LEVELS_DUO,
-    ETAT,
-    setEtat
+    transitionDuoLevel({
+        levelIndex,
+        doneCallback,
+        levelTransition,
+        LEVELS_DUO,
+        ETAT,
+        setEtat
 });
 
+
+/**
+ * Démarre une nouvelle partie selon le mode choisi (solo, duo, duel).
+ * Initialise les gestionnaires, vaisseaux, compteurs, et la musique.
+ * @param {string} mode - 'solo', 'duo' ou 'duel'
+ */
 function startGame(mode) {
     modeActuel = mode;
-    
     resetDuelState();
-
     if (mode === 'solo') {
         monVaisseau2 = null;
         gameManager = new GameManager(canvas, player, loadedAssets);
@@ -443,9 +542,16 @@ function startGame(mode) {
         });
     }
 
+	// Lancer la musique de jeu dès que le joueur choisit un mode
+	playGameMusicIfAvailable();
+
     updateBarreDeVie();
 }
 
+
+/**
+ * Boucle principale d'animation du jeu (draw + update + relance).
+ */
 function gameLoop() {
     // Ne dessiner le canvas que quand il est visible
     if (isJeuState(etat)) {
@@ -456,16 +562,17 @@ function gameLoop() {
         } else {
             drawPlaying();
         }
-        //drawPlaying();
     }
-
     // Mettre à jour l'état du jeu
     updateGameState();
-
     // Relancer la boucle
     requestAnimationFrame(gameLoop);
 }
 
+
+/**
+ * Met à jour l'état du jeu selon le mode (solo, duo, duel).
+ */
 function updateGameState() {
     if (etat !== ETAT.JEU && etat !== ETAT.DUEL) return;
     if (modeActuel === 'duo') {
@@ -486,9 +593,7 @@ function updateGameState() {
         });
         return;
     }
-
     if (!gameManager || !monVaisseau || !levelManager) return;
-
     gameManager.updateGameState({
         vaisseau: monVaisseau,
         levelManager,
@@ -510,10 +615,13 @@ function updateGameState() {
 	}
 }
 
+
+/**
+ * Met à jour l'état du jeu en mode duo (contrôles, collisions, chronomètre, fin de partie).
+ */
 function updateGameStateDuo() {
     // Si le gestionnaire duo n'existe pas, on ne fait rien
     if (!gameManagerDuo) return;
-
     gameManagerDuo.updateGameStateDuo({
         vaisseau1: monVaisseau,
         vaisseau2: monVaisseau2,
@@ -527,7 +635,6 @@ function updateGameStateDuo() {
         chronometre,
         formatTime
     });
-
     // Après la mise à jour des collisions, vérifier si un des deux vaisseaux est mort
     if (monVaisseau && typeof monVaisseau.estMort === 'function' && monVaisseau.estMort()) {
         monVaisseau = null;
@@ -535,9 +642,7 @@ function updateGameStateDuo() {
     if (monVaisseau2 && typeof monVaisseau2.estMort === 'function' && monVaisseau2.estMort()) {
         monVaisseau2 = null;
     }
-
     updateBarreDeVie();
-
 	// Mettre à jour le chronomètre en fonction du niveau duo courant
 	if (levelManagerDuo) {
 		const level = levelManagerDuo.getCurrentLevel();
@@ -545,7 +650,6 @@ function updateGameStateDuo() {
 			chronometre.textContent = formatTime(level.getElapsedTime());
 		}
 	}
-
     // Si les deux vaisseaux sont maintenant morts/absents, on déclenche le game over duo
     if (!monVaisseau && !monVaisseau2) {
         setEtat(ETAT.GAME_OVER);
@@ -553,6 +657,11 @@ function updateGameStateDuo() {
     }
 }
 
+
+/**
+ * Dessine tous les projectiles d'un vaisseau.
+ * @param {Object} vaisseau
+ */
 const drawBullets = (vaisseau) => {
     ctx.save();
     if (!vaisseau) return;
@@ -563,13 +672,16 @@ const drawBullets = (vaisseau) => {
     ctx.restore();
 };
 
+
+/**
+ * Dessine la scène de jeu courante (vaisseaux, entités, effets, projectiles).
+ */
 function drawPlaying() {
     ctx.save();
     if (modeActuel === 'duel') {
         drawDuel(ctx, getVaisseaux);
         return;
     }
-
     if (modeActuel === 'duo') {
         if (!gameManagerDuo) return;
         if (!monVaisseau && !monVaisseau2) return;
@@ -578,13 +690,11 @@ function drawPlaying() {
         drawBullets(monVaisseau2);
         return;
     }
-
     if (!gameManager || !monVaisseau) return;
     if (gameManager.isHit()) {
         monVaisseau.draw(ctx);
         return;
     }
-
     gameManager.draw(ctx);
     monVaisseau.draw(ctx);
     drawShieldBubble(ctx, monVaisseau);
@@ -594,10 +704,19 @@ function drawPlaying() {
     ctx.restore();
 }
 
+
+/**
+ * Met à jour l'affichage des barres de vie selon le mode et les vaisseaux.
+ */
 function updateBarreDeVie() {
     updateLifeBars(modeActuel, monVaisseau, monVaisseau2);
 }
 
+
+/**
+ * Change l'état global du jeu et met à jour l'UI en conséquence.
+ * @param {string} nouvelEtat
+ */
 function setEtat(nouvelEtat) {
     etat = appliquerEtat(
         nouvelEtat,
@@ -615,10 +734,14 @@ function setEtat(nouvelEtat) {
         setModeButtonsVisible,
         hideLifeBars
     );
-
     updateHudVisibility(etat);
 }
 
+
+/**
+ * Met à jour le texte de l'écran de fin de duel.
+ * @param {string} winnerLabel
+ */
 function setDuelGameOverText(winnerLabel) {
     if (gameOverTitle) gameOverTitle.textContent = 'DUEL TERMINÉ';
     if (gameOverSubtitle) gameOverSubtitle.textContent = `${winnerLabel} gagne la partie`;

@@ -1,5 +1,17 @@
+// Helpers pour gérer le volume de la musique et des effets sonores
+// à partir des sliders d'options. Ces fonctions utilisent la
+// configuration définie dans assetsConfig.js pour appliquer un
+// volume relatif à chaque son.
+
 import { assetsToLoadURLs } from './assetsConfig.js';
 
+/**
+ * Applique le volume de la musique principale (gameMusic)
+ * en fonction d'une valeur de slider comprise entre 0 et 100.
+ *
+ * @param {number} value - Pourcentage de volume (0 → 100).
+ * @param {Object} loadedAssets - Dictionnaire des Howl chargés.
+ */
 export function applyMusicVolume(value, loadedAssets) {
     if (!loadedAssets) return;
 
@@ -13,6 +25,13 @@ export function applyMusicVolume(value, loadedAssets) {
     }
 }
 
+/**
+ * Applique le volume global des effets sonores (explosion, life, gadget, win)
+ * en gardant leurs volumes de base définis dans assetsConfig.js.
+ *
+ * @param {number} value - Pourcentage de volume (0 → 100).
+ * @param {Object} loadedAssets - Dictionnaire des Howl chargés.
+ */
 export function applySfxVolume(value, loadedAssets) {
     if (!loadedAssets) return;
 

@@ -1,3 +1,10 @@
+/**
+                 * Classe représentant un projectile (balle) tiré par un vaisseau.
+                 * Gère la position, le déplacement, le dessin et la gestion des rebonds.
+                 *
+                 * @module Bullet
+                 */
+
 export default class Bullet {
     constructor(char) {
         this.x = char.x;

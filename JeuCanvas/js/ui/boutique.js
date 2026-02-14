@@ -1,10 +1,23 @@
+/**
+ * @module Boutique
+ * @description Gère le système d'achat et d'équipement des vaisseaux, ainsi que 
+ * l'interface utilisateur du carrousel de la boutique.
+ */
+
 import { TYPE_VAISSEAU } from '../entities/types/typeVaisseau.js';
 
+/**
+ * @class Boutique
+ * @description Logique interne de la boutique : catalogue, vérification des prix et transactions.
+ */
 export default class Boutique {
+    /**
+     * @param {Player} player - L'instance du joueur pour gérer l'or et l'inventaire.
+     */
     constructor(player) {
         this.player = player;
 
-        // Catalogue officiel de la boutique
+        /** @type {Array<Object>} Catalogue des vaisseaux disponibles */
         this.ships = [
             {
                 id: TYPE_VAISSEAU.NORMAL,
@@ -39,39 +52,46 @@ export default class Boutique {
         ];
     }
 
-    /* =============================
-       GETTERS
-    ============================= */
+    // --- Accesseurs (Getters) ---
 
+    /** @returns {Array} La liste complète des vaisseaux du catalogue. */
     getAllShips() {
         return this.ships;
     }
 
+    /** @param {string} shipId @returns {Object|undefined} */
     getShipById(shipId) {
         return this.ships.find(ship => ship.id === shipId);
     }
 
+    /** @param {string} shipId @returns {boolean} */
     isOwned(shipId) {
         return this.player.hasShip(shipId);
     }
 
+    /** @param {string} shipId @returns {boolean} */
     isEquipped(shipId) {
         return this.player.getEquippedShip() === shipId;
     }
 
-    /* =============================
-       ACHAT
-    ============================= */
+    // --- Logique d'Achat ---
 
+    /**
+     * Vérifie si un vaisseau peut être acheté.
+     * @param {string} shipId 
+     * @returns {boolean}
+     */
     canBuy(shipId) {
         const ship = this.getShipById(shipId);
-        if (!ship) return false;
-
-        if (this.isOwned(shipId)) return false;
-
+        if (!ship || this.isOwned(shipId)) return false;
         return this.player.gold >= ship.price;
     }
 
+    /**
+     * Effectue la transaction d'achat.
+     * @param {string} shipId 
+     * @returns {boolean} True si l'achat est validé.
+     */
     buy(shipId) {
         const ship = this.getShipById(shipId);
 
@@ -90,22 +110,34 @@ export default class Boutique {
             return false;
         }
 
+        // Débit du compte et ajout à l'inventaire
         this.player.spendGold(ship.price);
         this.player.addShip(shipId);
         return true;
     }
 
+    /**
+     * Équipe le vaisseau sélectionné.
+     * @param {string} shipId 
+     */
     equip(shipId) {
         return this.player.equipShip(shipId);
     }
 }
 
-export class BoutiqueUI{
-    constructor(player){
+/**
+ * @class BoutiqueUI
+ * @description Gère l'affichage du carrousel de la boutique et les interactions DOM.
+ */
+export class BoutiqueUI {
+    /**
+     * @param {Player} player - Instance du joueur.
+     */
+    constructor(player) {
         this.player = player;
         this.boutique = new Boutique(player);
-        // Liste fixe de tous les types de vaisseaux affichés dans la boutique,
-        // indépendamment de ce qu'il y a dans le localStorage.
+        
+        // Liste ordonnée des vaisseaux pour le carrousel
         this.shipIds = [
             TYPE_VAISSEAU.NORMAL,
             TYPE_VAISSEAU.SPLIT,
@@ -113,41 +145,50 @@ export class BoutiqueUI{
             TYPE_VAISSEAU.RICOCHET,
             TYPE_VAISSEAU.PIERCE
         ];
+        
         this.currentShipIndex = 0;
+
+        // Références DOM
         this.buyButton = document.querySelector('.ship-action');
         this.shopGold = document.querySelector('.shop-gold');
         this.shopShips = document.querySelectorAll('.ship');
         this.shopName = document.querySelector('.ship-name');
         this.shopDescription = document.querySelector('.ship-description');
         this.shopStatus = document.querySelector('.ship-status');
-
         this.carouselLeftButton = document.querySelector('.shop-arrow.left');
         this.carouselRightButton = document.querySelector('.shop-arrow.right');
 
+        this._initListeners();
         this.updateGold();
         this.updateShipInfo();
+    }
 
-        this.carouselLeftButton.addEventListener('click', () => {
+    /**
+     * Initialise les écouteurs d'événements pour la navigation et l'achat.
+     * @private
+     */
+    _initListeners() {
+        // Navigation Gauche
+        this.carouselLeftButton?.addEventListener('click', () => {
             const total = this.shipIds.length;
-            if (total === 0) return;
             this.currentShipIndex = (this.currentShipIndex - 1 + total) % total;
             this.updateShipInfo();
         });
 
-        this.carouselRightButton.addEventListener('click', () => {
+        // Navigation Droite
+        this.carouselRightButton?.addEventListener('click', () => {
             const total = this.shipIds.length;
-            if (total === 0) return;
             this.currentShipIndex = (this.currentShipIndex + 1) % total;
             this.updateShipInfo();
         });
 
-        this.buyButton.addEventListener('click', () => {
+        // Action principale (Acheter / Équiper)
+        this.buyButton?.addEventListener('click', () => {
             const currentShipId = this.shipIds[this.currentShipIndex];
 
-            // Si le vaisseau n'est pas encore possédé, tenter de l'acheter
+            // Cas : Achat
             if (!this.player.hasShip(currentShipId)) {
-                const success = this.boutique.buy(currentShipId);
-                if (success) {
+                if (this.boutique.buy(currentShipId)) {
                     this.updateGold();
                     this.player.equipShip(currentShipId);
                     this.updateShipInfo();
@@ -155,58 +196,48 @@ export class BoutiqueUI{
                 return;
             }
 
-            // Sinon, juste l'équiper
-            if (this.player.getEquippedShip() === currentShipId) {
-                return;
+            // Cas : Équiper
+            if (this.player.getEquippedShip() !== currentShipId) {
+                this.player.equipShip(currentShipId);
+                this.updateShipInfo();
             }
-            this.player.equipShip(currentShipId);
-            this.updateShipInfo();
         });
     }
 
-    updateGold(){
-        this.shopGold.textContent = `💰 ${this.player.gold}`;
+    /** Met à jour l'affichage du solde du joueur. */
+    updateGold() {
+        if (this.shopGold) this.shopGold.textContent = `💰 ${this.player.gold}`;
     }
 
-    updateShipInfo(){
+    /**
+     * Met à jour l'ensemble des textes, images et états du carrousel.
+     */
+    updateShipInfo() {
         const total = this.shipIds.length;
         if (total === 0) return;
 
         const currentShipId = this.shipIds[this.currentShipIndex];
+        const shipData = this.boutique.getShipById(currentShipId);
 
-        // Nom + description selon le type de vaisseau
-        let name = currentShipId;
-        let description = "Description du vaisseau à définir";
-        switch (currentShipId) {
-            case TYPE_VAISSEAU.NORMAL:
-                name = "Vaisseau Classique";
-                description = "Équilibré et fiable pour débuter.";
-                break;
-            case TYPE_VAISSEAU.SPLIT:
-                name = "Vaisseau Split";
-                description = "Tirs qui se divisent à l’impact.";
-                break;
-            case TYPE_VAISSEAU.SPREAD:
-                name = "Vaisseau Spread";
-                description = "Tir double pour couvrir plus de zone.";
-                break;
-            case TYPE_VAISSEAU.RICOCHET:
-                name = "Vaisseau Ricochet";
-                description = "Les balles rebondissent sur les bords du canvas.";
-                break;
-            case TYPE_VAISSEAU.PIERCE:
-                name = "Vaisseau Pierce";
-                description = "Les tirs traversent plusieurs météorites.";
-                break;
-        }
+        // 1. Mise à jour des textes descriptifs
+        if (this.shopName) this.shopName.textContent = shipData?.name || currentShipId;
+        if (this.shopDescription) this.shopDescription.textContent = shipData?.description || "";
 
-        this.shopName.textContent = name;
-        this.shopDescription.textContent = description;
+        // 2. Mise à jour du statut (Possédé, Équipé, etc.)
+        this._updateActionStatus(currentShipId);
 
-        const isOwned = this.player.hasShip(currentShipId);
-        const isEquipped = this.player.getEquippedShip() === currentShipId;
+        // 3. Mise à jour visuelle du carrousel (Images)
+        this._updateCarouselVisuals(total);
+    }
 
-        // Texte du statut ET du bouton selon l'état
+    /**
+     * Gère l'affichage du bouton d'action et du label de statut.
+     * @private
+     */
+    _updateActionStatus(shipId) {
+        const isOwned = this.player.hasShip(shipId);
+        const isEquipped = this.player.getEquippedShip() === shipId;
+
         if (!isOwned) {
             this.shopStatus.textContent = "🔒 Non possédé";
             this.buyButton.textContent = "Acheter";
@@ -217,40 +248,30 @@ export class BoutiqueUI{
             this.shopStatus.textContent = "✔ Équipé";
             this.buyButton.textContent = "Équipé";
         }
+    }
 
-        // Calcul des index pour gauche / centre / droite (carousel circulaire)
+    /**
+     * Calcule et place les images pour l'effet de carrousel (Gauche, Centre, Droite).
+     * @private
+     */
+    _updateCarouselVisuals(total) {
         const prevIndex = (this.currentShipIndex - 1 + total) % total;
         const nextIndex = (this.currentShipIndex + 1) % total;
 
-        const mapShipIdToImage = (shipId) => {
-            switch (shipId) {
-                case TYPE_VAISSEAU.NORMAL:
-                    return 'assets/img/vaisseaux/NORMAL.png';
-                case TYPE_VAISSEAU.SPLIT:
-                    return 'assets/img/vaisseaux/SPLIT.png';
-                case TYPE_VAISSEAU.SPREAD:
-                    return 'assets/img/vaisseaux/SPREAD.png';
-                case TYPE_VAISSEAU.RICOCHET:
-                    return 'assets/img/vaisseaux/RICOCHET.png';
-                case TYPE_VAISSEAU.PIERCE:
-                    return 'assets/img/vaisseaux/PIERCE.png';
-                default:
-                    return 'assets/img/vaisseau.png';
-            }
-        };
+        const getImg = (id) => `assets/img/vaisseaux/${id}.png`;
 
         const slots = [
-            { el: this.shopShips[0], shipIndex: prevIndex, position: 'left' },
-            { el: this.shopShips[1], shipIndex: this.currentShipIndex, position: 'center' },
-            { el: this.shopShips[2], shipIndex: nextIndex, position: 'right' }
+            { el: this.shopShips[0], idx: prevIndex, pos: 'left' },
+            { el: this.shopShips[1], idx: this.currentShipIndex, pos: 'center' },
+            { el: this.shopShips[2], idx: nextIndex, pos: 'right' }
         ];
 
         slots.forEach(slot => {
             if (!slot.el) return;
-            const shipId = this.shipIds[slot.shipIndex];
-            slot.el.src = mapShipIdToImage(shipId);
+            const shipId = this.shipIds[slot.idx];
+            slot.el.src = getImg(shipId);
             slot.el.classList.remove('left', 'center', 'right');
-            slot.el.classList.add(slot.position);
+            slot.el.classList.add(slot.pos);
         });
     }
 }

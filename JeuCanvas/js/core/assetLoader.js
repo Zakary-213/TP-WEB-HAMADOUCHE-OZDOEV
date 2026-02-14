@@ -18,24 +18,24 @@ function isAudio(url) {
 }
 
 async function loadAssetsUsingHowlerAndNoXhr(assetsToBeLoaded) {
-    var assetsLoaded = {};
-    var loadedAssets = 0;
-    var numberOfAssetsToLoad = 0;
-    var imageCount = 0;
-    var musicPlayed = {}; // Flag global pour éviter de jouer plusieurs fois
+    // Dictionnaire des assets effectivement chargés
+    const assetsLoaded = {};
+    let loadedAssets = 0;
+    let imageCount = 0;
 
     return new Promise((resolve) => {
-        // get num of assets to load
-        for (var name in assetsToBeLoaded) {
-            numberOfAssetsToLoad++;
-            if (isImage(assetsToBeLoaded[name].url)) {
+        // Compter uniquement les images pour savoir quand la phase de chargement est terminée
+        for (const name in assetsToBeLoaded) {
+            const url = assetsToBeLoaded[name].url;
+            if (isImage(url)) {
                 imageCount++;
             }
         }
 
-        for (name in assetsToBeLoaded) {
-            var url = assetsToBeLoaded[name].url;
-            
+        for (const name in assetsToBeLoaded) {
+            const url = assetsToBeLoaded[name].url;
+            const assetConfig = assetsToBeLoaded[name];
+			
             if (isImage(url)) {
                 assetsLoaded[name] = new Image();
 
@@ -50,28 +50,19 @@ async function loadAssetsUsingHowlerAndNoXhr(assetsToBeLoaded) {
                         return resolve(assetsLoaded);
                     }
                 };
-                // will start async loading
+                // démarrer le chargement asynchrone
                 assetsLoaded[name].src = url;
             } else if (isAudio(url)) {
-                // We assume the asset is an audio file
-                musicPlayed[name] = false; // Initialiser le flag pour cet audio
-                
+                // Asset audio chargé via Howler, sans démarrage automatique
                 assetsLoaded[name] = new Howl({
                     src: [url],
                     format: ['mp3', 'wav'],
-                    buffer: assetsToBeLoaded[name].buffer,
-                    loop: assetsToBeLoaded[name].loop,
+                    buffer: assetConfig.buffer,
+                    loop: assetConfig.loop,
                     autoplay: false,
-                    volume: assetsToBeLoaded[name].volume,
+                    volume: assetConfig.volume,
                     html5: true,
                     preload: 'auto',
-                    onload: function () {
-                        // Jouer la musique si c'est la musique de jeu (une seule fois)
-                        if (name === 'gameMusic' && !musicPlayed[name]) {
-                            musicPlayed[name] = true;
-                            assetsLoaded[name].play();
-                        }
-                    },
                     onerror: function (errorCode) {
                         console.error("Error loading audio " + name + " from " + url + " - Code: " + errorCode);
                         const errorMessages = {
@@ -82,20 +73,17 @@ async function loadAssetsUsingHowlerAndNoXhr(assetsToBeLoaded) {
                         };
                         console.error("Error message: " + errorMessages[errorCode]);
                     }
-                }); // End of howler.js callback
-                
-                // Fallback timeout: si la musique ne charge pas après 2 secondes, force quand même (une seule fois)
-                setTimeout(() => {
-                    if (name === 'gameMusic' && !musicPlayed[name]) {
-                        musicPlayed[name] = true;
-                        assetsLoaded[name].play();
-                    }
-                }, 2000);
+                });
             } else {
                 console.warn("Unknown asset type: " + url);
             } // if
 
         } // for
+
+        // S'il n'y a aucune image (imageCount === 0), on peut résoudre tout de suite
+        if (imageCount === 0) {
+            resolve(assetsLoaded);
+        }
     }); // promise
 } // function
 

@@ -1,3 +1,10 @@
+// Gestionnaire central des entités dynamiques du jeu :
+// - météorites (mouvements, explosions, collisions)
+// - ennemis (Logique simple, tirs, collisions)
+// - gadgets (spawn, ramassage, disparition)
+// - particules et zones de nuage
+// Il délègue les calculs au GameManager (collision, dégâts, player, etc.).
+
 import Meteorite from '../../entities/meteorite.js';
 import Bullet from '../../entities/bullet.js';
 import Ennemi from '../../entities/ennemi.js';
@@ -7,13 +14,25 @@ import { TYPE_GADGET } from '../../entities/types/typeGadget.js';
 import { TYPE_VAISSEAU } from '../../entities/types/typeVaisseau.js';
 import { getMeteoriteImageForType, spawnImpactParticles, spawnExplosionParticles } from '../../systems/meteoriteEffects.js';
 
-// Responsable de la gestion et des interactions des entités du monde
+/**
+ * Responsable de la gestion et des interactions des entités du monde.
+ * Le GameManager fournit le contexte (canvas, assets, player, systèmes de dégâts, etc.).
+ */
 export default class EntityManager {
+	/**
+	 * @param {Object} game - Instance du GameManager (ou objet équivalent)
+	 * contenant les tableaux d'entités et utilitaires (collision, dégâts...).
+	 */
 	constructor(game) {
 		// Référence vers le GameManager pour réutiliser son état et ses services
 		this.game = game;
 	}
 
+	/**
+	 * Met à jour toutes les entités dépendantes des vaisseaux :
+	 * météorites, zones de nuage, gadgets, ennemis et leurs collisions.
+	 * @param {Object|Object[]} vaisseauOrArray - Un vaisseau ou un tableau de vaisseaux.
+	 */
 	updateAll(vaisseauOrArray) {
 		const game = this.game;
 		const vaisseaux = Array.isArray(vaisseauOrArray)
@@ -32,6 +51,10 @@ export default class EntityManager {
 		this.updateEnnemis(vaisseaux);
 	}
 
+	/**
+	 * Fait apparaître deux petites météorites d'éclats à partir
+	 * d'une météorite parente (utilisé pour le type ECLATS).
+	 */
 	spawnEclatsPieces(parentMeteorite) {
 		const game = this.game;
 		const offsetX = parentMeteorite.largeur * 0.4;
@@ -70,6 +93,10 @@ export default class EntityManager {
 		game.meteorites.push(left, right);
 	}
 
+	/**
+	 * Ajoute une zone de nuage persistante à l'endroit d'explosion
+	 * d'une météorite de type NUAGE.
+	 */
 	spawnCloudZone(meteorite) {
 		const game = this.game;
 		const config = METEORITE_CONFIG[TYPE_METEORITE.NUAGE] || {};
@@ -84,6 +111,11 @@ export default class EntityManager {
 		});
 	}
 
+	/**
+	 * Met à jour la position et le comportement de toutes les météorites,
+	 * gère les explosions temporisées, les collisions avec les vaisseaux
+	 * et la sortie du canvas.
+	 */
 	updateMeteorites(vaisseaux) {
 		const game = this.game;
 		const meteorites = game.meteorites;
@@ -92,7 +124,7 @@ export default class EntityManager {
 			const meteorite = meteorites[i];
 			meteorite.descendre();
 
-			// Météorites avec timer d'explosion (dynamite, nuage, ...)
+			// timer d'explosion (dynamite, nuage, ...)
 			if (meteorite.explodeAfterMs !== null) {
 				const elapsed = Date.now() - meteorite.spawnedAt;
 				const remaining = meteorite.explodeAfterMs - elapsed;
@@ -121,6 +153,7 @@ export default class EntityManager {
 				spawnExplosionParticles(game.particles, meteorite);
 				meteorites.splice(i, 1);
 
+				// Rayon d'effet autour de la météorite pour appliquer les dégâts
 				const explosionRadius = meteorite.explosionRadius ?? (meteorite.largeur * 2);
 				for (const v of vaisseaux) {
 					const dx = v.x - meteorite.x;
@@ -133,7 +166,7 @@ export default class EntityManager {
 				continue;
 			}
 
-			// Collision météorite ↔ vaisseaux
+			// Collision météorite / vaisseaux
 			let meteoriteRemoved = false;
 			for (const v of vaisseaux) {
 				const collision = game.collisionUtils.rectCircleFromCenter(
@@ -164,6 +197,10 @@ export default class EntityManager {
 		}
 	}
 
+	/**
+	 * Nettoie les zones de nuage expirées et met à jour le système
+	 * de particules global.
+	 */
 	updateCloudZonesAndParticles() {
 		const game = this.game;
 		const now = Date.now();
@@ -171,6 +208,11 @@ export default class EntityManager {
 		game.particles.update();
 	}
 
+	/**
+	 * Gère les collisions balles / météorites, les effets associés
+	 * (split, nuage, éclats, particules, gold) et les compteurs de kills.
+	 * @param {Object|Object[]} vaisseauxOrVaisseau - Un ou plusieurs vaisseaux.
+	 */
 	handleBulletMeteoriteCollisions(vaisseauxOrVaisseau) {
 		const game = this.game;
 		const meteorites = game.meteorites;
@@ -209,6 +251,7 @@ export default class EntityManager {
 						const dirX = Math.cos(baseAngle);
 						const dirY = Math.sin(baseAngle);
 						bullet.hasSplit = true;
+						// On génère deux nouvelles balles légèrement décalées en angle
 						const bullet1 = new Bullet({ x: bullet.x + dirX * spawnOffset, y: bullet.y + dirY * spawnOffset, angle: baseAngle + splitAngle });
 						const bullet2 = new Bullet({ x: bullet.x + dirX * spawnOffset, y: bullet.y + dirY * spawnOffset, angle: baseAngle - splitAngle });
 						bullet1.hasSplit = true;
@@ -258,6 +301,7 @@ export default class EntityManager {
 						}
 						// ===== SOLO =====
 						else if (game.playerDestroyedMeteorites !== undefined) {
+							// Compteur unique utilisé pour les objectifs du mode solo
 							game.playerDestroyedMeteorites++;
 							console.log("SOLO kill :", game.playerDestroyedMeteorites);
 						}
@@ -282,6 +326,10 @@ export default class EntityManager {
 		}
 	}
 
+	/**
+	 * Met à jour les gadgets (chute, ramassage) et les supprime
+	 * quand ils sont consommés ou hors du canvas.
+	 */
 	updateGadgets(vaisseauxOrVaisseau) {
 		const game = this.game;
 		const vaisseaux = Array.isArray(vaisseauxOrVaisseau)
@@ -305,6 +353,10 @@ export default class EntityManager {
 		}
 	}
 
+	/**
+	 * Fait apparaître une météorite d'un certain type
+	 * à une position aléatoire en haut du canvas.
+	 */
 	spawnMeteorrite(type = TYPE_METEORITE.NORMAL) {
 		const game = this.game;
 		const x = Math.random() * game.canvas.width;
@@ -348,6 +400,9 @@ export default class EntityManager {
 		game.meteorites.push(meteorite);
 	}
 
+	/**
+	 * Fait apparaître un ennemi au-dessus du joueur, prêt à tirer.
+	 */
 	spawnEnnemi(options = {}) {
 		const game = this.game;
 		const {
@@ -368,6 +423,10 @@ export default class EntityManager {
 		game.ennemis.push(ennemi);
 	}
 
+	/**
+	 * Met à jour tous les ennemis : déplacement, tirs, collisions
+	 * avec les balles des joueurs et les balles ennemies.
+	 */
 	updateEnnemis(vaisseauxOrVaisseau) {
 		const game = this.game;
 		const now = Date.now();
@@ -390,7 +449,7 @@ export default class EntityManager {
 			ennemi.shoot(now, target.x, target.y);
 			ennemi.updateBullets(game.canvas.width, game.canvas.height);
 
-			// Collision bullets joueur -> ennemi
+			// Collision bullets joueur ennemi
 			for (const vaisseau of vaisseaux) {
 				for (let b = vaisseau.bullets.length - 1; b >= 0; b--) {
 					const bullet = vaisseau.bullets[b];
@@ -420,7 +479,7 @@ export default class EntityManager {
 				}
 			}
 
-			// Collision bullets ennemi -> joueurs
+			// Collision bullets ennemi joueurs
 			if (i < game.ennemis.length) {
 				for (let b = ennemi.bullets.length - 1; b >= 0; b--) {
 					const bullet = ennemi.bullets[b];
@@ -449,6 +508,10 @@ export default class EntityManager {
 		}
 	}
 
+	/**
+	 * Dessine toutes les entités gérées par l'EntityManager :
+	 * météorites, ennemis, gadgets, zones de nuage et particules.
+	 */
 	draw(ctx) {
 		ctx.save();
 		const game = this.game;
@@ -479,6 +542,11 @@ export default class EntityManager {
 		ctx.restore();
 	}
 
+	// Fonctions utilitaires de spawn de gadgets
+	/**
+	 * Fait apparaître un gadget Éclair qui augmente temporairement
+	 * la vitesse du vaisseau qui le ramasse.
+	 */
 	spawnGadgetEclair() {
 		const game = this.game;
 		const x = Math.random() * game.canvas.width;
@@ -487,6 +555,10 @@ export default class EntityManager {
 		game.gadgets.push(gadget);
 	}
 
+	/**
+	 * Fait apparaître un gadget Bouclier qui ajoute une protection
+	 * autour du vaisseau qui le ramasse.
+	 */
 	spawnGadgetBouclier() {
 		const game = this.game;
 		const x = Math.random() * game.canvas.width;
@@ -495,6 +567,10 @@ export default class EntityManager {
 		game.gadgets.push(gadget);
 	}
 
+	/**
+	 * Fait apparaître un gadget Mirroire qui permet de se téléporter
+	 * aléatoirement sur le terrain.
+	 */
 	spawnGadgetMirroire() {
 		const game = this.game;
 		const x = Math.random() * game.canvas.width;
@@ -503,6 +579,10 @@ export default class EntityManager {
 		game.gadgets.push(gadget);
 	}
 
+	/**
+	 * Fait apparaître un gadget Rafale qui augmente la cadence de tir
+	 * du vaisseau pendant un court instant.
+	 */
 	spawnGadgetRafale() {
 		const game = this.game;
 		const x = Math.random() * game.canvas.width;
@@ -511,6 +591,10 @@ export default class EntityManager {
 		game.gadgets.push(gadget);
 	}
 
+	/**
+	 * Fait apparaître un Coeur qui rend une vie au joueur
+	 * lorsqu'il le ramasse.
+	 */
 	spawnGadgetCoeur() {
 		const game = this.game;
 		const x = Math.random() * game.canvas.width;
@@ -528,6 +612,9 @@ export default class EntityManager {
 		game.gadgets.push(gadget);
 	}
 
+	/**
+	 * Dessine les zones de nuage (brouillard) au-dessus du champ de jeu.
+	 */
 	drawCloudZones(ctx) {
 		ctx.save();
 		const game = this.game;
@@ -545,6 +632,9 @@ export default class EntityManager {
 		ctx.restore();
 	}
 
+	/**
+	 * Renvoie la quantité d'or gagnée en fonction du type de météorite détruite.
+	 */
 	getGoldForMeteorite(type) {
 		switch (type) {
 			case TYPE_METEORITE.NUAGE: return 5;

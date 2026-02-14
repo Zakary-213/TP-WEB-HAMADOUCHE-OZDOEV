@@ -10,7 +10,6 @@ export default class Niveau3Duo extends Niveau {
         this.enemySpawnDelay = 5000; // 5s avant l'apparition de l'ennemi
         this.enemySpawned = false;
 
-        //this.lancerDelay = 100000000000000; // tirs de LANCER réguliers
         this.lancerDelay = 1500; // tirs de LANCER réguliers
         this.lastLancerSpawn = 0;
 

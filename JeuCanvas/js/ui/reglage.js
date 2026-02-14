@@ -1,4 +1,10 @@
-// CONSTANTES
+/**
+ * @module reglage
+ * @description Gère l'interface des paramètres : remappage des touches pour J1 et J2,
+ * contrôle des volumes (Musique et SFX) et persistance dans le localStorage.
+ */
+
+// --- RÉFÉRENCES ÉLÉMENTS DOM (Input J1) ---
 const BUTTONS = {
     up: document.querySelector('.btn-up'),
     left: document.querySelector('.btn-left'),
@@ -7,7 +13,7 @@ const BUTTONS = {
     shoot: document.querySelector('.btn-shoot')
 };
 
-// Boutons pour la configuration des touches du Joueur 2
+// --- RÉFÉRENCES ÉLÉMENTS DOM (Input J2) ---
 const BUTTONS_J2 = {
     up: document.querySelector('.btn2-up'),
     left: document.querySelector('.btn2-left'),
@@ -16,6 +22,7 @@ const BUTTONS_J2 = {
     shoot: document.querySelector('.btn2-shoot')
 };
 
+/** @type {Object} Touches par défaut pour le premier lancement */
 const DEFAULT_KEYS = {
     up: '↑',
     left: '←',
@@ -24,6 +31,7 @@ const DEFAULT_KEYS = {
     shoot: 'Entrée'
 };
 
+/** @type {Object} Thèmes visuels des boutons selon l'état de capture */
 const STYLES = {
     waiting: {
         background: 'linear-gradient(135deg, #ffff00, #ffcc00)',
@@ -42,36 +50,36 @@ const STYLES = {
     }
 };
 
-// VARIABLES D'ÉTAT
+// --- Variables d'état interne ---
 let isListeningForKey = false;
 let currentButton = null;
 
 let isListeningForKeyJ2 = false;
 let currentButtonJ2 = null;
 
-// INITIALISATION
+
 window.addEventListener('DOMContentLoaded', () => {
     loadSavedKeys();
     loadSavedKeysJ2();
     initVolumeControls();
 });
 
-// Attacher les écouteurs aux boutons
+/** Liaison des clics boutons J1 */
 Object.entries(BUTTONS).forEach(([keyType, button]) => {
     if (button) {
         button.addEventListener('click', () => startListeningForKey(button, keyType));
     }
 });
 
-// Attacher les écouteurs aux boutons du Joueur 2
+/** Liaison des clics boutons J2 */
 Object.entries(BUTTONS_J2).forEach(([keyType, button]) => {
     if (button) {
         button.addEventListener('click', () => startListeningForKeyJ2(button, keyType));
     }
 });
 
-// FONCTIONS PRINCIPALES
 
+/** Charge les touches J1 du localStorage ou applique les défauts. */
 function loadSavedKeys() {
     Object.entries(BUTTONS).forEach(([keyType, button]) => {
         if (button) {
@@ -81,7 +89,7 @@ function loadSavedKeys() {
     });
 }
 
-// Chargement des touches du Joueur 2 (par défaut cases vides)
+/** Charge les touches J2 (par défaut vides pour forcer le réglage en mode Duo). */
 function loadSavedKeysJ2() {
     Object.entries(BUTTONS_J2).forEach(([keyType, button]) => {
         if (button) {
@@ -92,6 +100,7 @@ function loadSavedKeysJ2() {
     });
 }
 
+/** Prépare l'interface à capturer une touche pour le J1. */
 function startListeningForKey(button, keyType) {
     if (isListeningForKey) return;
     
@@ -105,6 +114,7 @@ function startListeningForKey(button, keyType) {
     document.addEventListener('keydown', handleKeyPress);
 }
 
+/** Prépare l'interface à capturer une touche pour le J2. */
 function startListeningForKeyJ2(button, keyType) {
     if (isListeningForKeyJ2) return;
 
@@ -118,40 +128,38 @@ function startListeningForKeyJ2(button, keyType) {
     document.addEventListener('keydown', handleKeyPressJ2);
 }
 
+/** Traite l'événement clavier pour le J1. */
 function handleKeyPress(event) {
     if (!isListeningForKey) return;
-    
     event.preventDefault();
     
     const keyLabel = normalizeKey(event.key);
     
-    // Vérifier si la touche est déjà utilisée
+    // Vérification de conflit (touche déjà utilisée)
     if (isKeyUsed(keyLabel)) {
         showError();
         return;
     }
     
-    // Appliquer la nouvelle touche
     applyNewKey(keyLabel);
 }
 
+/** Traite l'événement clavier pour le J2. */
 function handleKeyPressJ2(event) {
     if (!isListeningForKeyJ2) return;
-
     event.preventDefault();
 
     const keyLabel = normalizeKey(event.key);
 
-    // Vérifier si la touche est déjà utilisée pour le joueur 2
     if (isKeyUsedJ2(keyLabel)) {
         showErrorJ2();
         return;
     }
 
-    // Appliquer la nouvelle touche
     applyNewKeyJ2(keyLabel);
 }
 
+/** Transforme les noms techniques (ex: ' ') en labels lisibles (ex: 'Espace'). */
 function normalizeKey(key) {
     const keyMap = {
         ' ': 'Espace',
@@ -164,26 +172,21 @@ function normalizeKey(key) {
     return keyMap[key] || key.toUpperCase();
 }
 
+/** Vérifie si une touche est déjà assignée à une autre action (global). */
 function isKeyUsed(keyLabel) {
-    const usedByJ1 = Object.values(BUTTONS).some(
-        btn => btn && btn !== currentButton && btn.textContent === keyLabel
-    );
-    const usedByJ2 = Object.values(BUTTONS_J2).some(
-        btn => btn && btn.textContent === keyLabel && btn.textContent !== ''
-    );
+    const usedByJ1 = Object.values(BUTTONS).some(btn => btn && btn !== currentButton && btn.textContent === keyLabel);
+    const usedByJ2 = Object.values(BUTTONS_J2).some(btn => btn && btn.textContent === keyLabel && btn.textContent !== '');
     return usedByJ1 || usedByJ2;
 }
 
+/** Vérifie les conflits spécifiquement pour le J2. */
 function isKeyUsedJ2(keyLabel) {
-    const usedByJ2 = Object.values(BUTTONS_J2).some(
-        btn => btn && btn !== currentButtonJ2 && btn.textContent === keyLabel
-    );
-    const usedByJ1 = Object.values(BUTTONS).some(
-        btn => btn && btn.textContent === keyLabel
-    );
+    const usedByJ2 = Object.values(BUTTONS_J2).some(btn => btn && btn !== currentButtonJ2 && btn.textContent === keyLabel);
+    const usedByJ1 = Object.values(BUTTONS).some(btn => btn && btn.textContent === keyLabel);
     return usedByJ2 || usedByJ1;
 }
 
+/** Affiche un retour visuel d'erreur J1 avant de restaurer l'ancienne touche. */
 function showError() {
     applyStyle(currentButton, STYLES.error);
     currentButton.textContent = 'Déjà utilisée!';
@@ -191,7 +194,6 @@ function showError() {
     setTimeout(() => {
         const keyType = currentButton.dataset.keyType;
         const savedKey = localStorage.getItem(`key_${keyType}`) || DEFAULT_KEYS[keyType];
-        
         applyStyle(currentButton, STYLES.normal);
         currentButton.textContent = savedKey;
     }, 1500);
@@ -199,6 +201,7 @@ function showError() {
     stopListening();
 }
 
+/** Affiche un retour visuel d'erreur J2. */
 function showErrorJ2() {
     applyStyle(currentButtonJ2, STYLES.error);
     currentButtonJ2.textContent = 'Déjà utilisée!';
@@ -206,7 +209,6 @@ function showErrorJ2() {
     setTimeout(() => {
         const keyType = currentButtonJ2.dataset.keyType;
         const savedKey = localStorage.getItem(`key2_${keyType}`) || '';
-
         applyStyle(currentButtonJ2, STYLES.normal);
         currentButtonJ2.textContent = savedKey;
     }, 1500);
@@ -214,25 +216,19 @@ function showErrorJ2() {
     stopListeningJ2();
 }
 
+/** Valide et sauvegarde la nouvelle touche J1. */
 function applyNewKey(keyLabel) {
     currentButton.textContent = keyLabel;
     applyStyle(currentButton, STYLES.normal);
-    
-    // Sauvegarder dans localStorage
-    const keyType = currentButton.dataset.keyType;
-    localStorage.setItem(`key_${keyType}`, keyLabel);
-    
+    localStorage.setItem(`key_${currentButton.dataset.keyType}`, keyLabel);
     stopListening();
 }
 
+/** Valide et sauvegarde la nouvelle touche J2. */
 function applyNewKeyJ2(keyLabel) {
     currentButtonJ2.textContent = keyLabel;
     applyStyle(currentButtonJ2, STYLES.normal);
-
-    // Sauvegarder dans localStorage pour Joueur 2
-    const keyType = currentButtonJ2.dataset.keyType;
-    localStorage.setItem(`key2_${keyType}`, keyLabel);
-
+    localStorage.setItem(`key2_${currentButtonJ2.dataset.keyType}`, keyLabel);
     stopListeningJ2();
 }
 
@@ -243,48 +239,48 @@ function applyStyle(button, style) {
 function stopListening() {
     document.removeEventListener('keydown', handleKeyPress);
     isListeningForKey = false;
-    currentButton = null;
 }
 
 function stopListeningJ2() {
-	document.removeEventListener('keydown', handleKeyPressJ2);
-	isListeningForKeyJ2 = false;
-	currentButtonJ2 = null;
+    document.removeEventListener('keydown', handleKeyPressJ2);
+    isListeningForKeyJ2 = false;
 }
 
+
+/** Initialise les sliders de volume et synchronise avec le stockage. */
 function initVolumeControls() {
     const musicSlider = document.getElementById('music-slider');
     const volumeSlider = document.getElementById('volume-slider');
     const musicValue = document.getElementById('music-value');
     const volumeValue = document.getElementById('volume-value');
 
+    // --- Configuration Musique ---
     if (musicSlider && musicValue) {
-        const savedMusicVolume = localStorage.getItem('music_volume');
-        const initialMusic = savedMusicVolume !== null ? Number(savedMusicVolume) : Number(musicSlider.value);
-        musicSlider.value = initialMusic;
-        musicValue.textContent = initialMusic + '%';
+        const savedM = localStorage.getItem('music_volume');
+        const initial = savedM !== null ? Number(savedM) : Number(musicSlider.value);
+        musicSlider.value = initial;
+        musicValue.textContent = initial + '%';
+
         musicSlider.addEventListener('input', (e) => {
             const val = Number(e.target.value);
             musicValue.textContent = val + '%';
             localStorage.setItem('music_volume', String(val));
-            if (window.applyMusicVolume) {
-                window.applyMusicVolume(val);
-            }
+            window.applyMusicVolume?.(val);
         });
     }
 
+    // --- Configuration Effets (SFX) ---
     if (volumeSlider && volumeValue) {
-        const savedVolume = localStorage.getItem('sfx_volume');
-        const initialSfx = savedVolume !== null ? Number(savedVolume) : Number(volumeSlider.value);
-        volumeSlider.value = initialSfx;
-        volumeValue.textContent = initialSfx + '%';
+        const savedS = localStorage.getItem('sfx_volume');
+        const initial = savedS !== null ? Number(savedS) : Number(volumeSlider.value);
+        volumeSlider.value = initial;
+        volumeValue.textContent = initial + '%';
+
         volumeSlider.addEventListener('input', (e) => {
             const val = Number(e.target.value);
             volumeValue.textContent = val + '%';
             localStorage.setItem('sfx_volume', String(val));
-            if (window.applySfxVolume) {
-                window.applySfxVolume(val);
-            }
+            window.applySfxVolume?.(val);
         });
     }
 }
