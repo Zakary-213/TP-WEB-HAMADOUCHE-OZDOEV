@@ -25,14 +25,14 @@ export default class TransitionNiveau {
         this.hintEl = this.overlay?.querySelector('.level-transition-hint');
         this.fireworksEl = this.overlay?.querySelector('.level-transition-fireworks');
 
-        // Gestionnaires de temps
-        this.timeoutId = null;
-        this.intervalId = null;
-        this.remainingSeconds = 0;
+        this.startTime = 0;
+        this.messagePrefix = '';
 
         // État interne
         this.isActive = false;
         this.onComplete = null; // Callback de fin de transition
+
+        
     }
 
     /**
@@ -46,13 +46,12 @@ export default class TransitionNiveau {
             return;
         }
 
-        this._prepareOverlay(onComplete);
         this.overlay.classList.remove('final');
 
         if (this.titleEl) this.titleEl.textContent = `NIVEAU ${levelNumber} RÉUSSI`;
         if (this.subtitleEl) this.subtitleEl.textContent = 'Clique sur le canvas pour passer au niveau suivant';
         
-        this._startTimers('Passage automatique dans');
+        this._prepareOverlay(onComplete, 'Passage automatique dans');
     }
 
     /**
@@ -67,7 +66,6 @@ export default class TransitionNiveau {
             return;
         }
 
-        this._prepareOverlay(onComplete);
         this.overlay.classList.add('final'); // Active les styles de célébration (ex: or/fireworks)
 
         if (this.titleEl) this.titleEl.textContent = 'BRAVO !';
@@ -77,59 +75,25 @@ export default class TransitionNiveau {
                 : 'Vous avez terminé le mode solo !';
         }
 
-        this._startTimers('Retour automatique au menu dans');
+        this._prepareOverlay(onComplete, 'Retour automatique au menu dans');
     }
 
     /**
      * Initialisation commune de l'overlay avant affichage.
      * @private
      */
-    _prepareOverlay(onComplete) {
+    _prepareOverlay(onComplete, messagePrefix) {
         this.onComplete = onComplete;
         this.isActive = true;
-        this.remainingSeconds = Math.floor(this.autoDelayMs / 1000);
-        
+        this.startTime = performance.now();
+        this.messagePrefix = messagePrefix;
+
         this.overlay.classList.add('active');
         this.overlay.setAttribute('aria-hidden', 'false');
     }
 
-    /**
-     * Démarre le timeout de complétion et l'intervalle de mise à jour du texte.
-     * @private
-     */
-    _startTimers(messagePrefix) {
-        this._clearTimers();
 
-        // Passage automatique après autoDelayMs
-        this.timeoutId = setTimeout(() => this.complete(), this.autoDelayMs);
 
-        // Mise à jour du compteur chaque seconde
-        this.intervalId = setInterval(() => {
-            if (!this.isActive) return;
-            
-            this.remainingSeconds = Math.max(0, this.remainingSeconds - 1);
-            
-            if (this.hintEl) {
-                this.hintEl.textContent = `${messagePrefix} ${this.remainingSeconds}s`;
-            }
-        }, 1000);
-
-        // Initialisation immédiate du texte hint
-        if (this.hintEl) {
-            this.hintEl.textContent = `${messagePrefix} ${this.remainingSeconds}s`;
-        }
-    }
-
-    /**
-     * Nettoie les timers en cours.
-     * @private
-     */
-    _clearTimers() {
-        if (this.timeoutId) clearTimeout(this.timeoutId);
-        if (this.intervalId) clearInterval(this.intervalId);
-        this.timeoutId = null;
-        this.intervalId = null;
-    }
 
     /**
      * Termine la transition, cache l'interface et déclenche le callback.
@@ -137,8 +101,6 @@ export default class TransitionNiveau {
     complete() {
         if (!this.isActive) return;
         this.isActive = false;
-
-        this._clearTimers();
 
         if (this.overlay) {
             this.overlay.classList.remove('active');
@@ -155,6 +117,25 @@ export default class TransitionNiveau {
     completeManually() {
         this.complete();
     }
+
+    update() {
+        if (!this.isActive) return;
+
+        const now = performance.now();
+        const elapsed = now - this.startTime;
+
+        const remaining = Math.max(0, this.autoDelayMs - elapsed);
+        const seconds = Math.ceil(remaining / 1000);
+
+        if (this.hintEl) {
+            this.hintEl.textContent = `${this.messagePrefix} ${seconds}s`;
+        }
+
+        if (elapsed >= this.autoDelayMs) {
+            this.complete();
+        }
+    }
+
 }
 
 // --- Fonctions utilitaires d'exportation ---
@@ -202,3 +183,4 @@ export const transitionDuoLevel = ({ levelIndex, doneCallback, levelTransition, 
         });
     }
 };
+

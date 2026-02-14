@@ -26,6 +26,8 @@ export default class Niveau2Duo extends Niveau {
 		this.gadgetSpawnDelay = 10000;
 		this.lastGadgetSpawn = 0;
 
+		this.burstSpawnedCount = 0;
+
 		this.spawnTable = [
 			{ type: TYPE_METEORITE.NORMAL,   weight: 50 },
 			{ type: TYPE_METEORITE.COSTAUD,  weight: 5 },
@@ -78,40 +80,49 @@ export default class Niveau2Duo extends Niveau {
 
 	handleBurstSpawn() {
 		if (this.finished || this.spawnFinished) return;
+
 		const now = performance.now();
-		if (this.isBurstSpawning) return;
-		if (now - this.lastBurstTime < this.burstDelay) return;
 
-		this.isBurstSpawning = true;
-		this.lastBurstTime = now;
+		// Si pas en burst et délai écoulé → démarrer un burst
+		if (!this.isBurstSpawning && now - this.lastBurstTime >= this.burstDelay) {
+			this.isBurstSpawning = true;
+			this.burstSpawnedCount = 0;
+			this.lastBurstTime = now;
+		}
 
-		let spawnedInBurst = 0;
+		// Si burst actif
+		if (this.isBurstSpawning) {
 
-		const interval = setInterval(() => {
-			if (this.finished || this.spawnFinished) return;
-			if (
-				spawnedInBurst >= this.burstSize ||
-				this.totalSpawned >= this.maxMeteoritesToSpawn
-			) {
-				clearInterval(interval);
-				this.isBurstSpawning = false;
+			if (now - this.lastBurstTime >= this.burstSpacing) {
 
-				if (this.totalSpawned >= this.maxMeteoritesToSpawn) {
-					this.spawnFinished = true;
+				if (
+					this.burstSpawnedCount >= this.burstSize ||
+					this.totalSpawned >= this.maxMeteoritesToSpawn
+				) {
+					this.isBurstSpawning = false;
+
+					if (this.totalSpawned >= this.maxMeteoritesToSpawn) {
+						this.spawnFinished = true;
+					}
+
+					return;
 				}
-				return;
+
+				// Duo → 2 météorites par tick
+				const type1 = pickByWeight(this.spawnTable);
+				const type2 = pickByWeight(this.spawnTable);
+
+				this.gameManager.spawnMeteorrite(type1);
+				this.gameManager.spawnMeteorrite(type2);
+
+				this.burstSpawnedCount += 2;
+				this.totalSpawned += 2;
+
+				this.lastBurstTime = now;
 			}
-
-			// Duo : on spawn 2 météorites par "tick" de burst
-			const type1 = pickByWeight(this.spawnTable);
-			const type2 = pickByWeight(this.spawnTable);
-			this.gameManager.spawnMeteorrite(type1);
-			this.gameManager.spawnMeteorrite(type2);
-
-			spawnedInBurst += 2;
-			this.totalSpawned += 2;
-		}, this.burstSpacing);
+		}
 	}
+
 
 	handleLancerSpawn() {
 		if (this.finished || this.spawnFinished) return;

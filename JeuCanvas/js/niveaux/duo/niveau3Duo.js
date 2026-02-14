@@ -13,7 +13,6 @@ export default class Niveau3Duo extends Niveau {
         this.lancerDelay = 1500; // tirs de LANCER réguliers
         this.lastLancerSpawn = 0;
 
-        //this.nuageWaveDelay = 50000000000000000000; // vagues de NUAGE régulières
         this.nuageWaveDelay = 5000; // vagues de NUAGE régulières
         this.lastNuageWave = 0;
         // Duo : on double le nombre de nuages par vague

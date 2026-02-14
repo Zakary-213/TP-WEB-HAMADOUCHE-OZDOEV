@@ -77,37 +77,39 @@ export default class Niveau2 extends Niveau {
 
     handleBurstSpawn() {
         if (this.finished || this.spawnFinished) return;
+
         const now = performance.now();
-        if (this.isBurstSpawning) return;
-        if (now - this.lastBurstTime < this.burstDelay) return;
 
-        this.isBurstSpawning = true;
-        this.lastBurstTime = now;
+        // Si on n'est pas en burst et que le délai est passé, on démarre un burst
+        if (!this.isBurstSpawning && now - this.lastBurstTime >= this.burstDelay) {
+            this.isBurstSpawning = true;
+            this.burstSpawnedCount = 0;
+            this.lastBurstTime = now;
+        }
 
-        let spawnedInBurst = 0;
+        // Si burst actif
+        if (this.isBurstSpawning) {
 
-        const interval = setInterval(() => {
-            if (this.finished || this.spawnFinished) return;
-            if (
-                spawnedInBurst >= this.burstSize ||
-                this.totalSpawned >= this.maxMeteoritesToSpawn
-            ) {
-                clearInterval(interval);
-                this.isBurstSpawning = false;
+            if (now - this.lastBurstTime >= this.burstSpacing) {
 
-                if (this.totalSpawned >= this.maxMeteoritesToSpawn) {
-                    this.spawnFinished = true;
+                if (
+                    this.burstSpawnedCount >= this.burstSize ||
+                    this.totalSpawned >= this.maxMeteoritesToSpawn
+                ) {
+                    this.isBurstSpawning = false;
+                    return;
                 }
-                return;
+
+                const type = pickByWeight(this.spawnTable);
+                this.gameManager.spawnMeteorrite(type);
+
+                this.burstSpawnedCount++;
+                this.totalSpawned++;
+                this.lastBurstTime = now;
             }
-
-            const type = pickByWeight(this.spawnTable);
-            this.gameManager.spawnMeteorrite(type);
-
-            spawnedInBurst++;
-            this.totalSpawned++;
-        }, this.burstSpacing);
+        }
     }
+
 
     handleLancerSpawn() {
         if (this.finished || this.spawnFinished) return;

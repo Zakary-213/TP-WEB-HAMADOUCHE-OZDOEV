@@ -565,6 +565,11 @@ function gameLoop() {
     }
     // Mettre à jour l'état du jeu
     updateGameState();
+
+    if (levelTransition) {
+        levelTransition.update();
+    }
+    
     // Relancer la boucle
     requestAnimationFrame(gameLoop);
 }
