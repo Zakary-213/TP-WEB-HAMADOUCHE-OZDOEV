@@ -182,14 +182,12 @@ export default class GameManager {
                 spawnExplosionParticles(this.particles, meteorite);
                 this.meteorites.splice(i, 1);
 
-                if (!(vaisseau.type === TYPE_VAISSEAU.PHASE && vaisseau.isDashing)) {
-                    const explosionRadius = meteorite.explosionRadius ?? (meteorite.largeur * 2);
-                    const dx = vaisseau.x - meteorite.x;
-                    const dy = vaisseau.y - meteorite.y;
-                    const distSq = dx * dx + dy * dy;
-                    if (distSq <= explosionRadius * explosionRadius) {
-                        this.gestionDegats.appliquerCoup(vaisseau, this);
-                    }
+                const explosionRadius = meteorite.explosionRadius ?? (meteorite.largeur * 2);
+                const dx = vaisseau.x - meteorite.x;
+                const dy = vaisseau.y - meteorite.y;
+                const distSq = dx * dx + dy * dy;
+                if (distSq <= explosionRadius * explosionRadius) {
+                    this.gestionDegats.appliquerCoup(vaisseau, this);
                 }
                 continue;
             }
@@ -206,9 +204,6 @@ export default class GameManager {
             );
 
             if (collision && this.gameState === "playing") {
-                if (vaisseau.type === TYPE_VAISSEAU.PHASE && vaisseau.isDashing) {
-                    continue;
-                }
                 this.meteorites.splice(i, 1);
                 this.gestionDegats.appliquerCoup(vaisseau, this);
                 continue;
@@ -238,14 +233,6 @@ export default class GameManager {
                     meteorite.largeur / 2
                 );
                 if (collision) {
-                    if (vaisseau.type === TYPE_VAISSEAU.PHASE) {
-                        spawnImpactParticles(this.particles, meteorite);
-                        this.meteorites.splice(m, 1);
-                        if (this.onMeteoriteDestroyed) this.onMeteoriteDestroyed(meteorite);
-                        vaisseau.bullets.splice(b, 1);
-                        break;
-                    }
-
                     if (meteorite.type === TYPE_METEORITE.NUAGE && meteorite.canSplit) {
                         this.spawnCloudZone(meteorite);
                         spawnImpactParticles(this.particles, meteorite);

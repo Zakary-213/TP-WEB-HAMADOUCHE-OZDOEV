@@ -13,12 +13,6 @@ export default class Boutique {
                 price: 0
             },
             {
-                id: TYPE_VAISSEAU.PHASE,
-                name: "Vaisseau Phase",
-                description: "Traverse certaines météorites.",
-                price: 0
-            },
-            {
                 id: TYPE_VAISSEAU.SPLIT,
                 name: "Vaisseau Split",
                 description: "Tirs qui se divisent à l’impact.",
@@ -114,7 +108,6 @@ export class BoutiqueUI{
         // indépendamment de ce qu'il y a dans le localStorage.
         this.shipIds = [
             TYPE_VAISSEAU.NORMAL,
-            TYPE_VAISSEAU.PHASE,
             TYPE_VAISSEAU.SPLIT,
             TYPE_VAISSEAU.SPREAD,
             TYPE_VAISSEAU.RICOCHET,
@@ -189,10 +182,6 @@ export class BoutiqueUI{
                 name = "Vaisseau Classique";
                 description = "Équilibré et fiable pour débuter.";
                 break;
-            case TYPE_VAISSEAU.PHASE:
-                name = "Vaisseau Phase";
-                description = "Traverse certaines météorites.";
-                break;
             case TYPE_VAISSEAU.SPLIT:
                 name = "Vaisseau Split";
                 description = "Tirs qui se divisent à l’impact.";
@@ -232,8 +221,6 @@ export class BoutiqueUI{
             switch (shipId) {
                 case TYPE_VAISSEAU.NORMAL:
                     return 'assets/img/vaisseaux/NORMAL.png';
-                case TYPE_VAISSEAU.PHASE:
-                    return 'assets/img/vaisseaux/PHASE.png';
                 case TYPE_VAISSEAU.SPLIT:
                     return 'assets/img/vaisseaux/SPLIT.png';
                 case TYPE_VAISSEAU.SPREAD:
