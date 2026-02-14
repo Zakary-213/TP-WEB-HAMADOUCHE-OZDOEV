@@ -13,7 +13,8 @@ export const ETAT = {
     DUEL: 'JEU DUEL',
     GAME_OVER: 'GAME OVER',
     TRANSITION: 'TRANSITION NIVEAU',
-    SCORE: 'score'
+    SCORE: 'score',
+    REGLES: 'regles'
 };
 
 // Listes de niveaux pour le solo et le duo
@@ -159,6 +160,14 @@ export function setEtat(
         return nouvelEtat;
     }
 
+    if (nouvelEtat === ETAT.REGLES) {
+        setCanvasActive?.(false);
+        setOverlayVisibility?.(gameOverOverlay, false);
+        setMenuButtonsVisible?.(false);
+        setModeButtonsVisible?.(false);
+        hideLifeBars?.();
+        return nouvelEtat;
+    }
 
     setCanvasActive?.(false);
     if (gameOverTitle) gameOverTitle.textContent = 'GAME OVER';

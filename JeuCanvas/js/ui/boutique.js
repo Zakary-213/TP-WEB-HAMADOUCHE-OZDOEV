@@ -156,6 +156,10 @@ export class BoutiqueUI{
                 name = "Vaisseau Split";
                 description = "Tirs qui se divisent à l’impact.";
                 break;
+            case TYPE_VAISSEAU.SPREAD:
+            name = "Vaisseau Spread";
+            description = "Tirs qui se divisent à l’impact.";
+            break;
         }
 
         this.shopName.textContent = name;

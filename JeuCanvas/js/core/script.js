@@ -242,6 +242,30 @@ document.addEventListener('DOMContentLoaded', () => {
         setEtat(ETAT.SCORE);
     });
 
+    // Bouton Règles - Redirection vers la page règles
+    document.querySelector('.Regles').addEventListener('click', () => {
+        if (etat !== ETAT.MENU) return;
+
+        setEtat(ETAT.REGLES);
+
+        const rulesOverlay = document.querySelector('.rules-overlay');
+        if (rulesOverlay) {
+            rulesOverlay.classList.add('active');
+            rulesOverlay.setAttribute('aria-hidden', 'false');
+        }
+    });
+
+    const rulesOverlay = document.querySelector('.rules-overlay');
+    const rulesClose = document.querySelector('.rules-close');
+
+    if (rulesClose) {
+        rulesClose.addEventListener('click', () => {
+            rulesOverlay.classList.remove('active');
+            rulesOverlay.setAttribute('aria-hidden', 'true');
+            setEtat(ETAT.MENU);
+        });
+    }   
+
 
 
     // Charger les assets dès le démarrage

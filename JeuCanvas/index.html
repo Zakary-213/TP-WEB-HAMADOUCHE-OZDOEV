@@ -6,6 +6,7 @@
     <title>Météorite</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/boutique.css">
+    <link rel="stylesheet" href="css/regle.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 
@@ -13,6 +14,7 @@
     <h1>Météorite canvas</h1>
     <div class="boutton">
         <button class="startBoutton">Jouer</button>
+        <button class="Regles">Règles</button>
         <button class="Boutique">Boutique</button>
         <button class="Score">Score</button>
         <button class="Réglage">Options</button>
@@ -212,9 +214,87 @@
         </div>
     </div>
 
+    <div class="rules-overlay" aria-hidden="true">
+        <div class="rules-container">
+
+            <h2 class="rules-title">Règles du jeu</h2>
+
+            <div class="rules-tabs">
+                <button class="rules-tab active" data-tab="solo">Solo</button>
+                <button class="rules-tab" data-tab="duo">Duo</button>
+                <button class="rules-tab" data-tab="duel">Duel</button>
+                <button class="rules-tab" data-tab="gadget">Gadget</button>
+                <button class="rules-tab" data-tab="meteorites">Météorites</button>
+            </div>
+
+            <div class="rules-content">
+
+                <div class="rules-panel active" id="solo">
+                    <h3>Mode Solo</h3>
+                    <p>Le joueur dispose de <strong>3 vies</strong> pour enchaîner 3 niveaux :</p>
+                    <ul>
+                        <li><strong>Niveau 1 :</strong> survivre 1 minute.</li>
+                        <li><strong>Niveau 2 :</strong> détruire 30 météorites.</li>
+                        <li><strong>Niveau 3 :</strong> affronter un vaisseau ennemi.</li>
+                    </ul>
+                </div>
+
+                <div class="rules-panel" id="duo">
+                    <h3>Mode Duo</h3>
+                    <p>Deux joueurs sur le même clavier.</p>
+                    <ul>
+                        <li>Touches dédiées pour Joueur 2.</li>
+                        <li>Niveaux similaires au solo.</li>
+                        <li>Paramètres doublés.</li>
+                    </ul>
+                </div>
+
+                <div class="rules-panel" id="duel">
+                    <h3>Mode Duel</h3>
+                    <p>1 vs 1.</p>
+                    <ul>
+                        <li>Premier à 3 points gagne.</li>
+                        <li>Gadgets activables.</li>
+                        <li>Parties rapides et explosives.</li>
+                    </ul>
+                </div>
+
+                <div class="rules-panel" id="gadget">
+                    <h3>Gadgets</h3>
+                    <ul>
+                        <li>⚡ Éclair : + vitesse 10 s</li>
+                        <li>🛡️ Bouclier : 2 impacts absorbés</li>
+                        <li>🪞 Mirroir : téléportation aléatoire</li>
+                        <li>🔫 Rafale : tir rapide 10 s</li>
+                        <li>❤️ Cœur : rend 1 vie</li>
+                    </ul>
+                </div>
+
+                <div class="rules-panel" id="meteorites">
+                    <h3>Météorites</h3>
+                    <ul>
+                        <li>🔹 Normale : se détruit en un seul tir.</li>
+                        <li>💣 Dynamite : explose après un certain temps, mieux vaut ne pas rester à côté.</li>
+                        <li>🧩 Éclats : se divise en deux petites météorites à la destruction.</li>
+                        <li>🛰️ Lancer : un drone qui suit le vaisseau du joueur avant de s’arrêter.</li>
+                        <li>🧱 Costaud : encaisse 5 tirs avant d’exploser.</li>
+                        <li>🌫️ Nuage : explose et crée une zone qui bloque la visibilité pendant un moment.</li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <button class="btn-return rules-close">Retour</button>
+
+        </div>
+    </div>
+
+
+
     <!-- Charger la librairie Howler.js pour les sons -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
     <script src="js/ui/reglage.js"></script>
+    <script type="module" src="js/ui/regle.js"></script>
     <script type="module" src="js/core/script.js"></script>
 </body>
 </html>
