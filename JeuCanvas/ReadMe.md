@@ -25,7 +25,7 @@
 		- Niveau 1 : **survivre 1 minute** sans mourir.
 		- Niveau 2 : **détruire 30 météorites** sans perdre toutes ses vies.
 		- Niveau 3 : affronter un **vaisseau ennemi** tout en gérant les météorites qui apparaissent près du vaisseau.
-	- 🤝 **Duo** : permet de jouer à **2 joueurs sur le même clavier**, avec des touches dédiées pour le deuxième joueur ; les niveaux sont similaires au solo mais **tous les paramètres sont doublés**.
+	- 🤝 **Duo** : permet de jouer à **2 joueurs sur le même clavier**, avec des touches dédiées pour le deuxième joueur, les niveaux sont similaires au solo mais **tous les paramètres sont doublés**.
 	- ⚔️ **Duel** : un mode **1 vs 1**, où le premier à **3 points** gagne, avec des gadgets qui peuvent renverser la partie à tout moment.
 
 - ☄️ **Variété de météorites** :
@@ -57,7 +57,7 @@
 - 🧪 **Version locale (recommandée pour les tests)** :
 	- Cloner le dépôt Git sur la machine locale.
 - 🌐 **Version en ligne** :
-	- Le jeu peut également être consulté via : .
+	- Le jeu peut également être consulté via : https://tp-web-hamadouche-ozdoev.vercel.app/.
 
 - ## 8. 📂 Structure du projet
 
@@ -120,15 +120,10 @@
 - 🖥️ **js/ui/** : regroupe la **logique d’interface utilisateur** liée aux menus de boutique et de réglages :
 	- `boutique.js` : contient la classe `Boutique`, qui définit le **catalogue de vaisseaux** (types, noms, descriptions, prix) et gère l’achat/équipement via le joueur, ainsi que la classe `BoutiqueUI`, qui met à jour l’**interface visuelle de la boutique** (carousel de vaisseaux, boutons, affichage de l’or, état « équipé »).
 	- `reglage.js` : gère l’**écran de réglages** :
-		- configuration des touches pour le joueur 1 et le joueur 2 (écoute des pressions de touches, vérification des conflits, sauvegarde dans le `localStorage`) ;
+		- configuration des touches pour le joueur 1 et le joueur 2 (écoute des pressions de touches, vérification des conflits, sauvegarde dans le `localStorage`).
 		- réglage du **volume de la musique** et des **effets sonores** via des sliders, avec affichage des valeurs.
 	- `regle.js` : gère l’**interface utilisateur des règles du jeu** :
-		- contrôle l’ouverture/fermeture de l’overlay des règles ;
-		- gère la navigation par onglets entre les différentes sections de règles ;
-		- assure l’accessibilité (attributs ARIA, gestion du focus) ;
-		- code modulaire et commenté pour faciliter la maintenance.
-		- configuration des touches pour le joueur 1 et le joueur 2 (écoute des pressions de touches, vérification des conflits, sauvegarde dans le `localStorage`) ;
-		- réglage du **volume de la musique** et des **effets sonores** via des sliders, avec affichage des valeurs.
+		- contrôle l’ouverture/fermeture de l’overlay des règles.
 
 ## 9. 🏗️ Ce dont nous sommes fiers
 
