@@ -7,7 +7,7 @@ export default class Niveau3 extends Niveau {
     constructor(gameManager) {
         super(gameManager);
 
-        this.enemySpawnDelay = 2; // 15s
+        this.enemySpawnDelay = 5000; // 15s
         this.enemySpawned = false;
 
         this.lancerDelay = 100000000000000000; // toutes les 1s

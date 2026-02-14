@@ -171,6 +171,7 @@ export function formatTime(ms) {
 }
 
 export function drawScoreScreen(ctx, canvas) {
+    ctx.save();
 
     const scores = getScores(scoreMode);
 
@@ -251,7 +252,6 @@ export function drawScoreScreen(ctx, canvas) {
     if (scoreScrollOffset > maxScroll) scoreScrollOffset = maxScroll;
     if (scoreScrollOffset < 0) scoreScrollOffset = 0;
 
-    ctx.save();
     ctx.beginPath();
     ctx.rect(contentX, contentY, contentWidth, contentHeight);
     ctx.clip();
@@ -406,8 +406,6 @@ export function drawScoreScreen(ctx, canvas) {
 
     });
 
-    ctx.restore();
-
     ctx.textAlign = 'center';
     ctx.fillStyle = 'white';
     ctx.font = '14px Arial';
@@ -416,4 +414,5 @@ export function drawScoreScreen(ctx, canvas) {
         centerX,
         cardY + cardHeight - 20
     );
+    ctx.restore();
 }

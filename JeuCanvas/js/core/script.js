@@ -551,14 +551,17 @@ function updateGameStateDuo() {
 }
 
 const drawBullets = (vaisseau) => {
+    ctx.save();
     if (!vaisseau) return;
     for (let i = vaisseau.bullets.length - 1; i >= 0; i--) {
         const bullet = vaisseau.bullets[i];
         bullet.draw(ctx);
     }
+    ctx.restore();
 };
 
 function drawPlaying() {
+    ctx.save();
     if (modeActuel === 'duel') {
         drawDuel(ctx, getVaisseaux);
         return;
@@ -585,6 +588,7 @@ function drawPlaying() {
     drawEclairBar(ctx, monVaisseau);
     drawRafaleBar(ctx, monVaisseau);
     drawBullets(monVaisseau);
+    ctx.restore();
 }
 
 function updateBarreDeVie() {

@@ -174,6 +174,7 @@ export default class GameManagerDuel {
 	}
 
 	draw(ctx, vaisseau1, vaisseau2) {
+		ctx.save();
 		this.entityManager.draw(ctx);
 
 		if (vaisseau1) {
@@ -189,6 +190,7 @@ export default class GameManagerDuel {
 			drawEclairBar(ctx, vaisseau2);
 			drawRafaleBar(ctx, vaisseau2);
 		}
+		ctx.restore();
 	}
 
 	spawnGadgetEclair() {

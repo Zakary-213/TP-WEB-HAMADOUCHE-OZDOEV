@@ -27,9 +27,9 @@ export class Particle {
   }
 
   draw(ctx) {
+    ctx.save();
     // Slight flicker for arcade feel
     const alpha = Math.max(0, this.life / this.maxLife) * (0.9 + Math.random() * 0.1);
-    ctx.save();
     ctx.globalAlpha = alpha;
     ctx.globalCompositeOperation = this.composite;
     ctx.fillStyle = this.color;
@@ -59,7 +59,6 @@ export class Particle {
         ctx.fill();
       }
     }
-
     ctx.restore();
   }
 }
@@ -114,8 +113,10 @@ export default class ParticleManager {
   }
 
   draw(ctx) {
+    ctx.save()
     for (let i = 0; i < this.particles.length; i++) {
       this.particles[i].draw(ctx);
     }
+    ctx.restore();
   }
 }

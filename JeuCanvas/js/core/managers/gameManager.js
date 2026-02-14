@@ -466,6 +466,7 @@ export default class GameManager {
     }
 
     draw(ctx) {
+        ctx.save();
         // Dessiner les météorites
         this.meteorites.forEach((meteorite) => {
             meteorite.draw(ctx);
@@ -489,6 +490,7 @@ export default class GameManager {
 
         // Dessiner les particules (au-dessus pour bien voir)
         this.particles.draw(ctx);
+        ctx.restore();
     }
 
     spawnGadgetEclair() {
@@ -536,8 +538,8 @@ export default class GameManager {
     }
 
     drawCloudZones(ctx) {
-        if (!this.cloudZones.length) return;
         ctx.save();
+        if (!this.cloudZones.length) return;
         this.cloudZones.forEach(zone => {
             const grd = ctx.createRadialGradient(zone.x, zone.y, 0, zone.x, zone.y, zone.radius);
             grd.addColorStop(0, 'rgba(200, 200, 200, 0.85)');

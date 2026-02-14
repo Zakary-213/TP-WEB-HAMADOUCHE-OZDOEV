@@ -80,6 +80,7 @@ export function drawEclairBar(ctx, vaisseau) {
 
 // Dessiner la barre de durée Rafale au-dessus du vaisseau (noire)
 export function drawRafaleBar(ctx, vaisseau) {
+	ctx.save();
 	const now = performance.now();
 	if (vaisseau.rafaleEndAt !== undefined && vaisseau.rafaleEndAt !== null && vaisseau.rafaleDuration) {
 		const remaining = vaisseau.rafaleEndAt - now;
@@ -91,7 +92,6 @@ export function drawRafaleBar(ctx, vaisseau) {
 			const x = vaisseau.x - barW / 2;
 			const y = vaisseau.y - vaisseau.hauteur / 2 - offsetY;
 
-			ctx.save();
 			ctx.fillStyle = 'rgba(50, 0, 80, 0.7)'; // fond violet sombre
 			ctx.fillRect(x, y, barW, barH);
 			ctx.fillStyle = '#C77DFF'; // violet vif pour la jauge
@@ -99,17 +99,17 @@ export function drawRafaleBar(ctx, vaisseau) {
 			ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
 			ctx.lineWidth = 1;
 			ctx.strokeRect(x, y, barW, barH);
-			ctx.restore();
 		}
 	}
+	ctx.restore();
 }
 
 // Dessiner une bulle bleue autour du vaisseau quand le bouclier est actif
 export function drawShieldBubble(ctx, vaisseau) {
+	ctx.save();
 	const shieldHP = (vaisseau.shieldHP !== undefined && vaisseau.shieldHP !== null) ? vaisseau.shieldHP : 0;
 	if (shieldHP > 0) {
 		const radius = Math.max(vaisseau.largeur, vaisseau.hauteur) * 0.65;
-		ctx.save();
 		ctx.strokeStyle = 'rgba(80, 160, 255, 0.9)';
 		ctx.fillStyle = 'rgba(80, 160, 255, 0.15)';
 		ctx.lineWidth = 3;
@@ -117,7 +117,7 @@ export function drawShieldBubble(ctx, vaisseau) {
 		ctx.arc(vaisseau.x, vaisseau.y, radius, 0, Math.PI * 2);
 		ctx.fill();
 		ctx.stroke();
-		ctx.restore();
 	}
+	ctx.restore();
 }
 

@@ -143,6 +143,7 @@ export default class GameManagerDuo {
 	}
 
 	draw(ctx, vaisseau1, vaisseau2) {
+		ctx.save();
 		// Dessiner toutes les entités (météorites, ennemis, gadgets, nuages, particules)
 		this.entityManager.draw(ctx);
 
@@ -159,6 +160,7 @@ export default class GameManagerDuo {
 			drawEclairBar(ctx, vaisseau2);
 			drawRafaleBar(ctx, vaisseau2);
 		}
+		ctx.restore();
 	}
 
 	spawnMeteorrite(type) {
