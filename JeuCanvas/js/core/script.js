@@ -355,6 +355,7 @@ transitionDuoLevel({
 
 function startGame(mode) {
     modeActuel = mode;
+    
     resetDuelState();
 
     if (mode === 'solo') {

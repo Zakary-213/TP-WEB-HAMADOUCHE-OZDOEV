@@ -40,37 +40,48 @@ export function initLifeBars() {
     labelJ2 = barreVieJ2 ? barreVieJ2.querySelector('.label-vie') : null;
 
     // Cacher les cœurs au départ
-    coeursJ1.forEach(coeur => { coeur.style.visibility = 'hidden'; });
-    coeursJ2.forEach(coeur => { coeur.style.visibility = 'hidden'; });
+    coeursJ1.forEach(coeur => { coeur.style.display = 'none'; });
+    coeursJ2.forEach(coeur => { coeur.style.display = 'none'; });
 }
+
 
 export function updateLifeBars(modeActuel, vaisseau1, vaisseau2) {
     if (!coeursJ1) return;
 
-    // Mode SOLO : une seule barre de cœurs sans texte
+    // =========================
+    // ===== MODE SOLO =========
+    // =========================
     if (modeActuel === 'solo') {
+
         if (barreVieJ1) barreVieJ1.style.display = 'flex';
         if (barreVieJ2) barreVieJ2.style.display = 'none';
+
         if (labelJ1) labelJ1.style.display = 'none';
         if (labelJ2) labelJ2.style.display = 'none';
 
         const pvSolo = vaisseau1 ? vaisseau1.pointsDeVie : 0;
+
         coeursJ1.forEach((c, i) => {
-            c.style.visibility = i < pvSolo ? 'visible' : 'hidden';
+            c.style.display = i < pvSolo ? 'inline-block' : 'none';
         });
 
         if (coeursJ2) {
             coeursJ2.forEach(c => {
-                c.style.visibility = 'hidden';
+                c.style.display = 'none';
             });
         }
+
         return;
     }
 
-    // Mode DUO / DUEL : deux barres avec labels
+    // =========================
+    // ===== MODE DUO / DUEL ===
+    // =========================
     if (modeActuel === 'duo' || modeActuel === 'duel') {
+
         if (barreVieJ1) barreVieJ1.style.display = 'flex';
         if (barreVieJ2) barreVieJ2.style.display = 'flex';
+
         if (labelJ1) labelJ1.style.display = '';
         if (labelJ2) labelJ2.style.display = '';
 
@@ -78,15 +89,17 @@ export function updateLifeBars(modeActuel, vaisseau1, vaisseau2) {
         const pv2 = vaisseau2 ? vaisseau2.pointsDeVie : 0;
 
         coeursJ1.forEach((c, i) => {
-            c.style.visibility = i < pv1 ? 'visible' : 'hidden';
+            c.style.display = i < pv1 ? 'inline-block' : 'none';
         });
+
         if (coeursJ2) {
             coeursJ2.forEach((c, i) => {
-                c.style.visibility = i < pv2 ? 'visible' : 'hidden';
+                c.style.display = i < pv2 ? 'inline-block' : 'none';
             });
         }
     }
 }
+
 
 export function hideLifeBars() {
     setDisplay(barreVieJ1, 'none');
