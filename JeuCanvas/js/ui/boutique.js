@@ -207,7 +207,8 @@ export class BoutiqueUI{
         const isEquipped = this.player.getEquippedShip() === currentShipId;
         if (!isOwned) {
             this.shopStatus.textContent = "🔒 Non possédé – cliquer pour acheter";
-        } else {
+        } 
+        else {
             this.shopStatus.textContent = isEquipped
                 ? "✔ Équipé"
                 : "➕ Cliquer pour équiper";

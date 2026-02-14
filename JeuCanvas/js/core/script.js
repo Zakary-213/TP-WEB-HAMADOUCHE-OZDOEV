@@ -36,6 +36,7 @@ let monVaisseau, monVaisseau2, gameManager, gameManagerDuo;
 let etat = ETAT.MENU, modeActuel = 'solo', loadedAssets, keys = inputStates;
 
 const player = new Player();
+// AVANT CANVAS --> W = 500 / H = 600
 const BASE_CANVAS_WIDTH = 500, BASE_CANVAS_HEIGHT = 600;
 
 let settingsOverlay, duoSettingsOverlay, settingsClose, menuButtons, modeButtons;

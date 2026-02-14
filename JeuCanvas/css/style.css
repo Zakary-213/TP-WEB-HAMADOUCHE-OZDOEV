@@ -11,10 +11,14 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
+    /*min-height: 100vh;*/
     position: relative;
+    /*
     overflow-x: hidden;
     overflow-y: auto;
+    */
+    height: 100vh;      
+    overflow: hidden;  
 }
 
 /* Effet néon arcade en arrière-plan */
@@ -136,7 +140,7 @@ canvas {
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
     width: 100%;
     height: auto;
-    max-width: 500px;
+    /*max-width: 500px;*/
     aspect-ratio: 500 / 600;
 }
 
@@ -148,9 +152,12 @@ canvas.game-active {
     position: relative;
     display: inline-block;
     z-index: 5;
-    width: 100%;
-    max-width: 500px;
+    /*width: 100%;*/
+    width: 500px;
+    /*max-width: 500px;*/
     padding-top: 16px;
+    
+    
 }
 
 .canvas-wrapper canvas {
