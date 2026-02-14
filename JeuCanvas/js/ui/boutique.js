@@ -23,6 +23,24 @@ export default class Boutique {
                 name: "Vaisseau Split",
                 description: "Tirs qui se divisent à l’impact.",
                 price: 0
+            },
+            {
+                id: TYPE_VAISSEAU.SPREAD,
+                name: "Vaisseau Spread",
+                description: "Tir double pour couvrir plus de zone.",
+                price: 0
+            },
+            {
+                id: TYPE_VAISSEAU.RICOCHET,
+                name: "Vaisseau Ricochet",
+                description: "Les balles rebondissent sur les bords du canvas.",
+                price: 0
+            },
+            {
+                id: TYPE_VAISSEAU.PIERCE,
+                name: "Vaisseau Pierce",
+                description: "Les tirs traversent plusieurs météorites.",
+                price: 0
             }
         ];
     }
@@ -91,6 +109,17 @@ export default class Boutique {
 export class BoutiqueUI{
     constructor(player){
         this.player = player;
+        this.boutique = new Boutique(player);
+        // Liste fixe de tous les types de vaisseaux affichés dans la boutique,
+        // indépendamment de ce qu'il y a dans le localStorage.
+        this.shipIds = [
+            TYPE_VAISSEAU.NORMAL,
+            TYPE_VAISSEAU.PHASE,
+            TYPE_VAISSEAU.SPLIT,
+            TYPE_VAISSEAU.SPREAD,
+            TYPE_VAISSEAU.RICOCHET,
+            TYPE_VAISSEAU.PIERCE
+        ];
         this.currentShipIndex = 0;
         this.buyButton = document.querySelector('.ship-action');
         this.shopGold = document.querySelector('.shop-gold');
@@ -106,22 +135,35 @@ export class BoutiqueUI{
         this.updateShipInfo();
 
         this.carouselLeftButton.addEventListener('click', () => {
-            const total = this.player.ownedShips.length;
+            const total = this.shipIds.length;
             if (total === 0) return;
             this.currentShipIndex = (this.currentShipIndex - 1 + total) % total;
             this.updateShipInfo();
         });
 
         this.carouselRightButton.addEventListener('click', () => {
-            const total = this.player.ownedShips.length;
+            const total = this.shipIds.length;
             if (total === 0) return;
             this.currentShipIndex = (this.currentShipIndex + 1) % total;
             this.updateShipInfo();
         });
 
         this.buyButton.addEventListener('click', () => {
-            const currentShipId = this.player.ownedShips[this.currentShipIndex];
-            if(this.player.getEquippedShip() === currentShipId){
+            const currentShipId = this.shipIds[this.currentShipIndex];
+
+            // Si le vaisseau n'est pas encore possédé, tenter de l'acheter
+            if (!this.player.hasShip(currentShipId)) {
+                const success = this.boutique.buy(currentShipId);
+                if (success) {
+                    this.updateGold();
+                    this.player.equipShip(currentShipId);
+                    this.updateShipInfo();
+                }
+                return;
+            }
+
+            // Sinon, juste l'équiper
+            if (this.player.getEquippedShip() === currentShipId) {
                 return;
             }
             this.player.equipShip(currentShipId);
@@ -134,13 +176,12 @@ export class BoutiqueUI{
     }
 
     updateShipInfo(){
-        const owned = this.player.ownedShips;
-        const total = owned.length;
+        const total = this.shipIds.length;
         if (total === 0) return;
 
-        const currentShipId = owned[this.currentShipIndex];
+        const currentShipId = this.shipIds[this.currentShipIndex];
 
-        // Nom + description simples selon le type de vaisseau
+        // Nom + description selon le type de vaisseau
         let name = currentShipId;
         let description = "Description du vaisseau à définir";
         switch (currentShipId) {
@@ -156,11 +197,32 @@ export class BoutiqueUI{
                 name = "Vaisseau Split";
                 description = "Tirs qui se divisent à l’impact.";
                 break;
+            case TYPE_VAISSEAU.SPREAD:
+                name = "Vaisseau Spread";
+                description = "Tir double pour couvrir plus de zone.";
+                break;
+            case TYPE_VAISSEAU.RICOCHET:
+                name = "Vaisseau Ricochet";
+                description = "Les balles rebondissent sur les bords du canvas.";
+                break;
+            case TYPE_VAISSEAU.PIERCE:
+                name = "Vaisseau Pierce";
+                description = "Les tirs traversent plusieurs météorites.";
+                break;
         }
 
         this.shopName.textContent = name;
         this.shopDescription.textContent = description;
-        this.shopStatus.textContent = this.player.getEquippedShip() === currentShipId ? "✔ Équipé" : "➕ Cliquer pour équiper";
+
+        const isOwned = this.player.hasShip(currentShipId);
+        const isEquipped = this.player.getEquippedShip() === currentShipId;
+        if (!isOwned) {
+            this.shopStatus.textContent = "🔒 Non possédé – cliquer pour acheter";
+        } else {
+            this.shopStatus.textContent = isEquipped
+                ? "✔ Équipé"
+                : "➕ Cliquer pour équiper";
+        }
 
         // Calcul des index pour gauche / centre / droite (carousel circulaire)
         const prevIndex = (this.currentShipIndex - 1 + total) % total;
@@ -193,7 +255,7 @@ export class BoutiqueUI{
 
         slots.forEach(slot => {
             if (!slot.el) return;
-            const shipId = owned[slot.shipIndex];
+            const shipId = this.shipIds[slot.shipIndex];
             slot.el.src = mapShipIdToImage(shipId);
             slot.el.classList.remove('left', 'center', 'right');
             slot.el.classList.add(slot.position);
