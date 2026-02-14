@@ -205,13 +205,17 @@ export class BoutiqueUI{
 
         const isOwned = this.player.hasShip(currentShipId);
         const isEquipped = this.player.getEquippedShip() === currentShipId;
+
+        // Texte du statut ET du bouton selon l'état
         if (!isOwned) {
-            this.shopStatus.textContent = "🔒 Non possédé – cliquer pour acheter";
-        } 
-        else {
-            this.shopStatus.textContent = isEquipped
-                ? "✔ Équipé"
-                : "➕ Cliquer pour équiper";
+            this.shopStatus.textContent = "🔒 Non possédé";
+            this.buyButton.textContent = "Acheter";
+        } else if (!isEquipped) {
+            this.shopStatus.textContent = "✅ Acheté";
+            this.buyButton.textContent = "Équiper";
+        } else {
+            this.shopStatus.textContent = "✔ Équipé";
+            this.buyButton.textContent = "Équipé";
         }
 
         // Calcul des index pour gauche / centre / droite (carousel circulaire)
