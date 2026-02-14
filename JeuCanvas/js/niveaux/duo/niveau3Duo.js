@@ -33,8 +33,6 @@ export default class Niveau3Duo extends Niveau {
 
     start() {
         super.start();
-        console.log('=== NIVEAU 3 DUO : START ===');
-
         this.enemySpawned = false;
         this.lastLancerSpawn = performance.now();
         this.lastNuageWave = performance.now();
@@ -54,7 +52,6 @@ export default class Niveau3Duo extends Niveau {
             this.gameManager.spawnEnnemi({ x: canvasWidth / 3, y: 60 });
             this.gameManager.spawnEnnemi({ x: (canvasWidth * 2) / 3, y: 60 });
             this.enemySpawned = true;
-            console.log('[DUO] 2 ENNEMIS SPAWN');
         }
 
         // Météorites LANCER régulières (même rythme que solo)
@@ -87,7 +84,6 @@ export default class Niveau3Duo extends Niveau {
         // Condition de fin : comme en solo, lorsque l'ennemi a été détruit
         if (this.enemySpawned && this.gameManager.ennemis.length === 0) {
             this.finished = true;
-            console.log('=== NIVEAU 3 DUO GAGNÉ : ENNEMI DÉTRUIT ===');
         }
     }
 }

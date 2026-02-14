@@ -40,7 +40,6 @@ export default class Tour {
     endRound(winnerLabel) {
         this.roundWinner = winnerLabel;
         this.isRoundComplete = true;
-        console.log(`Tour ${this.roundNumber} terminé - ${winnerLabel} a gagné !`);
     }
 
     /**

@@ -653,7 +653,6 @@ function updateGameStateDuo() {
     // Si les deux vaisseaux sont maintenant morts/absents, on déclenche le game over duo
     if (!monVaisseau && !monVaisseau2) {
         setEtat(ETAT.GAME_OVER);
-        console.log('Game Over Duo : les deux joueurs sont morts');
     }
 }
 

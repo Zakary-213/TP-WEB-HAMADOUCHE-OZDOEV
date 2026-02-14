@@ -2,7 +2,6 @@ async function loadAssets(assetsToLoadURLs) {
     // Charge les sons, les sprite sheets etc.
     // puis retourne tous les assets chargés
     let result = await loadAssetsUsingHowlerAndNoXhr(assetsToLoadURLs);
-    console.log("loadAssets - Tous les assets sont chargés");
     return result;
 }
 

@@ -43,7 +43,6 @@ export default class Niveau1Duo extends Niveau {
 
     start() {
         super.start();
-        console.log('=== NIVEAU 1 DUO : START ===');
         this.lastSpawn = performance.now() - this.spawnDelay;
     }
 
@@ -60,8 +59,6 @@ export default class Niveau1Duo extends Niveau {
                 this.spawnDelay - this.spawnStep
             );
             this.lastDifficultyUpdate = this.elapsedTime;
-
-            console.log('[DUO] Nouveau spawnDelay:', this.spawnDelay);
         }
 
         // Spawns de météorites : on en fait apparaître 2 à chaque fois
@@ -84,7 +81,6 @@ export default class Niveau1Duo extends Niveau {
 
         if (this.elapsedTime >= this.duration) {
             this.finished = true;
-            console.log('=== NIVEAU 1 DUO : FINISHED ===');
         }
     }
 }

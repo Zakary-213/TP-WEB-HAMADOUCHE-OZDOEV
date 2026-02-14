@@ -7,8 +7,6 @@ let lastKeyPress = {};
 const DOUBLE_TAP_DELAY = 250; // ms
 
 function defineListeners({ getEtat, getCustomKeys, getCustomKeys2, getVaisseau, getVaisseau2, getMode }) {
-	console.log("Définition des écouteurs clavier (ecouteur.js)");
-
 	const scrollKeys = new Set([
 		'ArrowUp',
 		'ArrowDown',

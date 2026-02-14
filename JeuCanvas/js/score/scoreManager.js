@@ -53,7 +53,6 @@ export function addSoloScore(data) {
         if (newScore.totalTime < existingScore.totalTime) {
             allScores.solo[existingIndex] = newScore;
         } else {
-            console.log("Score non amélioré : record précédent conservé.");
             return;
         }
     } else {

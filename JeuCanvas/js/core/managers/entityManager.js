@@ -290,12 +290,10 @@ export default class EntityManager {
 
 							if (vaisseau === vaisseau1) {
 								game.player1DestroyedMeteorites++;
-								console.log("DUO J1 kill :", game.player1DestroyedMeteorites);
 							}
 
 							if (vaisseau === vaisseau2) {
 								game.player2DestroyedMeteorites++;
-								console.log("DUO J2 kill :", game.player2DestroyedMeteorites);
 							}
 
 						}
@@ -303,7 +301,6 @@ export default class EntityManager {
 						else if (game.playerDestroyedMeteorites !== undefined) {
 							// Compteur unique utilisé pour les objectifs du mode solo
 							game.playerDestroyedMeteorites++;
-							console.log("SOLO kill :", game.playerDestroyedMeteorites);
 						}
 
 

@@ -10,11 +10,9 @@ export default class Niveau3 extends Niveau {
         this.enemySpawnDelay = 5000; // 15s
         this.enemySpawned = false;
 
-        //this.lancerDelay = 100000000000000000; // toutes les 1s
         this.lancerDelay = 1500; // toutes les 1s
         this.lastLancerSpawn = 0;
 
-        //this.nuageWaveDelay = 500000000000000000000; // toutes les 3s
         this.nuageWaveDelay = 5000; // toutes les 3s
         this.lastNuageWave = 0;
         this.nuagePerWave = 2;
@@ -33,12 +31,6 @@ export default class Niveau3 extends Niveau {
 
     start() {
         super.start();
-        console.log('=== NIVEAU 3 : START ===');
-
-        /*
-        this.gameManager.ennemis.length = 0;
-        this.gameManager.meteorites.length = 0;
-        */
         this.enemySpawned = false;
         this.lastLancerSpawn = performance.now();
         this.lastNuageWave = performance.now();
@@ -54,7 +46,6 @@ export default class Niveau3 extends Niveau {
         if (!this.enemySpawned && this.elapsedTime >= this.enemySpawnDelay) {
             this.gameManager.spawnEnnemi();
             this.enemySpawned = true;
-            console.log('ENNEMI SPAWN');
         }
 
         if (now - this.lastLancerSpawn >= this.lancerDelay) {
@@ -78,7 +69,6 @@ export default class Niveau3 extends Niveau {
 
         if (this.enemySpawned && this.gameManager.ennemis.length === 0) {
             this.finished = true;
-            console.log('=== NIVEAU 3 GAGNÉ : ENNEMI DÉTRUIT ===');
         }
     }
 }

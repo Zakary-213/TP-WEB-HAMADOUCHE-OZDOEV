@@ -45,9 +45,6 @@ export default class Niveau2 extends Niveau {
 
     start() {
         super.start();
-
-        console.log('=== NIVEAU 2 : START ===');
-
         this.currentKills = 0;
         const previousCallback = this.gameManager.onMeteoriteDestroyed;
         this.totalSpawned = 0;
@@ -63,14 +60,9 @@ export default class Niveau2 extends Niveau {
             }
             this.currentKills++;
 
-            console.log(
-                `[N2] Météorites détruites : ${this.currentKills}/${this.targetKills}`
-            );
-
             if (this.currentKills >= this.targetKills) {
                 this.finished = true;
                 this.spawnFinished = true;
-                console.log('=== NIVEAU 2 GAGNÉ ===');
             }
         };
     }

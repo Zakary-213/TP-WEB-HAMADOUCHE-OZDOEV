@@ -36,7 +36,6 @@ export default class Niveau1 extends Niveau {
 
     start() {
         super.start();
-        console.log('=== NIVEAU 1 : START ===');
         this.lastSpawn = performance.now() - this.spawnDelay;
     }
 
@@ -52,8 +51,6 @@ export default class Niveau1 extends Niveau {
                 this.spawnDelay - this.spawnStep
             );
             this.lastDifficultyUpdate = this.elapsedTime;
-
-            console.log('Nouveau spawnDelay:', this.spawnDelay);
         }
 
         if (now - this.lastSpawn > this.spawnDelay) {
@@ -70,8 +67,6 @@ export default class Niveau1 extends Niveau {
 
         if (this.elapsedTime >= this.duration) {
             this.finished = true;
-            console.log('=== NIVEAU 1 : FINISHED ===');
-
         }
     }
 }

@@ -45,9 +45,6 @@ export default class Niveau2Duo extends Niveau {
 
 	start() {
 		super.start();
-
-		console.log('=== NIVEAU 2 DUO : START ===');
-
 		this.currentKills = 0;
 		const previousCallback = this.gameManager.onMeteoriteDestroyed;
 		this.totalSpawned = 0;
@@ -64,14 +61,9 @@ export default class Niveau2Duo extends Niveau {
 			}
 			this.currentKills++;
 
-			console.log(
-				`[N2 DUO] Météorites détruites : ${this.currentKills}/${this.targetKills}`
-			);
-
 			if (this.currentKills >= this.targetKills) {
 				this.finished = true;
 				this.spawnFinished = true;
-				console.log('=== NIVEAU 2 DUO GAGNÉ ===');
 			}
 		};
 	}

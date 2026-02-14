@@ -2,7 +2,7 @@
  * @module LevelManager
  * @description Gère la progression logique du jeu, l'enchaînement des niveaux, 
  * les transitions et la sauvegarde des scores finaux
-
+*/
 import { addSoloScore, addDuoScore } from '../../score/scoreManager.js';
 
 /**
@@ -53,7 +53,6 @@ export default class LevelManager {
 
         // Réinitialisation du compteur de session pour le nouveau niveau
         this.gameManager.playerDestroyedMeteorites = 0;
-        console.log(`Début du niveau ${this.currentIndex + 1}`);
     }
 
     /**
@@ -138,8 +137,6 @@ export default class LevelManager {
      * Gère la fin de la campagne : demande les pseudos et enregistre les scores.
      */
     finalizeGame() {
-        console.log("Tous les niveaux terminés !");
-
         // --- ENREGISTREMENT DUO ---
         if (this.gameManager.player1DestroyedMeteorites !== undefined) {
             const pseudo1 = prompt("Bravo ! Pseudo Joueur 1 :");
@@ -166,7 +163,6 @@ export default class LevelManager {
                         time: lvl.time
                     }))
                 });
-                console.log("Score DUO enregistré !");
             }
         } 
         // --- ENREGISTREMENT SOLO ---
@@ -177,7 +173,6 @@ export default class LevelManager {
                     pseudo: pseudo.trim(),
                     niveaux: this.completedLevelsData
                 });
-                console.log("Score SOLO enregistré !");
             }
         }
     }

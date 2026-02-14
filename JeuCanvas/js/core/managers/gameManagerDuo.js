@@ -206,7 +206,6 @@ export default class GameManagerDuo {
 		       // (la gestion de l'affichage/contrôles reste à l'extérieur)
 		       if (!vaisseau1 && !vaisseau2 && typeof setEtat === 'function' && ETAT) {
 			       setEtat(ETAT.GAME_OVER);
-			       console.log('Game Over Duo : les deux joueurs sont morts');
 		       }
 	       }
 
