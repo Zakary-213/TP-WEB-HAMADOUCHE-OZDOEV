@@ -10,12 +10,12 @@ export default class Niveau3 extends Niveau {
         this.enemySpawnDelay = 5000; // 15s
         this.enemySpawned = false;
 
-        this.lancerDelay = 100000000000000000; // toutes les 1s
-        //this.lancerDelay = 1500; // toutes les 1s
+        //this.lancerDelay = 100000000000000000; // toutes les 1s
+        this.lancerDelay = 1500; // toutes les 1s
         this.lastLancerSpawn = 0;
 
-        this.nuageWaveDelay = 500000000000000000000; // toutes les 3s
-        //this.nuageWaveDelay = 5000; // toutes les 3s
+        //this.nuageWaveDelay = 500000000000000000000; // toutes les 3s
+        this.nuageWaveDelay = 5000; // toutes les 3s
         this.lastNuageWave = 0;
         this.nuagePerWave = 2;
         

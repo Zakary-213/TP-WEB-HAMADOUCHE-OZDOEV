@@ -7,15 +7,15 @@ export default class Niveau3Duo extends Niveau {
     constructor(gameManagerDuo) {
         super(gameManagerDuo);
 
-        this.enemySpawnDelay = 2000; // 15s avant l'apparition de l'ennemi
+        this.enemySpawnDelay = 5000; // 5s avant l'apparition de l'ennemi
         this.enemySpawned = false;
 
-        this.lancerDelay = 100000000000000; // tirs de LANCER réguliers
-        //this.lancerDelay = 1500; // tirs de LANCER réguliers
+        //this.lancerDelay = 100000000000000; // tirs de LANCER réguliers
+        this.lancerDelay = 1500; // tirs de LANCER réguliers
         this.lastLancerSpawn = 0;
 
-        this.nuageWaveDelay = 50000000000000000000; // vagues de NUAGE régulières
-        //this.nuageWaveDelay = 5000; // vagues de NUAGE régulières
+        //this.nuageWaveDelay = 50000000000000000000; // vagues de NUAGE régulières
+        this.nuageWaveDelay = 5000; // vagues de NUAGE régulières
         this.lastNuageWave = 0;
         // Duo : on double le nombre de nuages par vague
         this.nuagePerWave = 4;

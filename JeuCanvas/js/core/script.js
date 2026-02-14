@@ -111,7 +111,6 @@ document.addEventListener('DOMContentLoaded', () => {
     setEtat(ETAT.MENU);
     canvas.width = BASE_CANVAS_WIDTH;
     canvas.height = BASE_CANVAS_HEIGHT;
-
     document.querySelector('.startBoutton').addEventListener('click', () => {
         if (etat !== ETAT.MENU && etat !== ETAT.GAME_OVER) return;
         setEtat(ETAT.CHOIX_MODE);
@@ -427,6 +426,10 @@ function startGame(mode) {
         );
         levelManagerDuo.start();
     } else if (mode === 'duel') {
+        const meteoriteCounterContainer = document.querySelector('.meteorite-counter');
+        const chronometre = document.getElementById('timer');
+        meteoriteCounterContainer.style.display ='none';
+        chronometre.style.display = 'none';
         levelManager = null;
         levelManagerDuo = null;
         gameManager = null;

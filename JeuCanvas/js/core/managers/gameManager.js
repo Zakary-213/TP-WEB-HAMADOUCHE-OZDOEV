@@ -163,7 +163,7 @@ export default class GameManager {
         this.updateEnnemis(vaisseau);
         this.updateBullets(vaisseau);
         this.updateGadgets(vaisseau);
-        this.handleSpawns();
+        //this.handleSpawns();
     }
 
     updateMeteorites(vaisseau) {

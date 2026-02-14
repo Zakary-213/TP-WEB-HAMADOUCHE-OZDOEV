@@ -7,7 +7,7 @@ export default class Niveau2Duo extends Niveau {
 	constructor(gameManagerDuo) {
 		super(gameManagerDuo);
 
-		this.targetKills = 2;
+		this.targetKills = 60;
 		this.currentKills = 0;
 
 		this.maxMeteoritesToSpawn = 100000;
