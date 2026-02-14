@@ -57,6 +57,9 @@ export default class GameManager {
         // Dernière position connue du vaisseau, utilisée par certaines météorites
         this.lastVaisseauX = null;
         this.lastVaisseauY = null;
+
+        // Score: Nombre de météorites détruites par le joueur (pour le résumé de fin)
+        this.playerDestroyedMeteorites = 0;
     }
 
     /**
@@ -147,8 +150,7 @@ export default class GameManager {
             bullet.move(this.canvas.width, this.canvas.height);
 
             // Si la balle sort de l'écran et ne rebondit pas, on la supprime
-            if (bullet.estHorsCanvas(this.canvas.width, this.canvas.height) && bullet.bounces === 0) 
-            {
+            if (bullet.estHorsCanvas(this.canvas.width, this.canvas.height) && bullet.bounces === 0) {
                 vaisseau.bullets.splice(i, 1);
             }
 
@@ -372,6 +374,9 @@ export default class GameManager {
                         // Récompense en or selon le type de météorite détruite
                         const goldEarned = this.getGoldForMeteorite(meteorite.type);
                         this.player.addGold(goldEarned);
+
+                        // Incrémenter le score (statistique de fin de niveau)
+                        this.playerDestroyedMeteorites++;
                     }
                     if (vaisseau.type !== TYPE_VAISSEAU.PIERCE) {
                         vaisseau.bullets.splice(b, 1);
