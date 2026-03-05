@@ -7,7 +7,15 @@ const createScene = function () {
     const scene = new BABYLON.Scene(engine);
 
     // Camera looking at the center
-    const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 50, new BABYLON.Vector3(0, 0, 0), scene);
+    //const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 50, new BABYLON.Vector3(0, 0, 0), scene);
+    const camera = new BABYLON.ArcRotateCamera(
+        "camera",
+        Math.PI,
+        0.01,      // presque vertical
+        40,
+        new BABYLON.Vector3(0,0,0),
+        scene
+    );
     camera.attachControl(canvas, true);
 
     // Light
@@ -75,6 +83,7 @@ const createScene = function () {
     const ball = createBall(scene); // Defined in js/objects/ball.js
 
     // Players
+    /*
     const teamAColor = new BABYLON.Color3(1, 0, 0); // Red
     const teamBColor = new BABYLON.Color3(0, 0, 1); // Blue
 
@@ -91,6 +100,53 @@ const createScene = function () {
     createPlayer(scene, new BABYLON.Vector3(20, 0, -10), teamBColor);
     createPlayer(scene, new BABYLON.Vector3(10, 0, 20), teamBColor);
     createPlayer(scene, new BABYLON.Vector3(10, 0, -20), teamBColor);
+    */
+
+    const players = [];
+    const teamAColor = new BABYLON.Color3(1, 0, 0); // Red
+
+
+    players.push(
+        createPlayer(scene, new BABYLON.Vector3(-40, 0, 0), teamAColor)
+    );
+    const player = players[0];
+    camera.lockedTarget = players[0];
+    camera.inputs.clear();
+
+
+    // ----- Flèche directionnelle -----
+
+    const arrowMaterial = new BABYLON.StandardMaterial("arrowMat", scene);
+    arrowMaterial.diffuseColor = new BABYLON.Color3(1, 1, 0); // jaune
+
+    // tige de la flèche
+    const arrowBody = BABYLON.MeshBuilder.CreateCylinder("arrowBody", {
+        height: 1.5,
+        diameter: 0.15
+    }, scene);
+
+    arrowBody.rotation.z = Math.PI / 2;
+    arrowBody.position = new BABYLON.Vector3(1.2, 0.3, 0);
+    arrowBody.material = arrowMaterial;
+
+
+    // pointe de la flèche
+    const arrowHead = BABYLON.MeshBuilder.CreateCylinder("arrowHead", {
+        height: 0.6,
+        diameterTop: 0,
+        diameterBottom: 0.5
+    }, scene);
+
+    arrowHead.rotation.z = -Math.PI / 2;
+    arrowHead.position = new BABYLON.Vector3(2, 0.3, 0);
+    arrowHead.material = arrowMaterial;
+
+
+    // attacher au joueur
+    arrowBody.parent = player;
+    arrowHead.parent = player;
+
+    
 
     // --- Interaction ---
     const kickButton = document.getElementById("kickButton");
@@ -154,6 +210,8 @@ const createScene = function () {
         // Reset rotation if any (though we aren't rotating it yet)
         ball.rotation = new BABYLON.Vector3(0, 0, 0);
     });
+
+    
 
     return scene;
 };
