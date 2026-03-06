@@ -30,6 +30,7 @@ const createScene = function () {
 
     // Ball
     const ball = createBall(scene);
+    let ballControlled = true;
 
     // Player
     const players = [];
@@ -40,6 +41,8 @@ const createScene = function () {
     );
 
     const player = players[0];
+    ball.parent = player;
+    ball.position = new BABYLON.Vector3(1.5, 0.75, 0);
 
     camera.lockedTarget = players[0];
     camera.inputs.clear();
@@ -74,7 +77,7 @@ const createScene = function () {
     });
 
     const speed = 0.4;
-
+    const ballDistance = 1.5;
     scene.onBeforeRenderObservable.add(() => {
 
         let moveX = 0;
@@ -87,13 +90,16 @@ const createScene = function () {
 
         if (moveX !== 0 || moveZ !== 0) {
 
-            // normaliser pour éviter vitesse diagonale plus rapide
             const length = Math.sqrt(moveX * moveX + moveZ * moveZ);
             moveX /= length;
             moveZ /= length;
 
             player.position.x += moveX * speed;
             player.position.z += moveZ * speed;
+
+            // Position du ballon selon direction
+            ball.position.x = moveX * ballDistance;
+            ball.position.z = moveZ * ballDistance;
         }
 
     });
