@@ -1,61 +1,77 @@
-const createTribunes = (scene) => {
-    const stadiumRoot = new BABYLON.TransformNode("stadiumRoot", scene);
+class Tribune {
+    constructor(scene) {
+        this.scene = scene;
+        this.stadiumRoot = new BABYLON.TransformNode("stadiumRoot", scene);
 
-    // 1. MATÉRIAUX
-    const blueSeatMaterial = new BABYLON.PBRMaterial("blueSeatMat", scene);
-    blueSeatMaterial.albedoColor = new BABYLON.Color3(0.05, 0.2, 0.8);
-    blueSeatMaterial.roughness = 0.7;
+        // Paramètres par défaut de la structure de base
+        this.pitchWidth = 100;
+        this.pitchHeight = 60;
+        this.margin = 5;
+        
+        this.rowsPerTier = 12;
+        this.numTiers = 3;
+        this.rowHeight = 0.6;
+        this.rowDepth = 1.0;
+        this.tierGapHeight = 2.5;
+        this.tierGapDepth = 2.0;
 
-    const redSeatMaterial = new BABYLON.PBRMaterial("redSeatMat", scene);
-    redSeatMaterial.albedoColor = new BABYLON.Color3(0.8, 0.1, 0.1);
-    redSeatMaterial.roughness = 0.7;
+        this.initMaterials();
+        this.calculateDimensions();
+    }
 
-    const concreteMaterial = new BABYLON.PBRMaterial("concreteMat", scene);
-    concreteMaterial.albedoColor = new BABYLON.Color3(0.65, 0.65, 0.65); // Béton un peu plus clair
-    concreteMaterial.roughness = 0.9;
+    calculateDimensions() {
+        this.innerX = this.pitchWidth / 2 + this.margin;
+        this.innerZ = this.pitchHeight / 2 + this.margin;
+        this.standDepth = this.numTiers * (this.rowsPerTier * this.rowDepth) + (this.numTiers - 1) * this.tierGapDepth;
 
-    const roofMaterial = new BABYLON.PBRMaterial("roofMat", scene);
-    roofMaterial.albedoColor = new BABYLON.Color3(0.9, 0.9, 0.9);
-    roofMaterial.alpha = 0.6; // Toit plus translucide pour laisser voir la structure
+        this.maxY = (this.numTiers - 1) * (this.rowsPerTier * this.rowHeight + this.tierGapHeight) + (this.rowsPerTier - 1) * this.rowHeight;
+        this.roofHeight = this.maxY + 10;
+        this.towerHeight = this.roofHeight + 5;
+    }
 
-    // Le fameux rouge des poutres de San Siro
-    const trussMaterial = new BABYLON.PBRMaterial("trussMat", scene);
-    trussMaterial.albedoColor = new BABYLON.Color3(0.8, 0.05, 0.05); 
-    trussMaterial.metallic = 0.5;
-    trussMaterial.roughness = 0.4;
+    initMaterials() {
+        this.blueSeatMaterial = new BABYLON.PBRMaterial("blueSeatMat", this.scene);
+        this.blueSeatMaterial.albedoColor = new BABYLON.Color3(0.05, 0.2, 0.8);
+        this.blueSeatMaterial.roughness = 0.7;
 
-    const adMaterial = new BABYLON.PBRMaterial("adMat", scene);
-    adMaterial.albedoColor = new BABYLON.Color3(0.05, 0.05, 0.05); 
-    adMaterial.emissiveColor = new BABYLON.Color3(1, 1, 1);  
-    adMaterial.emissiveIntensity = 1.2;
+        this.redSeatMaterial = new BABYLON.PBRMaterial("redSeatMat", this.scene);
+        this.redSeatMaterial.albedoColor = new BABYLON.Color3(0.8, 0.1, 0.1);
+        this.redSeatMaterial.roughness = 0.7;
 
-    // Dimensions de base
-    const pitchWidth = 100;
-    const pitchHeight = 60;
-    const margin = 5;
-    
-    // Configuration des gradins
-    const rowsPerTier = 12;
-    const numTiers = 3;
-    const rowHeight = 0.6;
-    const rowDepth = 1.0;
-    const tierGapHeight = 2.5;
-    const tierGapDepth = 2.0;
+        this.whiteSeatMaterial = new BABYLON.PBRMaterial("whiteSeatMat", this.scene);
+        this.whiteSeatMaterial.albedoColor = new BABYLON.Color3(0.9, 0.9, 0.9);
+        this.whiteSeatMaterial.roughness = 0.7;
 
-    // Calculs de profondeur pour encastrer parfaitement les éléments
-    const innerX = pitchWidth / 2 + margin;  // 55
-    const innerZ = pitchHeight / 2 + margin; // 35
-    const standDepth = numTiers * (rowsPerTier * rowDepth) + (numTiers - 1) * tierGapDepth; // 40
+        this.goldSeatMaterial = new BABYLON.PBRMaterial("goldSeatMat", this.scene);
+        this.goldSeatMaterial.albedoColor = new BABYLON.Color3(1.0, 0.84, 0.0);
+        this.goldSeatMaterial.metallic = 0.8;
+        this.goldSeatMaterial.roughness = 0.3;
 
-    // LA HAUTEUR MAX DU STADE (calculée pour aligner le toit et les tours)
-    const maxY = (numTiers - 1) * (rowsPerTier * rowHeight + tierGapHeight) + (rowsPerTier - 1) * rowHeight; // ~26
-    const roofHeight = maxY + 10;
-    const towerHeight = roofHeight + 5;
+        this.concreteMaterial = new BABYLON.PBRMaterial("concreteMat", this.scene);
+        this.concreteMaterial.albedoColor = new BABYLON.Color3(0.65, 0.65, 0.65);
+        this.concreteMaterial.roughness = 0.9;
 
-    // --- FONCTION TRIBUNES ---
-    const createSideStand = (name, length, position, rotationY, teamColor) => {
-        const standGroup = new BABYLON.TransformNode(name, scene);
-        standGroup.parent = stadiumRoot;
+        this.roofMaterial = new BABYLON.PBRMaterial("roofMat", this.scene);
+        this.roofMaterial.albedoColor = new BABYLON.Color3(0.9, 0.9, 0.9);
+        this.roofMaterial.alpha = 0.6;
+
+        this.trussMaterial = new BABYLON.PBRMaterial("trussMat", this.scene);
+        this.trussMaterial.albedoColor = new BABYLON.Color3(0.8, 0.05, 0.05); 
+        this.trussMaterial.metallic = 0.5;
+        this.trussMaterial.roughness = 0.4;
+
+        this.adMaterial = new BABYLON.PBRMaterial("adMat", this.scene);
+        this.adMaterial.albedoColor = new BABYLON.Color3(0.05, 0.05, 0.05); 
+        this.adMaterial.emissiveColor = new BABYLON.Color3(1, 1, 1);  
+        this.adMaterial.emissiveIntensity = 1.2;
+
+        // Par défaut, toutes les tribunes ont un toit
+        this.hasRoof = true;
+    }
+
+    createSideStand(name, length, position, rotationY, teamColor) {
+        const standGroup = new BABYLON.TransformNode(name, this.scene);
+        standGroup.parent = this.stadiumRoot;
         standGroup.position = position;
         standGroup.rotation.y = rotationY;
 
@@ -63,141 +79,112 @@ const createTribunes = (scene) => {
         const numSections = 5;
         const sectionLength = (length - (numSections - 1) * aisleWidth) / numSections;
 
-        for (let t = 0; t < numTiers; t++) {
-            const tierBaseY = t * (rowsPerTier * rowHeight + tierGapHeight);
-            const tierBaseZ = t * (rowsPerTier * rowDepth + tierGapDepth);
+        for (let t = 0; t < this.numTiers; t++) {
+            const tierBaseY = t * (this.rowsPerTier * this.rowHeight + this.tierGapHeight);
+            const tierBaseZ = t * (this.rowsPerTier * this.rowDepth + this.tierGapDepth);
 
             // Mur de soutènement
             if (t > 0) {
                 const wall = BABYLON.MeshBuilder.CreateBox(name + "_wall_" + t, {
-                    width: length, height: tierGapHeight + 1, depth: 0.5
-                }, scene);
-                wall.position = new BABYLON.Vector3(0, tierBaseY - tierGapHeight / 2 + 0.5, tierBaseZ - 0.25);
-                wall.material = concreteMaterial;
+                    width: length, height: this.tierGapHeight + 1, depth: 0.5
+                }, this.scene);
+                wall.position = new BABYLON.Vector3(0, tierBaseY - this.tierGapHeight / 2 + 0.5, tierBaseZ - 0.25);
+                wall.material = this.concreteMaterial;
                 wall.parent = standGroup;
             }
 
-            for (let r = 0; r < rowsPerTier; r++) {
-                const seatMat = (teamColor === "blue") ? blueSeatMaterial : redSeatMaterial;
-                const y = tierBaseY + r * rowHeight + rowHeight / 2;
-                const z = tierBaseZ + r * rowDepth + rowDepth / 2;
+            for (let r = 0; r < this.rowsPerTier; r++) {
+                let seatMat;
+                if (teamColor === "blue") {
+                    seatMat = this.blueSeatMaterial;
+                } else if (teamColor === "red") {
+                    seatMat = this.redSeatMaterial;
+                } else if (teamColor === "white") {
+                    seatMat = this.whiteSeatMaterial;
+                } else if (teamColor === "gold") {
+                    seatMat = this.goldSeatMaterial;
+                } else {
+                    seatMat = this.concreteMaterial;
+                }
+                const y = tierBaseY + r * this.rowHeight + this.rowHeight / 2;
+                const z = tierBaseZ + r * this.rowDepth + this.rowDepth / 2;
 
                 for (let s = 0; s < numSections; s++) {
                     const box = BABYLON.MeshBuilder.CreateBox(`${name}_t${t}_r${r}_s${s}`, {
-                        width: sectionLength, height: rowHeight, depth: rowDepth
-                    }, scene);
+                        width: sectionLength, height: this.rowHeight, depth: this.rowDepth
+                    }, this.scene);
                     const xCenter = -length / 2 + sectionLength / 2 + s * (sectionLength + aisleWidth);
                     box.position = new BABYLON.Vector3(xCenter, y, z);
                     box.material = seatMat;
                     box.parent = standGroup;
                 }
 
-                if (r < rowsPerTier - 1) { // Escaliers
+                if (r < this.rowsPerTier - 1) { // Escaliers
                     for (let a = 0; a < numSections - 1; a++) {
                         const stair = BABYLON.MeshBuilder.CreateBox(`${name}_t${t}_r${r}_stair${a}`, {
-                            width: aisleWidth, height: rowHeight * 0.7, depth: rowDepth
-                        }, scene);
+                            width: aisleWidth, height: this.rowHeight * 0.7, depth: this.rowDepth
+                        }, this.scene);
                         const xOffset = -length / 2 + sectionLength + aisleWidth / 2 + a * (sectionLength + aisleWidth);
-                        stair.position = new BABYLON.Vector3(xOffset, y - rowHeight * 0.15, z);
-                        stair.material = concreteMaterial;
+                        stair.position = new BABYLON.Vector3(xOffset, y - this.rowHeight * 0.15, z);
+                        stair.material = this.concreteMaterial;
                         stair.parent = standGroup;
                     }
                 }
             }
         }
 
-        // Bande publicitaire parfaitement alignée (même longueur que la tribune)
+        // Bande publicitaire
         const adBoard = BABYLON.MeshBuilder.CreateBox(name + "_adBoard", {
             width: length, height: 1.2, depth: 0.3
-        }, scene);
+        }, this.scene);
         adBoard.position = new BABYLON.Vector3(0, 0.6, -0.5); 
-        adBoard.material = adMaterial;
+        adBoard.material = this.adMaterial;
         adBoard.parent = standGroup;
 
-        // Le toit (plus de piliers moches à l'arrière, les tours gèrent ça visuellement)
-        const roof = BABYLON.MeshBuilder.CreatePlane(name + "_roof", { width: length, height: standDepth + 10 }, scene);
-        roof.material = roofMaterial;
-        roof.rotation.x = Math.PI / 2 - 0.1; // Légère inclinaison
-        roof.position = new BABYLON.Vector3(0, roofHeight, standDepth / 2 - 5);
-        roof.parent = standGroup;
+        // Le toit (optionnel, peut être désactivé par les sous-classes)
+        if (this.hasRoof) {
+            const roof = BABYLON.MeshBuilder.CreatePlane(name + "_roof", { width: length, height: this.standDepth + 10 }, this.scene);
+            roof.material = this.roofMaterial;
+            roof.rotation.x = Math.PI / 2 - 0.1; // Légère inclinaison
+            roof.position = new BABYLON.Vector3(0, this.roofHeight, this.standDepth / 2 - 5);
+            roof.parent = standGroup;
+        }
 
         return standGroup;
-    };
+    }
 
-    // --- FONCTION TOURS SAN SIRO ---
-    const createCornerTower = (name, x, z) => {
-        // Un très gros cylindre pour boucher l'angle et soutenir visuellement le toit
+    createCornerTower(name, x, z) {
         const radius = 22; 
         const tower = BABYLON.MeshBuilder.CreateCylinder(name, {
-            height: towerHeight,
+            height: this.towerHeight,
             diameter: radius * 2
-        }, scene);
-        tower.position = new BABYLON.Vector3(x, towerHeight / 2, z);
-        tower.material = concreteMaterial;
-        tower.parent = stadiumRoot;
+        }, this.scene);
+        tower.position = new BABYLON.Vector3(x, this.towerHeight / 2, z);
+        tower.material = this.concreteMaterial;
+        tower.parent = this.stadiumRoot;
 
-        // Les fameuses rampes hélicoïdales de San Siro (simulées par des anneaux toriques)
-        for (let i = 2; i < towerHeight - 5; i += 4) {
+        for (let i = 2; i < this.towerHeight - 5; i += 4) {
             const ramp = BABYLON.MeshBuilder.CreateTorus(name + "_ramp_" + i, {
                 diameter: (radius * 2) + 1.5,
                 thickness: 1.5,
                 tessellation: 32
-            }, scene);
+            }, this.scene);
             ramp.position = new BABYLON.Vector3(x, i, z);
-            ramp.material = concreteMaterial;
-            ramp.parent = stadiumRoot;
+            ramp.material = this.concreteMaterial;
+            ramp.parent = this.stadiumRoot;
         }
-    };
+    }
 
-    // --- ASSEMBLAGE PARFAIT (Zéro dépassement) ---
-    // Les tribunes font exactement la taille du terrain pour former une croix parfaite.
-    const pitchLengthX = innerX * 2; // 110
-    const pitchLengthZ = innerZ * 2; // 70
+    startLEDAnimation() {
+        let time = 0;
+        this.scene.onBeforeRenderObservable.add(() => {
+            time += 0.04;
+            this.adMaterial.emissiveIntensity = 1.1 + Math.sin(time) * 0.15;
+        });
+    }
 
-    createSideStand("northStand", pitchLengthX, new BABYLON.Vector3(0, 0, innerZ), 0, "blue");
-    createSideStand("southStand", pitchLengthX, new BABYLON.Vector3(0, 0, -innerZ), Math.PI, "red");
-    createSideStand("eastStand", pitchLengthZ, new BABYLON.Vector3(innerX, 0, 0), Math.PI / 2, "blue");
-    createSideStand("westStand", pitchLengthZ, new BABYLON.Vector3(-innerX, 0, 0), -Math.PI / 2, "red");
-
-    // Création des 4 tours dans les 4 angles "vides"
-    const towerX = innerX + standDepth / 2; // 55 + 20 = 75
-    const towerZ = innerZ + standDepth / 2; // 35 + 20 = 55
-    createCornerTower("towerNE", towerX, towerZ);
-    createCornerTower("towerNW", -towerX, towerZ);
-    createCornerTower("towerSE", towerX, -towerZ);
-    createCornerTower("towerSW", -towerX, -towerZ);
-
-    // --- STRUCTURE ROUGE DU TOIT (La touche finale San Siro) ---
-    const trussThickness = 4;
-    
-    // Poutres au-dessus des tribunes Nord/Sud
-    const trussNS1 = BABYLON.MeshBuilder.CreateBox("trussNS1", { width: towerX * 2.2, height: trussThickness, depth: trussThickness }, scene);
-    trussNS1.position = new BABYLON.Vector3(0, towerHeight + 2, towerZ);
-    trussNS1.material = trussMaterial;
-    trussNS1.parent = stadiumRoot;
-
-    const trussNS2 = BABYLON.MeshBuilder.CreateBox("trussNS2", { width: towerX * 2.2, height: trussThickness, depth: trussThickness }, scene);
-    trussNS2.position = new BABYLON.Vector3(0, towerHeight + 2, -towerZ);
-    trussNS2.material = trussMaterial;
-    trussNS2.parent = stadiumRoot;
-
-    // Poutres au-dessus des tribunes Est/Ouest (plus hautes pour croiser les autres)
-    const trussEW1 = BABYLON.MeshBuilder.CreateBox("trussEW1", { width: trussThickness, height: trussThickness, depth: towerZ * 2.2 }, scene);
-    trussEW1.position = new BABYLON.Vector3(towerX, towerHeight + trussThickness + 2, 0);
-    trussEW1.material = trussMaterial;
-    trussEW1.parent = stadiumRoot;
-
-    const trussEW2 = BABYLON.MeshBuilder.CreateBox("trussEW2", { width: trussThickness, height: trussThickness, depth: towerZ * 2.2 }, scene);
-    trussEW2.position = new BABYLON.Vector3(-towerX, towerHeight + trussThickness + 2, 0);
-    trussEW2.material = trussMaterial;
-    trussEW2.parent = stadiumRoot;
-
-    // Animation LED toujours présente
-    let time = 0;
-    scene.onBeforeRenderObservable.add(() => {
-        time += 0.04;
-        adMaterial.emissiveIntensity = 1.1 + Math.sin(time) * 0.15;
-    });
-
-    return stadiumRoot;
-};
+    create() {
+        console.warn("La méthode create() doit être implémentée par les classes enfants.");
+        return this.stadiumRoot;
+    }
+}
