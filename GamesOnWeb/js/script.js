@@ -78,7 +78,23 @@ const createScene = function () {
 
     const speed = 0.4;
     const ballDistance = 1.5;
+    let lastDirection = new BABYLON.Vector3(1, 0, 0);
+    let playerFacing = new BABYLON.Vector3(1, 0, 0);
+    let lastKickTime = 0;
+    const kickCooldown = 300; // ms
+
     scene.onBeforeRenderObservable.add(() => {
+
+        const distance = BABYLON.Vector3.Distance(
+            player.position,
+            ball.getAbsolutePosition()
+        );
+
+        if (!ballControlled && distance < 2 && Date.now() - lastKickTime > kickCooldown) {
+            ball.parent = player;
+            ball.position = new BABYLON.Vector3(ballDistance, 0.75, 0);
+            ballControlled = true;
+        }
 
         let moveX = 0;
         let moveZ = 0;
@@ -97,9 +113,15 @@ const createScene = function () {
             player.position.x += moveX * speed;
             player.position.z += moveZ * speed;
 
+            // mémoriser direction
+            lastDirection = new BABYLON.Vector3(moveX, 0, moveZ);
+            playerFacing = lastDirection.clone();
+
             // Position du ballon selon direction
-            ball.position.x = moveX * ballDistance;
-            ball.position.z = moveZ * ballDistance;
+            if (ballControlled) {
+                ball.position.x = moveX * ballDistance;
+                ball.position.z = moveZ * ballDistance;
+            }
         }
 
     });
@@ -109,54 +131,54 @@ const createScene = function () {
     
     kickButton.addEventListener("click", function() {
 
-        const angle = Math.random() * Math.PI * 2;
-        const force = 10 + Math.random() * 20;
+    const force = 20;
 
-        const startX = ball.position.x;
-        const startZ = ball.position.z;
+    // position réelle de la balle
+    const startPos = ball.getAbsolutePosition();
 
-        let targetX = startX + Math.cos(angle) * force;
-        let targetZ = startZ + Math.sin(angle) * force;
+    ball.parent = null;
+    ball.position = startPos.clone();
+    ballControlled = false;
+    lastKickTime = Date.now();
 
-        if (targetX > 48) targetX = 48;
-        if (targetX < -48) targetX = -48;
-        if (targetZ > 28) targetZ = 28;
-        if (targetZ < -28) targetZ = -28;
+    let targetX = startPos.x + lastDirection.x * force;
+    let targetZ = startPos.z + lastDirection.z * force;
 
-        const frameRate = 60;
+    // limites du terrain
+    if (targetX > 48) targetX = 48;
+    if (targetX < -48) targetX = -48;
+    if (targetZ > 28) targetZ = 28;
+    if (targetZ < -28) targetZ = -28;
 
-        const animationBox = new BABYLON.Animation(
-            "kickAnimation",
-            "position",
-            frameRate,
-            BABYLON.Animation.ANIMATIONTYPE_VECTOR3,
-            BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT
-        );
+    const frameRate = 60;
 
-        const keys = [];
+    const animation = new BABYLON.Animation(
+        "kickAnimation",
+        "position",
+        frameRate,
+        BABYLON.Animation.ANIMATIONTYPE_VECTOR3,
+        BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT
+    );
 
-        keys.push({
-            frame: 0,
-            value: ball.position.clone()
-        });
+    const keys = [];
 
-        keys.push({
-            frame: frameRate,
-            value: new BABYLON.Vector3(targetX, 0.75, targetZ)
-        });
-
-        animationBox.setKeys(keys);
-
-        const easingFunction = new BABYLON.CircleEase();
-        easingFunction.setEasingMode(BABYLON.EasingFunction.EASINGMODE_EASEOUT);
-        animationBox.setEasingFunction(easingFunction);
-
-        ball.animations = [];
-        ball.animations.push(animationBox);
-
-        scene.beginAnimation(ball, 0, frameRate, false);
-
+    keys.push({
+        frame: 0,
+        value: startPos
     });
+
+    keys.push({
+        frame: frameRate,
+        value: new BABYLON.Vector3(targetX, 0.75, targetZ)
+    });
+
+    animation.setKeys(keys);
+
+    ball.animations = [];
+    ball.animations.push(animation);
+
+    scene.beginAnimation(ball, 0, frameRate, false);
+});
 
     const resetButton = document.getElementById("resetButton");
 
