@@ -25,7 +25,7 @@
 		- Niveau 1 : **survivre 1 minute** sans mourir.
 		- Niveau 2 : **détruire 30 météorites** sans perdre toutes ses vies.
 		- Niveau 3 : affronter un **vaisseau ennemi** tout en gérant les météorites qui apparaissent près du vaisseau.
-	- 🤝 **Duo** : permet de jouer à **2 joueurs sur le même clavier**, avec des touches dédiées pour le deuxième joueur ; les niveaux sont similaires au solo mais **tous les paramètres sont doublés**.
+	- 🤝 **Duo** : permet de jouer à **2 joueurs sur le même clavier**, avec des touches dédiées pour le deuxième joueur, les niveaux sont similaires au solo mais **tous les paramètres sont doublés**.
 	- ⚔️ **Duel** : un mode **1 vs 1**, où le premier à **3 points** gagne, avec des gadgets qui peuvent renverser la partie à tout moment.
 
 - ☄️ **Variété de météorites** :
@@ -57,9 +57,9 @@
 - 🧪 **Version locale (recommandée pour les tests)** :
 	- Cloner le dépôt Git sur la machine locale.
 - 🌐 **Version en ligne** :
-	- Le jeu peut également être consulté via : .
+	- Le jeu peut également être consulté via : https://tp-web-hamadouche-ozdoev.vercel.app/.
 
-- ## 8. 📂 Structure du projet
+- ## 5. 📂 Structure du projet
 
 - 📁 **assets/** : contient l’ensemble des médias du jeu, c’est-à-dire les fichiers **audio** (musique et effets sonores) ainsi que les **images** utilisées pour les différentes météorites, gadgets, vaisseaux, etc.
 
@@ -120,21 +120,23 @@
 - 🖥️ **js/ui/** : regroupe la **logique d’interface utilisateur** liée aux menus de boutique et de réglages :
 	- `boutique.js` : contient la classe `Boutique`, qui définit le **catalogue de vaisseaux** (types, noms, descriptions, prix) et gère l’achat/équipement via le joueur, ainsi que la classe `BoutiqueUI`, qui met à jour l’**interface visuelle de la boutique** (carousel de vaisseaux, boutons, affichage de l’or, état « équipé »).
 	- `reglage.js` : gère l’**écran de réglages** :
-		- configuration des touches pour le joueur 1 et le joueur 2 (écoute des pressions de touches, vérification des conflits, sauvegarde dans le `localStorage`) ;
+		- configuration des touches pour le joueur 1 et le joueur 2 (écoute des pressions de touches, vérification des conflits, sauvegarde dans le `localStorage`).
 		- réglage du **volume de la musique** et des **effets sonores** via des sliders, avec affichage des valeurs.
+	- `regle.js` : gère l’**interface utilisateur des règles du jeu** :
+		- contrôle l’ouverture/fermeture de l’overlay des règles.
 
-## 9. 🏗️ Ce dont nous sommes fiers
+## 6. 🏗️ Ce dont nous sommes fiers
 
 - 🧩 **Une structure de code cohérente** : malgré le grand nombre de fichiers à gérer, nous avons réussi à organiser le projet en **dossiers et modules clairement séparés** (core, entities, niveaux, systems, ui…), ce qui rend le code plus lisible et plus facile à maintenir.
 - 🧬 **Un bon usage de l’héritage** : nous sommes particulièrement fiers d’avoir mis en place une **hiérarchie de classes logique** (par exemple `ObjetGraphique` → `Vaisseau` → `Player` / `Ennemi`, ou encore `Niveau` étendu par les niveaux solo/duo) qui permet de factoriser le comportement commun et d’éviter la duplication de code.
 - 🧠 **Maîtrise de la complexité** : en créant des fichiers spécialisés (managers, systems, modèles de score, types de météorites/gadgets/vaisseaux…), nous avons pu **découper le problème** en petites briques réutilisables et garder une **architecture globale claire**, même avec beaucoup de fonctionnalités.
 
-## 10. 🤖 Utilisation de l’IA dans le projet
+## 7. 🤖 Utilisation de l’IA dans le projet
 
 - 🎨 **Design et styles CSS** : le professeur ne nous ayant pas demandé de nous concentrer sur la partie graphique, nous avons utilisé l’IA pour **proposer le design général** (mise en page, palettes de couleurs, organisation des menus, certains effets visuels). Nous avons ensuite **adapté et intégré ces propositions** dans nos fichiers CSS et notre interface, en gardant le focus du travail manuel sur la logique de jeu et la structure du code.
 - ✨ **Effets de particules (`particles.js`)** : ne sachant pas comment concevoir un système de particules avancé (classes `Particle` et `ParticleManager`, gestion de la durée de vie, des vitesses, des couleurs, etc.), nous nous sommes **appuyés sur l’IA pour générer une base d’implémentation**. Nous avons ensuite **ajusté ce code** pour qu’il s’intègre à notre architecture (appel depuis `meteoriteEffects.js`, paramètres adaptés aux différents types d’explosions) et corresponde au gameplay voulu.
 
-## 11. 💡 Améliorations possibles
+## 8. 💡 Améliorations possibles
 
 - 🗄️ **Backend pour les scores** : remplacer le stockage local (`localStorage`) par une **API backend** capable d’enregistrer et de servir les scores au format JSON (classement persistant côté serveur, meilleur partage des résultats entre joueurs).
 - 🚀 **Sélection avancée des vaisseaux en multijoueur** : permettre à chaque joueur de **choisir son vaisseau** (type de tir, capacités) dans les modes **Duo** et **Duel**, avant le lancement de la partie.
