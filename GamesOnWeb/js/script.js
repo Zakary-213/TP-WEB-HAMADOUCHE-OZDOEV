@@ -22,7 +22,7 @@ const createScene = function () {
     createField(scene); // Defined in js/structure/field.js
 
     // Grandstands (Tribunes)
-    const tribune = new TribuneFinale(scene);
+    const tribune = new TribuneHuitieme(scene);
     tribune.create();
 
     
