@@ -48,6 +48,24 @@ const createScene = function () {
 
     const player = players[0];
 
+    let currentAnim = "idle";
+
+    function playAnimation(name){
+
+        if(!player.animations) return;
+
+        if(currentAnim === name) return;
+
+        for(let anim in player.animations){
+            player.animations[anim].stop();
+        }
+
+        if(player.animations[name]){
+            player.animations[name].start(true);
+            currentAnim = name;
+        }
+    }
+
     player.ellipsoid = new BABYLON.Vector3(1,1,1);
     player.checkCollisions = true;
 
@@ -100,6 +118,7 @@ const createScene = function () {
 
         if(moveX!==0||moveZ!==0){
 
+            playAnimation("run");
             const length = Math.sqrt(moveX*moveX+moveZ*moveZ);
             moveX/=length;
             moveZ/=length;
@@ -110,6 +129,22 @@ const createScene = function () {
             lastDirection = new BABYLON.Vector3(moveX,0,moveZ);
             playerFacing = lastDirection.clone();
 
+            if(player.model){
+
+                const angle = Math.atan2(moveZ, moveX);
+                const targetRotation = -angle;
+
+                player.model.rotation.z = BABYLON.Scalar.Lerp(
+                    player.model.rotation.z,
+                    targetRotation,
+                    0.15
+                );
+
+            }
+
+        }
+        else{
+            playAnimation("idle");
         }
 
         // COLLISION JOUEUR → BALLE
