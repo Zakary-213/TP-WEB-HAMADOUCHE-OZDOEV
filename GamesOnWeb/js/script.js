@@ -3,6 +3,13 @@ const engine = new BABYLON.Engine(canvas, true);
 
 const createScene = function () {
 
+    // VARIABLES 
+    let chargeStart = 0;
+    let isCharging = false;
+
+    const maxChargeTime = 1000; // 1 seconde max
+    const maxForce = 25;
+
     const scene = new BABYLON.Scene(engine);
 
     scene.collisionsEnabled = true;
@@ -86,7 +93,10 @@ const createScene = function () {
         if(e.key==="s"||e.key==="S") input.backward=true;
         if(e.key==="q"||e.key==="Q") input.left=true;
         if(e.key==="d"||e.key==="D") input.right=true;
-
+        if(e.code === "Space" && !isCharging){
+            chargeStart = Date.now();
+            isCharging = true;
+        }
     });
 
     window.addEventListener("keyup",(e)=>{
@@ -95,6 +105,21 @@ const createScene = function () {
         if(e.key==="s"||e.key==="S") input.backward=false;
         if(e.key==="q"||e.key==="Q") input.left=false;
         if(e.key==="d"||e.key==="D") input.right=false;
+
+        if(e.code === "Space" && isCharging){
+
+            const chargeDuration = Date.now() - chargeStart;
+
+            const clampedCharge = Math.min(chargeDuration, maxChargeTime);
+
+            const power = clampedCharge / maxChargeTime;
+
+            const force = power * maxForce;
+
+            kick(force);
+
+            isCharging = false;
+        }
 
     });
 
@@ -167,12 +192,19 @@ const createScene = function () {
 
     });
 
+
     // KICK
-    const kickButton = document.getElementById("kickButton");
 
-    kickButton.addEventListener("click",function(){
+    function kick(force){
 
-        const force = 20;
+        const distance = BABYLON.Vector3.Distance(
+            player.position,
+            ball.position
+        );
+
+        if(distance > 3){
+            return;
+        }
 
         const startPos = ball.position.clone();
 
@@ -214,8 +246,7 @@ const createScene = function () {
         scene.beginAnimation(ball,0,frameRate,false);
 
         lastKickTime = Date.now();
-
-    });
+    }
 
     // RESET
     const resetButton = document.getElementById("resetButton");
@@ -223,6 +254,8 @@ const createScene = function () {
     resetButton.addEventListener("click",function(){
 
         scene.stopAnimation(ball);
+
+        
 
         ball.position = new BABYLON.Vector3(0,0.75,0);
         ball.rotation = new BABYLON.Vector3(0,0,0);
