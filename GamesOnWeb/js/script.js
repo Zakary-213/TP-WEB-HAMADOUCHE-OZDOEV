@@ -1,13 +1,28 @@
-const canvas = document.getElementById("renderCanvas"); // Get the canvas element
-const engine = new BABYLON.Engine(canvas, true); // Generate the BABYLON 3D engine
+const canvas = document.getElementById("renderCanvas");
+const engine = new BABYLON.Engine(canvas, true);
 
-// Add your code here matching the playground format
 const createScene = function () {
+
+    // VARIABLES 
+    let chargeStart = 0;
+    let isCharging = false;
+
+    const maxChargeTime = 1000; // 1 seconde max
+    const maxForce = 25;
 
     const scene = new BABYLON.Scene(engine);
 
-    // Camera looking at the center
-    const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 50, new BABYLON.Vector3(0, 0, 0), scene);
+    scene.collisionsEnabled = true;
+
+    // Camera
+    const camera = new BABYLON.ArcRotateCamera(
+        "camera",
+        Math.PI,
+        0.01,
+        60,
+        new BABYLON.Vector3(0,0,0),
+        scene
+    );
     camera.attachControl(canvas, true);
 
     // Light (ambiance plus douce)
@@ -28,107 +43,240 @@ const createScene = function () {
     
     // --- Objects ---
     // Goals
-    // Left Goal (at -50, needs to face +X, back to -X)
-    createGoal(scene, new BABYLON.Vector3(-50, 0, 0), Math.PI / 2); // Defined in js/objects/goal.js
-
-    // Right Goal (at 50, needs to face -X, back to +X)
-    createGoal(scene, new BABYLON.Vector3(50, 0, 0), -Math.PI / 2); // Defined in js/objects/goal.js
+    createGoal(scene, new BABYLON.Vector3(-50, 0, 0), Math.PI / 2);
+    createGoal(scene, new BABYLON.Vector3(50, 0, 0), -Math.PI / 2);
 
     // Ball
-    const ball = createBall(scene); // Defined in js/objects/ball.js
+    const ball = createBall(scene);
+    ball.checkCollisions = true;
+    ball.ellipsoid = new BABYLON.Vector3(0.7,0.7,0.7);
 
     // Players
-    const teamAColor = new BABYLON.Color3(1, 0, 0); // Red
-    const teamBColor = new BABYLON.Color3(0, 0, 1); // Blue
+    const players = [];
+    const teamAColor = new BABYLON.Color3(1,0,0);
 
-    // Team A (Left side -50 to 0)
-    createPlayer(scene, new BABYLON.Vector3(-40, 0, 0), teamAColor); // Goalie?
-    createPlayer(scene, new BABYLON.Vector3(-20, 0, 10), teamAColor);
-    createPlayer(scene, new BABYLON.Vector3(-20, 0, -10), teamAColor);
-    createPlayer(scene, new BABYLON.Vector3(-10, 0, 20), teamAColor);
-    createPlayer(scene, new BABYLON.Vector3(-10, 0, -20), teamAColor);
+    players.push(
+        createPlayer(scene,new BABYLON.Vector3(-40,0,0),teamAColor)
+    );
 
-    // Team B (Right side 0 to 50)
-    createPlayer(scene, new BABYLON.Vector3(40, 0, 0), teamBColor); // Goalie?
-    createPlayer(scene, new BABYLON.Vector3(20, 0, 10), teamBColor);
-    createPlayer(scene, new BABYLON.Vector3(20, 0, -10), teamBColor);
-    createPlayer(scene, new BABYLON.Vector3(10, 0, 20), teamBColor);
-    createPlayer(scene, new BABYLON.Vector3(10, 0, -20), teamBColor);
+    const player = players[0];
 
-    // --- Interaction ---
-    const kickButton = document.getElementById("kickButton");
-    
-    kickButton.addEventListener("click", function() {
-        // Random direction
-        const angle = Math.random() * Math.PI * 2;
-        const force = 10 + Math.random() * 20; // Random distance between 10 and 30 units
+    let currentAnim = "idle";
 
-        // Current position
-        const startX = ball.position.x;
-        const startZ = ball.position.z;
+    function playAnimation(name){
 
-        // Target position
-        let targetX = startX + Math.cos(angle) * force;
-        let targetZ = startZ + Math.sin(angle) * force;
+        if(!player.animations) return;
 
-        // Clamp to field boundaries (approximate)
-        if (targetX > 48) targetX = 48;
-        if (targetX < -48) targetX = -48;
-        if (targetZ > 28) targetZ = 28;
-        if (targetZ < -28) targetZ = -28;
+        if(currentAnim === name) return;
 
-        // Animation
-        const frameRate = 60;
-        const animationBox = new BABYLON.Animation("kickAnimation", "position", frameRate, BABYLON.Animation.ANIMATIONTYPE_VECTOR3, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+        for(let anim in player.animations){
+            player.animations[anim].stop();
+        }
 
-        const keys = [];
-        keys.push({
-            frame: 0,
-            value: ball.position.clone()
-        });
+        if(player.animations[name]){
+            player.animations[name].start(true);
+            currentAnim = name;
+        }
+    }
 
-        keys.push({
-            frame: frameRate, // 1 second animation
-            value: new BABYLON.Vector3(targetX, 0.75, targetZ)
-        });
+    player.ellipsoid = new BABYLON.Vector3(1,1,1);
+    player.checkCollisions = true;
 
-        animationBox.setKeys(keys);
+    camera.lockedTarget = player;
+    camera.inputs.clear();
 
-        // Easing function for more natural movement (starts fast, slows down)
-        const easingFunction = new BABYLON.CircleEase();
-        easingFunction.setEasingMode(BABYLON.EasingFunction.EASINGMODE_EASEOUT);
-        animationBox.setEasingFunction(easingFunction);
+    // INPUT
+    const input = {
+        forward:false,
+        backward:false,
+        left:false,
+        right:false
+    };
 
-        ball.animations = [];
-        ball.animations.push(animationBox);
+    window.addEventListener("keydown",(e)=>{
 
-        scene.beginAnimation(ball, 0, frameRate, false);
+        if(e.key==="z"||e.key==="Z") input.forward=true;
+        if(e.key==="s"||e.key==="S") input.backward=true;
+        if(e.key==="q"||e.key==="Q") input.left=true;
+        if(e.key==="d"||e.key==="D") input.right=true;
+        if(e.code === "Space" && !isCharging){
+            chargeStart = Date.now();
+            isCharging = true;
+        }
     });
 
+    window.addEventListener("keyup",(e)=>{
+
+        if(e.key==="z"||e.key==="Z") input.forward=false;
+        if(e.key==="s"||e.key==="S") input.backward=false;
+        if(e.key==="q"||e.key==="Q") input.left=false;
+        if(e.key==="d"||e.key==="D") input.right=false;
+
+        if(e.code === "Space" && isCharging){
+
+            const chargeDuration = Date.now() - chargeStart;
+
+            const clampedCharge = Math.min(chargeDuration, maxChargeTime);
+
+            const power = clampedCharge / maxChargeTime;
+
+            const force = power * maxForce;
+
+            kick(force);
+
+            isCharging = false;
+        }
+
+    });
+
+    const speed = 0.1;
+
+    let lastDirection = new BABYLON.Vector3(1,0,0);
+    let playerFacing = new BABYLON.Vector3(1,0,0);
+
+    let lastKickTime = 0;
+    const kickCooldown = 300;
+
+    scene.onBeforeRenderObservable.add(()=>{
+
+        let moveX = 0;
+        let moveZ = 0;
+
+        if(input.forward) moveX+=1;
+        if(input.backward) moveX-=1;
+        if(input.left) moveZ+=1;
+        if(input.right) moveZ-=1;
+
+        if(moveX!==0||moveZ!==0){
+
+            playAnimation("run");
+            const length = Math.sqrt(moveX*moveX+moveZ*moveZ);
+            moveX/=length;
+            moveZ/=length;
+
+            player.position.x += moveX*speed;
+            player.position.z += moveZ*speed;
+
+            lastDirection = new BABYLON.Vector3(moveX,0,moveZ);
+            playerFacing = lastDirection.clone();
+
+            if(player.model){
+
+                const angle = Math.atan2(moveZ, moveX);
+                const targetRotation = -angle;
+
+                player.model.rotation.z = BABYLON.Scalar.Lerp(
+                    player.model.rotation.z,
+                    targetRotation,
+                    0.15
+                );
+
+            }
+
+        }
+        else{
+            playAnimation("idle");
+        }
+
+        // COLLISION JOUEUR → BALLE
+
+        const distance = BABYLON.Vector3.Distance(
+            player.position,
+            ball.position
+        );
+
+        if(distance<2){
+
+            const pushForce = 1.2;
+
+            ball.position.x += playerFacing.x*pushForce;
+            ball.position.z += playerFacing.z*pushForce;
+
+        }
+
+        ball.position.y = 0.75;
+
+    });
+
+
+    // KICK
+
+    function kick(force){
+
+        const distance = BABYLON.Vector3.Distance(
+            player.position,
+            ball.position
+        );
+
+        if(distance > 3){
+            return;
+        }
+
+        const startPos = ball.position.clone();
+
+        let targetX = startPos.x + lastDirection.x*force;
+        let targetZ = startPos.z + lastDirection.z*force;
+
+        if(targetX>48) targetX=48;
+        if(targetX<-48) targetX=-48;
+        if(targetZ>28) targetZ=28;
+        if(targetZ<-28) targetZ=-28;
+
+        const frameRate = 60;
+
+        const animation = new BABYLON.Animation(
+            "kickAnimation",
+            "position",
+            frameRate,
+            BABYLON.Animation.ANIMATIONTYPE_VECTOR3,
+            BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT
+        );
+
+        const keys = [];
+
+        keys.push({
+            frame:0,
+            value:startPos
+        });
+
+        keys.push({
+            frame:frameRate,
+            value:new BABYLON.Vector3(targetX,0.75,targetZ)
+        });
+
+        animation.setKeys(keys);
+
+        ball.animations=[];
+        ball.animations.push(animation);
+
+        scene.beginAnimation(ball,0,frameRate,false);
+
+        lastKickTime = Date.now();
+    }
+
+    // RESET
     const resetButton = document.getElementById("resetButton");
 
-    resetButton.addEventListener("click", function() {
-        // Stop any running animations on the ball
+    resetButton.addEventListener("click",function(){
+
         scene.stopAnimation(ball);
+
         
-        // Reset position to center
-        ball.position = new BABYLON.Vector3(0, 0.75, 0);
-        
-        // Reset rotation if any (though we aren't rotating it yet)
-        ball.rotation = new BABYLON.Vector3(0, 0, 0);
+
+        ball.position = new BABYLON.Vector3(0,0.75,0);
+        ball.rotation = new BABYLON.Vector3(0,0,0);
+
     });
 
     return scene;
 };
 
-const scene = createScene(); //Call the createScene function
+const scene = createScene();
 
-// Register a render loop to repeatedly render the scene
-engine.runRenderLoop(function () {
+engine.runRenderLoop(function(){
     scene.render();
 });
 
-// Watch for browser/canvas resize events
-window.addEventListener("resize", function () {
+window.addEventListener("resize",function(){
     engine.resize();
 });

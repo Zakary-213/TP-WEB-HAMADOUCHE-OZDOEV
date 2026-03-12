@@ -1,30 +1,56 @@
-// Player
 const createPlayer = (scene, position, teamColor) => {
-    // Player Group (Parent Node)
     const wPlayer = new BABYLON.TransformNode("player", scene);
     wPlayer.position = position;
 
-    // Simple spherical player (plus besoin de player.glb)
-    const playerMesh = BABYLON.MeshBuilder.CreateSphere("playerMesh", { diameter: 2 }, scene);
-    playerMesh.scaling = new BABYLON.Vector3(2, 2, 2);
-    playerMesh.position = new BABYLON.Vector3(0, 0, 0);
-    playerMesh.parent = wPlayer;
+    wPlayer.animations = {};
 
-    const playerMat = new BABYLON.StandardMaterial("playerMat", scene);
-    playerMat.diffuseColor = teamColor;
-    playerMat.emissiveColor = teamColor.scale(0.5);
-    playerMesh.material = playerMat;
+    BABYLON.SceneLoader.ImportMesh(
+        "",
+        "textures/",
+        "cricketers_pack_low_poly.glb",
+        scene,
+        function (meshes, particleSystems, skeletons, animationGroups) {
+            console.log("Animations trouvées :", animationGroups);
 
-    // Team Indicator (Disc on ground)
-    const teamDisc = BABYLON.MeshBuilder.CreateDisc("teamDisc", { radius: 0.9, tessellation: 16 }, scene);
-    teamDisc.rotation.x = Math.PI / 2;
-    teamDisc.position.y = 0.05; // Slightly above ground to avoid z-fighting
-    teamDisc.parent = wPlayer;
 
-    const discMaterial = new BABYLON.StandardMaterial("discMat", scene);
-    discMaterial.diffuseColor = teamColor;
-    discMaterial.emissiveColor = teamColor; // Glow
-    teamDisc.material = discMaterial;
+            const model = new BABYLON.TransformNode("playerModel", scene);
+            model.parent = wPlayer;
+
+            const playerMesh = meshes[1];
+
+            playerMesh.parent = model;
+            playerMesh.scaling = new BABYLON.Vector3(8,8,8);
+            playerMesh.position.x = 15.7;
+            playerMesh.position.y = 0;
+
+            model.rotation.y = Math.PI / 2;
+            model.rotation.x = -Math.PI / 2;
+
+            wPlayer.model = model;
+
+            // récupérer les animations
+            animationGroups.forEach((anim) => {
+
+                if(anim.name.toLowerCase().includes("idle"))
+                    wPlayer.animations.idle = anim;
+
+                if(anim.name.toLowerCase().includes("run") || anim.name.toLowerCase().includes("walk"))
+                    wPlayer.animations.run = anim;
+
+            });
+
+            // animation par défaut
+            if(wPlayer.animations.idle){
+                wPlayer.animations.idle.start(true);
+            }
+
+            meshes.forEach((mesh, index) => {
+                if (index !== 1 && mesh !== playerMesh) {
+                    mesh.dispose();
+                }
+            });
+        }
+    );
 
     return wPlayer;
 };
