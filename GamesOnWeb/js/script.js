@@ -62,6 +62,42 @@ const createScene = function () {
     ball.checkCollisions = true;
     ball.ellipsoid = new BABYLON.Vector3(0.7,0.7,0.7);
 
+    // Players
+    const players = [];
+    const teamAColor = new BABYLON.Color3(1,0,0);
+
+    players.push(
+        createPlayer(scene,new BABYLON.Vector3(-40,0,0),teamAColor)
+    );
+
+    const player = players[0];
+
+    let currentAnim = "idle";
+
+    // Jauge de tir
+    const kickGauge = createKickGauge(scene);
+    drawGaugeColors(kickGauge);
+
+    function playAnimation(name){
+
+        if(!player.animations) return;
+
+        if(currentAnim === name) return;
+
+        for(let anim in player.animations){
+            player.animations[anim].stop();
+        }
+
+        if(player.animations[name]){
+            player.animations[name].start(true);
+            currentAnim = name;
+        }
+    }
+
+    player.ellipsoid = new BABYLON.Vector3(1,1,1);
+    player.checkCollisions = true;
+
+    camera.lockedTarget = player;
     // Players (using Team Architecture)
     const myTeam = new PlayerTeam(scene, "My Team", new BABYLON.Color3(1, 0, 0));
     myTeam.createTeamFormation(1); // 1 pour le côté gauche
@@ -100,7 +136,7 @@ const createScene = function () {
         if(e.key==="d"||e.key==="D") input.right=true;
         if(e.code === "Space" && !isCharging){
             chargeStart = Date.now();
-            isCharging = true;
+            isCharging = true; 
         }
     });
 
@@ -113,14 +149,11 @@ const createScene = function () {
 
         if(e.code === "Space" && isCharging){
 
-            const chargeDuration = Date.now() - chargeStart;
+            const force = computeKickPower(kickGauge);
 
-            const clampedCharge = Math.min(chargeDuration, maxChargeTime);
+            kick(scene, ball, player, lastDirection, force);
 
-            const power = clampedCharge / maxChargeTime;
-
-            const force = power * maxForce;
-
+            hideKickGauge(kickGauge);
             kick(scene, ball, activePlayer, lastDirection, force);
 
             isCharging = false;
@@ -159,6 +192,23 @@ const createScene = function () {
 
         // UPDATE ADVERSAIRES
         opponentTeam.update(ball);
+
+        // UPDATE JAUGE
+        if(isCharging){
+
+            const time = performance.now() / 1000;
+
+            updateKickGauge(
+                kickGauge,
+                player,
+                lastDirection,
+                time
+            );
+
+        }
+        else{
+            hideKickGauge(kickGauge);
+        }
 
     });
 
