@@ -63,6 +63,10 @@ const createScene = function () {
 
     let currentAnim = "idle";
 
+    // Jauge de tir
+    const kickGauge = createKickGauge(scene);
+    drawGaugeColors(kickGauge);
+
     function playAnimation(name){
 
         if(!player.animations) return;
@@ -101,7 +105,7 @@ const createScene = function () {
         if(e.key==="d"||e.key==="D") input.right=true;
         if(e.code === "Space" && !isCharging){
             chargeStart = Date.now();
-            isCharging = true;
+            isCharging = true; 
         }
     });
 
@@ -114,15 +118,11 @@ const createScene = function () {
 
         if(e.code === "Space" && isCharging){
 
-            const chargeDuration = Date.now() - chargeStart;
-
-            const clampedCharge = Math.min(chargeDuration, maxChargeTime);
-
-            const power = clampedCharge / maxChargeTime;
-
-            const force = power * maxForce;
+            const force = computeKickPower(kickGauge);
 
             kick(scene, ball, player, lastDirection, force);
+
+            hideKickGauge(kickGauge);
 
             isCharging = false;
         }
@@ -180,6 +180,23 @@ const createScene = function () {
 
         // COLLISION JOUEUR → BALLE
         checkBallCollision(player, ball, playerFacing);
+
+        // UPDATE JAUGE
+        if(isCharging){
+
+            const time = performance.now() / 1000;
+
+            updateKickGauge(
+                kickGauge,
+                player,
+                lastDirection,
+                time
+            );
+
+        }
+        else{
+            hideKickGauge(kickGauge);
+        }
 
     });
 
