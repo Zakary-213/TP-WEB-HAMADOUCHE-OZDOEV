@@ -32,12 +32,23 @@ const createScene = function () {
     // --- Environnement (espace autour du stade) ---
     createEnvironment(scene); // Defined in js/structure/environnement.js
 
+    // --- TOURNAMENT STATE ---
+    // Change this variable to test different stages: "huitieme", "quart", "demi", "finale"
+    let tournamentStage = "finale";
+
     // --- Structure ---
     // Field (Ground and Markings)
     createField(scene); // Defined in js/structure/field.js
 
     // Grandstands (Tribunes)
-    const tribune = new TribuneFinale(scene);
+    let tribune;
+    switch(tournamentStage) {
+        case "huitieme": tribune = new TribuneHuitieme(scene); break;
+        case "quart": tribune = new TribuneQuart(scene); break;
+        case "demi": tribune = new TribuneDemi(scene); break;
+        case "finale": tribune = new TribuneFinale(scene); break;
+        default: tribune = new TribuneHuitieme(scene); break;
+    }
     tribune.create();
 
     
@@ -51,41 +62,29 @@ const createScene = function () {
     ball.checkCollisions = true;
     ball.ellipsoid = new BABYLON.Vector3(0.7,0.7,0.7);
 
-    // Players
-    const players = [];
-    const teamAColor = new BABYLON.Color3(1,0,0);
+    // Players (using Team Architecture)
+    const myTeam = new PlayerTeam(scene, "My Team", new BABYLON.Color3(1, 0, 0));
+    myTeam.createTeamFormation(1); // 1 pour le côté gauche
 
-    players.push(
-        createPlayer(scene,new BABYLON.Vector3(-40,0,0),teamAColor)
-    );
+    // Pour l'instant, le "joueur actif" est le premier attaquant (index 3)
+    let activePlayer = myTeam.players[3]; 
 
-    const player = players[0];
-
-    let currentAnim = "idle";
-
-    function playAnimation(name){
-
-        if(!player.animations) return;
-
-        if(currentAnim === name) return;
-
-        for(let anim in player.animations){
-            player.animations[anim].stop();
-        }
-
-        if(player.animations[name]){
-            player.animations[name].start(true);
-            currentAnim = name;
-        }
+    // Opponent team based on tournament stage
+    let opponentTeam;
+    switch(tournamentStage) {
+        case "huitieme": opponentTeam = new AITeamHuitieme(scene, "Adversaire", new BABYLON.Color3(0, 0, 1)); break;
+        case "quart": opponentTeam = new AITeamQuart(scene, "Adversaire", new BABYLON.Color3(0, 0, 1)); break;
+        case "demi": opponentTeam = new AITeamDemi(scene, "Adversaire", new BABYLON.Color3(0, 0, 1)); break;
+        case "finale": opponentTeam = new AITeamFinale(scene, "Adversaire", new BABYLON.Color3(0, 0, 1)); break;
+        default: opponentTeam = new AITeamHuitieme(scene, "Adversaire", new BABYLON.Color3(0, 0, 1)); break;
     }
+    opponentTeam.createTeamFormation(-1); // -1 pour le côté droit
 
-    player.ellipsoid = new BABYLON.Vector3(1,1,1);
-    player.checkCollisions = true;
-
-    camera.lockedTarget = player;
+    // Camera tracking
+    camera.lockedTarget = activePlayer;
     camera.inputs.clear();
 
-    // INPUT
+    // Input & Variables de base
     const input = {
         forward:false,
         backward:false,
@@ -122,7 +121,7 @@ const createScene = function () {
 
             const force = power * maxForce;
 
-            kick(scene, ball, player, lastDirection, force);
+            kick(scene, ball, activePlayer, lastDirection, force);
 
             isCharging = false;
         }
@@ -147,39 +146,19 @@ const createScene = function () {
         if(input.left) moveZ+=1;
         if(input.right) moveZ-=1;
 
-        if(moveX!==0||moveZ!==0){
-
-            playAnimation("run");
-            const length = Math.sqrt(moveX*moveX+moveZ*moveZ);
-            moveX/=length;
-            moveZ/=length;
-
-            player.position.x += moveX*speed;
-            player.position.z += moveZ*speed;
-
-            lastDirection = new BABYLON.Vector3(moveX,0,moveZ);
+        // Appel de la méthode encapsulée dans player.js
+        const directionOpt = activePlayer.move(moveX, moveZ, speed);
+        
+        if (directionOpt) {
+            lastDirection = directionOpt;
             playerFacing = lastDirection.clone();
-
-            if(player.model){
-
-                const angle = Math.atan2(moveZ, moveX);
-                const targetRotation = -angle;
-
-                player.model.rotation.z = BABYLON.Scalar.Lerp(
-                    player.model.rotation.z,
-                    targetRotation,
-                    0.15
-                );
-
-            }
-
-        }
-        else{
-            playAnimation("idle");
         }
 
         // COLLISION JOUEUR → BALLE
-        checkBallCollision(player, ball, playerFacing);
+        checkBallCollision(activePlayer, ball, playerFacing);
+
+        // UPDATE ADVERSAIRES
+        opponentTeam.update(ball);
 
     });
 
