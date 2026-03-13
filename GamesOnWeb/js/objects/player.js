@@ -92,6 +92,19 @@ const createPlayer = (scene, position, teamColor, meshIndex = 0) => {
             this.position.x += normX * speed;
             this.position.z += normZ * speed;
 
+            // Empêche le joueur de sortir des limites du terrain
+            // Le terrain fait 100x60 (voir field.js), centré en (0,0)
+            // On garde une petite marge pour rester à l'intérieur des lignes
+            const minX = -49;
+            const maxX = 49;
+            const minZ = -29;
+            const maxZ = 29;
+
+            if (this.position.x < minX) this.position.x = minX;
+            if (this.position.x > maxX) this.position.x = maxX;
+            if (this.position.z < minZ) this.position.z = minZ;
+            if (this.position.z > maxZ) this.position.z = maxZ;
+
             // Rotation du modèle vers la direction
             if (this.model) {
                 const angle = Math.atan2(normZ, normX);

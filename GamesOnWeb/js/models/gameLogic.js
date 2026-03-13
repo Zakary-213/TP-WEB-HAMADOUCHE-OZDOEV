@@ -10,6 +10,19 @@ function checkBallCollision(player, ball, playerFacing) {
         ball.position.z += playerFacing.z * pushForce;
     }
 
+    // Empêche le ballon de sortir des limites du terrain
+    // Le terrain fait 100x60 (voir field.js), centré en (0,0)
+    // On garde une petite marge pour rester à l'intérieur des lignes
+    const minX = -49;
+    const maxX = 49;
+    const minZ = -29;
+    const maxZ = 29;
+
+    if (ball.position.x < minX) ball.position.x = minX;
+    if (ball.position.x > maxX) ball.position.x = maxX;
+    if (ball.position.z < minZ) ball.position.z = minZ;
+    if (ball.position.z > maxZ) ball.position.z = maxZ;
+
     ball.position.y = 0.75;
 }
 
