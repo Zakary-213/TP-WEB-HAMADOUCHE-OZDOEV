@@ -11,7 +11,6 @@ const createPlayer = (scene, position, teamColor, meshIndex = 0) => {
         "cricketers_pack_low_poly.glb",
         scene,
         function (meshes, particleSystems, skeletons, animationGroups) {
-            console.log("Animations trouvées :", animationGroups);
 
 
             const model = new BABYLON.TransformNode("playerModel", scene);

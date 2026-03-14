@@ -156,9 +156,6 @@ const createScene = function () {
         // COLLISION JOUEUR → BALLE
         checkBallCollision(activePlayer, ball, playerFacing);
 
-        // UPDATE ADVERSAIRES
-        opponentTeam.update(ball);
-
         // UPDATE JAUGE
         if(isCharging){
 
