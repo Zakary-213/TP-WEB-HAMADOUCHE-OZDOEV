@@ -8,6 +8,7 @@ class Team {
         
         this.players = []; 
         this.score = 0;
+        this.activePlayer = null;
     }
 
     addPlayer(position, side = 1) {
@@ -76,4 +77,77 @@ class Team {
             }
         });
     }
+
+    switchPlayer(newPlayer, cameras){
+
+        if(!newPlayer) return;
+
+        this.activePlayer = newPlayer;
+
+        if(cameras && cameras.tpsCamera){
+            cameras.tpsCamera.lockedTarget = newPlayer;
+        }
+
+    }
+
+    getPlayerOnSide(direction){
+
+        const current = this.activePlayer;
+        if(!current) return null;
+
+        let bestPlayer = null;
+        let bestScore = -Infinity;
+
+        this.players.forEach(player => {
+
+            if(player === current) return;
+
+            const dx = player.position.x - current.position.x;
+            const dz = player.position.z - current.position.z;
+
+            const dist = Math.sqrt(dx*dx + dz*dz);
+
+            // vecteur direction
+            const dir = new BABYLON.Vector3(dx,0,dz).normalize();
+
+            // axe droite/gauche
+            const right = new BABYLON.Vector3(0,0,-1);
+
+            let score;
+
+            if(direction === "right"){
+                score = BABYLON.Vector3.Dot(dir, right);
+            }
+            else{
+                score = BABYLON.Vector3.Dot(dir, right.scale(-1));
+            }
+
+            // on pénalise la distance
+            score = score - dist * 0.02;
+
+            if(score > bestScore){
+                bestScore = score;
+                bestPlayer = player;
+            }
+
+        });
+
+        return bestPlayer;
+    }
+
+    switchLeft(cameras){
+
+        const p = this.getPlayerOnSide("left");
+        this.switchPlayer(p, cameras);
+
+    }
+
+    switchRight(cameras){
+
+        const p = this.getPlayerOnSide("right");
+        this.switchPlayer(p, cameras);
+
+    }
+
+
 }

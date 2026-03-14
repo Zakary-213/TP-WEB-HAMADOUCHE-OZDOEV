@@ -71,6 +71,7 @@ const createScene = function () {
 
     // Pour l'instant, le "joueur actif" est le premier attaquant (index 3)
     let activePlayer = myTeam.players[3]; 
+    myTeam.activePlayer = activePlayer;
 
     // Opponent team based on tournament stage
     let opponentTeam;
@@ -100,10 +101,22 @@ const createScene = function () {
         if(e.key==="s"||e.key==="S") input.backward=true;
         if(e.key==="q"||e.key==="Q") input.left=true;
         if(e.key==="d"||e.key==="D") input.right=true;
+
         if(e.code === "Space" && !isCharging){
             chargeStart = Date.now();
             isCharging = true; 
         }
+
+        if(e.key==="a" || e.key==="A"){
+            myTeam.switchLeft(cameras);
+            activePlayer = myTeam.activePlayer;
+        }
+
+        if(e.key==="e" || e.key==="E"){
+            myTeam.switchRight(cameras);
+            activePlayer = myTeam.activePlayer;
+        }
+        
     });
 
     window.addEventListener("keyup",(e)=>{
