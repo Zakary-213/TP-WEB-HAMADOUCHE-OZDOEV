@@ -10,6 +10,24 @@ function checkBallCollision(player, ball, playerFacing) {
         ball.position.z += playerFacing.z * pushForce;
     }
 
+    // Empêche le ballon de sortir des limites du terrain
+    // Le terrain fait 100x60 (voir field.js), centré en (0,0)
+    let minX = -49;
+    let maxX = 49;
+    const minZ = -29;
+    const maxZ = 29;
+
+    // Si le ballon est face au but (au centre sur l'axe Z), on agrandit la limite X
+    if (ball.position.z > -7.5 && ball.position.z < 7.5) {
+        minX = -54; // Profondeur du but (environ 4)
+        maxX = 54;
+    }
+
+    if (ball.position.x < minX) ball.position.x = minX;
+    if (ball.position.x > maxX) ball.position.x = maxX;
+    if (ball.position.z < minZ) ball.position.z = minZ;
+    if (ball.position.z > maxZ) ball.position.z = maxZ;
+
     ball.position.y = 0.75;
 }
 
@@ -23,44 +41,73 @@ function kick(scene, ball, player, lastDirection, force) {
         return;
     }
 
-    const startPos = ball.position.clone();
+    // Direction horizontale normalisée du tir
+    const dir = new BABYLON.Vector3(lastDirection.x, 0, lastDirection.z);
+    if (dir.lengthSquared() === 0) {
+        return;
+    }
+    const dirNorm = dir.normalize();
 
-    let targetX = startPos.x + lastDirection.x * force;
-    let targetZ = startPos.z + lastDirection.z * force;
+    // On utilise une physique simple : vitesse initiale proportionnelle à la force
+    // L'unité correspond à des unités de terrain / seconde (le dt est géré dans script.js)
+    const speed = force; // 8, 15 ou 25 selon la jauge
 
-    // Boundaries check
-    if (targetX > 48) targetX = 48;
-    if (targetX < -48) targetX = -48;
-    if (targetZ > 28) targetZ = 28;
-    if (targetZ < -28) targetZ = -28;
+    if (!ball.velocity) {
+        ball.velocity = new BABYLON.Vector3(0, 0, 0);
+    }
 
-    const frameRate = 60;
+    // On annule toute ancienne animation Babylon éventuellement en cours
+    scene.stopAnimation(ball);
 
-    const animation = new BABYLON.Animation(
-        "kickAnimation",
-        "position",
-        frameRate,BABYLON.Animation.ANIMATIONTYPE_VECTOR3,
-        BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT
-    );
+    // --- Animation procédurale de Frappe (Recul puis Frappe) ---
+    if (player.model) {
+        // Enregistrer la rotation de base
+        const baseRotX = player.model.rotation.x; // Généralement -PI/2
+        
+        // Créer l'animation de recul (wind-up) puis de frappe (snap)
+        const kickAnim = new BABYLON.Animation(
+            "kickAnim",
+            "rotation.x",
+            60, // fps
+            BABYLON.Animation.ANIMATIONTYPE_FLOAT,
+            BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT
+        );
 
-    const keys = [];
+        const keys = [];
+        // Frame 0 : position de départ
+        keys.push({ frame: 0, value: baseRotX });
+        // Frame 15 : Le joueur se penche en arrière pour prendre de l'élan
+        keys.push({ frame: 15, value: baseRotX - 0.5 });
+        // Frame 25 : Le joueur frappe violemment vers l'avant
+        keys.push({ frame: 25, value: baseRotX + 0.3 });
+        // Frame 40 : Retour à la position initiale
+        keys.push({ frame: 40, value: baseRotX });
 
-    keys.push({
-        frame: 0,
-        value: startPos
-    });
+        kickAnim.setKeys(keys);
+        
+        // Ajouter une fonction d'easing (élastique/rebond) pour rendre la frappe dynamique
+        const easingFunction = new BABYLON.CubicEase();
+        easingFunction.setEasingMode(BABYLON.EasingFunction.EASINGMODE_EASEOUT);
+        kickAnim.setEasingFunction(easingFunction);
 
-    keys.push({
-        frame: frameRate,
-        value: new BABYLON.Vector3(targetX, 0.75, targetZ)
-    });
+        player.model.animations.push(kickAnim);
 
-    animation.setKeys(keys);
+        // Lancer l'animation
+        scene.beginDirectAnimation(player.model, [kickAnim], 0, 40, false, 1.5, () => {
+            // Nettoyage une fois terminé
+            player.model.animations = player.model.animations.filter(a => a.name !== "kickAnim");
+        });
 
-    ball.animations = [];
-    ball.animations.push(animation);
+        // La balle part au moment de la frappe (vers la frame 20-25),
+        // On met un petit délai de 200ms
+        setTimeout(() => {
+            ball.velocity = dirNorm.scale(speed);
+        }, 200);
 
-    scene.beginAnimation(ball, 0, frameRate, false);
+    } else {
+        // Fallback si pas de modèle
+        ball.velocity = dirNorm.scale(speed);
+    }
 }
 
 function createKickGauge(scene){

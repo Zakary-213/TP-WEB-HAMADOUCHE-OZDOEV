@@ -3,6 +3,7 @@ const createPlayer = (scene, position, teamColor, meshIndex = 0) => {
     wPlayer.position = position;
 
     wPlayer.animations = {};
+    wPlayer.wobbleTime = 0;
 
     BABYLON.SceneLoader.ImportMesh(
         "",
@@ -21,12 +22,11 @@ const createPlayer = (scene, position, teamColor, meshIndex = 0) => {
             playerMesh.parent = model;
             playerMesh.scaling = new BABYLON.Vector3(8,8,8);
             
-            // Centrage dynamique du joueur basé sur sa géométrie
+            // Centrage dynamique du joueur basé sur sa géométrie (X/Z)
             // Ça enlève le décalage (offset) de base du fichier 3D, peu importe le skin sélectionné
             playerMesh.computeWorldMatrix(true);
             const centerLocal = playerMesh.getBoundingInfo().boundingBox.center;
             playerMesh.position.x = -centerLocal.x * 8;
-            playerMesh.position.y = 0;
             playerMesh.position.z = -centerLocal.z * 8;
 
             // Orientation de base :
@@ -35,6 +35,13 @@ const createPlayer = (scene, position, teamColor, meshIndex = 0) => {
             const side = wPlayer.side || 1;
             model.rotation.y = side === 1 ? Math.PI / 2 : -Math.PI / 2;
             model.rotation.x = -Math.PI / 2;
+
+            // Ajuste la hauteur pour que les pieds soient au niveau du sol (y = 0)
+            playerMesh.computeWorldMatrix(true);
+            const bbox = playerMesh.getBoundingInfo().boundingBox;
+            const minYWorld = bbox.minimumWorld.y;
+            const offsetY = -minYWorld;
+            model.position.y += offsetY;
 
             wPlayer.model = model;
 
@@ -82,7 +89,12 @@ const createPlayer = (scene, position, teamColor, meshIndex = 0) => {
 
     wPlayer.move = function(moveX, moveZ, speed) {
         if (moveX !== 0 || moveZ !== 0) {
-
+            this.playAnimation("run");
+            
+            // Animation procédurale de dandinement ("wobble")
+            const dt = scene.getEngine().getDeltaTime() / 1000;
+            this.wobbleTime += dt * 15; // Vitesse de balancement
+            
             // Normalisation pour ne pas aller plus vite en diagonale
             const length = Math.sqrt(moveX * moveX + moveZ * moveZ);
 
@@ -100,6 +112,23 @@ const createPlayer = (scene, position, teamColor, meshIndex = 0) => {
             this.position.x += normX * speed;
             this.position.z += normZ * speed;
 
+            // Empêche le joueur de sortir des limites du terrain
+            let minX = -49;
+            let maxX = 49;
+            const minZ = -29;
+            const maxZ = 29;
+
+            // Si le joueur est face au but (au centre sur l'axe Z), on agrandit la limite X
+            if (this.position.z > -7.5 && this.position.z < 7.5) {
+                minX = -54; // Profondeur du but (environ 4)
+                maxX = 54;
+            }
+
+            if (this.position.x < minX) this.position.x = minX;
+            if (this.position.x > maxX) this.position.x = maxX;
+            if (this.position.z < minZ) this.position.z = minZ;
+            if (this.position.z > maxZ) this.position.z = maxZ;
+
             // Rotation du modèle vers la direction
             if (this.model) {
 
@@ -111,13 +140,22 @@ const createPlayer = (scene, position, teamColor, meshIndex = 0) => {
                     targetRotation,
                     0.15
                 );
-
+                
+                // Appliquer le wobble (balancement gauche / droite)
+                // L'axe X du modèle est son "front/back" roll selon la setup
+                this.model.rotation.x = -Math.PI / 2 + Math.sin(this.wobbleTime) * 0.15; 
             }
 
             return new BABYLON.Vector3(normX, 0, normZ);
         }
         else {
             this.playAnimation("idle");
+            
+            // Revenir doucement à la position droite quand on s'arrête
+            if (this.model) {
+                this.model.rotation.x = BABYLON.Scalar.Lerp(this.model.rotation.x, -Math.PI / 2, 0.1);
+            }
+            
             return null; // Pas de mouvement
         }
     };

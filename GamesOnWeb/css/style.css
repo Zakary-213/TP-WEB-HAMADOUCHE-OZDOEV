@@ -13,54 +13,112 @@ body {
     touch-action: none;
 }
 
-#kickButton {
+/* -- HUD GLOBAL (Score + Chrono) -- */
+#match-hud {
     position: absolute;
     top: 20px;
-    left: 20px;
+    left: 50%;
+    transform: translateX(-50%);
     z-index: 10;
-    padding: 10px 20px;
-    font-size: 18px;
-    font-weight: bold;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* -- TABLEAU DES SCORES (Style FIFA / TV) -- */
+#scoreboard-container {
+    display: flex;
+    align-items: center;
+    background-color: rgba(15, 20, 30, 0.85);
+    border-radius: 8px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
     color: white;
-    background-color: #2ecc71;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    transition: background-color 0.2s, transform 0.1s;
+    overflow: hidden;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-#kickButton:hover {
-    background-color: #27ae60;
-}
-
-#kickButton:active {
-    transform: translateY(2px);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-#resetButton {
-    position: absolute;
-    top: 70px; /* Below the Kick button */
-    left: 20px;
-    z-index: 10;
+.team {
+    display: flex;
+    align-items: center;
     padding: 10px 20px;
-    font-size: 18px;
-    font-weight: bold;
+    font-size: 20px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.team-left {
+    background: linear-gradient(to right, rgba(0,0,0,0), rgba(255, 255, 255, 0.05));
+}
+
+.team-right {
+    background: linear-gradient(to left, rgba(0,0,0,0), rgba(255, 255, 255, 0.05));
+    flex-direction: row-reverse;
+}
+
+.team-color {
+    width: 6px;
+    height: 24px;
+    margin: 0 12px;
+    border-radius: 3px;
+}
+
+.score-display {
+    display: flex;
+    align-items: center;
+    background-color: #0b0f19;
+    padding: 10px 24px;
+    font-size: 28px;
+    font-weight: 900;
+}
+
+/* -- CHRONOMÈTRE -- */
+#match-timer {
+    background-color: #e74c3c; /* Rouge dynamique, ou tu peux mettre du noir/doré */
     color: white;
-    background-color: #e74c3c; /* Red color */
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    transition: background-color 0.2s, transform 0.1s;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 4px 16px;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    letter-spacing: 1px;
+    margin-top: -2px; /* Superpose légèrement sous le score */
+    z-index: 9; /* En dessous du score */
 }
 
-#resetButton:hover {
-    background-color: #c0392b;
+#score-player, #score-ai {
+    min-width: 30px;
+    text-align: center;
+    display: inline-block; /* Requis pour que le transform scale fonctionne correctement */
+    transition: color 0.3s;
 }
 
-#resetButton:active {
-    transform: translateY(2px);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+/* -- ANIMATION DE BUT -- */
+@keyframes scorePop {
+    0% {
+        transform: scale(1);
+        color: white;
+    }
+    50% {
+        transform: scale(1.8);
+        color: #ffd700; /* Or / Doré */
+        text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+    }
+    100% {
+        transform: scale(1);
+        color: white;
+    }
+}
+
+.animate-score {
+    animation: scorePop 0.8s ease-out;
+}
+
+.score-separator {
+    color: #666;
+    margin: 0 10px;
+    font-size: 20px;
 }

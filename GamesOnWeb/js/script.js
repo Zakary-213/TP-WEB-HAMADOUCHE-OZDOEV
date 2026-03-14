@@ -14,17 +14,6 @@ const createScene = function () {
 
     scene.collisionsEnabled = true;
 
-    // Camera
-    const camera = new BABYLON.ArcRotateCamera(
-        "camera",
-        Math.PI,
-        0.01,
-        60,
-        new BABYLON.Vector3(0,0,0),
-        scene
-    );
-    camera.attachControl(canvas, true);
-
     // Light (ambiance plus douce)
     const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
     light.intensity = 0.45;
@@ -34,7 +23,7 @@ const createScene = function () {
 
     // --- TOURNAMENT STATE ---
     // Change this variable to test different stages: "huitieme", "quart", "demi", "finale"
-    let tournamentStage = "quart";
+    let tournamentStage = "finale";
 
     // --- Structure ---
     
@@ -54,13 +43,24 @@ const createScene = function () {
     
     // --- Objects ---
     // Goals
-    createGoal(scene, new BABYLON.Vector3(-50, 0, 0), Math.PI / 2);
-    createGoal(scene, new BABYLON.Vector3(50, 0, 0), -Math.PI / 2);
+    const leftGoal = createGoal(scene, new BABYLON.Vector3(-50, 0, 0), Math.PI / 2);
+    const rightGoal = createGoal(scene, new BABYLON.Vector3(50, 0, 0), -Math.PI / 2);
+
+    // Liste des poteaux (pour les rebonds de la balle)
+    const goalPosts = [
+        leftGoal.leftPost,
+        leftGoal.rightPost,
+        rightGoal.leftPost,
+        rightGoal.rightPost
+    ];
 
     // Ball
     const ball = createBall(scene);
     ball.checkCollisions = true;
-    ball.ellipsoid = new BABYLON.Vector3(0.7,0.7,0.7);
+    ball.ellipsoid = new BABYLON.Vector3(0.55, 0.55, 0.55);
+
+    // Panneaux de score 3D style stade
+    createScoreboard3D(scene);
 
     // Jauge de tir
     const kickGauge = createKickGauge(scene);
@@ -83,9 +83,8 @@ const createScene = function () {
     }
     opponentTeam.createTeamFormation(-1); // -1 pour le côté droit
 
-    // Camera tracking
-    camera.lockedTarget = activePlayer;
-    camera.inputs.clear();
+    // Cameras Setup (TPS et FPS gérées dans cameras.js)
+    const cameras = setupCameras(scene, canvas, activePlayer);
 
     // Input & Variables de base
     const input = {
@@ -136,6 +135,8 @@ const createScene = function () {
 
     scene.onBeforeRenderObservable.add(()=>{
 
+        const dt = scene.getEngine().getDeltaTime() / 1000;
+
         let moveX = 0;
         let moveZ = 0;
 
@@ -175,24 +176,112 @@ const createScene = function () {
             hideKickGauge(kickGauge);
         }
 
+        // PHYSIQUE SIMPLE DE LA BALLE (tir + rebonds sur les poteaux)
+        if (!ball.velocity) {
+            ball.velocity = new BABYLON.Vector3(0, 0, 0);
+        }
+
+        // Mise à jour de la position de la balle en fonction de sa vitesse
+        if (ball.velocity.lengthSquared() > 0.000001) {
+            ball.position.x += ball.velocity.x * dt;
+            ball.position.z += ball.velocity.z * dt;
+
+            // Frottement au sol pour que la balle ralentisse
+            const friction = 0.985;
+            ball.velocity.scaleInPlace(friction);
+
+            if (ball.velocity.lengthSquared() < 0.0001) {
+                ball.velocity.set(0, 0, 0);
+            }
+
+            // Rebond sur les poteaux
+            const ballRadius = 0.55; // cohérent avec ball.js (diamètre 1.1)
+            const postRadius = 0.2;  // moitié de postThickness (0.4)
+            const collisionDistance = ballRadius + postRadius;
+
+            let hasBounced = false;
+
+            for (let i = 0; i < goalPosts.length; i++) {
+                const post = goalPosts[i];
+                if (!post || hasBounced) continue;
+
+                const postPos = post.getAbsolutePosition();
+                const diff = ball.position.subtract(postPos);
+                const horizontal = new BABYLON.Vector3(diff.x, 0, diff.z);
+                const dist = horizontal.length();
+
+                if (dist > 0 && dist < collisionDistance) {
+                    const normal = horizontal.normalize();
+
+                    // Réflexion de la vitesse par rapport à la normale du poteau
+                    const reflected = BABYLON.Vector3.Reflect(ball.velocity, normal);
+                    // On atténue un peu l'énergie du rebond
+                    ball.velocity = reflected.scale(0.7);
+
+                    // On repousse la balle juste à l'extérieur du rayon de collision
+                    ball.position = postPos.add(normal.scale(collisionDistance));
+                    hasBounced = true;
+                }
+            }
+        }
+
+        // GOAL DETECTION (Vérifie si le ballon est dans un des triggers de but)
+        // On vérifie d'abord que le ballon a une vraie position
+        if (ball && ball.position) {
+            
+            // Pour des TransformNodes complexes, on peut utiliser des Sphères virtuelles ou vérifier le Mesh enfant
+            // Ici, le ballon gère sa propre physique donc sa position est suffisante
+            
+            // Méthode simple : on regarde la boundingbox du trigger
+            const ballCenter = ball.position;
+            
+            // On ajoute une vérification de sécurité : le ballon doit être près des cages (X > 45 ou X < -45)
+            // pour éviter un but fantôme si la position d'initialisation croise brièvement un trigger mal placé
+            let playerScored = false;
+            let aiScored = false;
+
+            if (Math.abs(ballCenter.x) > 45) {
+                playerScored = rightGoal.triggerBox.intersectsPoint(ballCenter);
+                aiScored = leftGoal.triggerBox.intersectsPoint(ballCenter);
+            }
+
+            if (playerScored || aiScored) {
+                // Stopper l'animation physique (si le ballon vole)
+                scene.stopAnimation(ball);
+                
+                // Remettre la balle au centre
+                ball.position = new BABYLON.Vector3(0, 0.65, 0);
+                ball.rotation = new BABYLON.Vector3(0, 0, 0);
+
+                if (ball.velocity) {
+                    ball.velocity.set(0, 0, 0);
+                }
+
+                // Mise à jour du score en fonction de qui a marqué
+                if (playerScored) {
+                    window.gameScoreboard.playerScored();
+                } else if (aiScored) {
+                    window.gameScoreboard.aiScored();
+                }
+
+                // Replacer tous les joueurs à leur position de départ
+                if (myTeam && myTeam.resetPositions) myTeam.resetPositions();
+                if (opponentTeam && opponentTeam.resetPositions) opponentTeam.resetPositions();
+            }
+        }
+
     });
 
 
-    // KICK logic has been moved to gameLogic.js
 
-    // RESET
-    const resetButton = document.getElementById("resetButton");
+    // --- UI Update (Chronomètre) ---
+    // Start the timer when the match actually begins
+    window.gameScoreboard.startTimer();
 
-    resetButton.addEventListener("click",function(){
-
-        scene.stopAnimation(ball);
-
-        
-
-        ball.position = new BABYLON.Vector3(0,0.75,0);
-        ball.rotation = new BABYLON.Vector3(0,0,0);
-
+    scene.onBeforeRenderObservable.add(() => {
+        window.gameScoreboard.updateTimer(scene.getEngine().getDeltaTime() / 1000);
     });
+
 
     return scene;
 };

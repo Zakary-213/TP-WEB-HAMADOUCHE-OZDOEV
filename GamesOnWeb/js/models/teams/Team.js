@@ -28,6 +28,10 @@ class Team {
         // side = 1 : équipe de gauche (regarde vers +X)
         // side = -1 : équipe de droite (regarde vers -X, donc vers l'adversaire)
         newPlayer.side = side;
+        
+        // Sauvegarde de la position et rotation initiale pour le reset après un but
+        newPlayer.initialPosition = position.clone();
+        newPlayer.initialRotationY = side === 1 ? Math.PI / 2 : -Math.PI / 2;
 
         this.players.push(newPlayer);
         return newPlayer;
@@ -53,5 +57,23 @@ class Team {
 
     update(ball) {
         // Logique commune de mise à jour à chaque frame
+    }
+
+    resetPositions() {
+        this.players.forEach(player => {
+            // Réinitialise la position physique
+            player.position = player.initialPosition.clone();
+            
+            // Réinitialise la rotation du modèle 3D
+            if (player.model) {
+                player.model.rotation.y = player.initialRotationY;
+                player.model.rotation.z = 0; // Annule toute rotation de course en cours
+            }
+
+            // Remet l'animation en idle
+            if (player.playAnimation) {
+                player.playAnimation("idle");
+            }
+        });
     }
 }
