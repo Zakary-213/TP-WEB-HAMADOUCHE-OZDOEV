@@ -71,7 +71,6 @@ const createScene = function () {
 
     // Pour l'instant, le "joueur actif" est le premier attaquant (index 3)
     let activePlayer = myTeam.players[3]; 
-    activePlayer.isHuman = true;
 
     // Opponent team based on tournament stage
     let opponentTeam;
@@ -147,8 +146,6 @@ const createScene = function () {
 
         // Appel de la méthode encapsulée dans player.js
         const directionOpt = activePlayer.move(moveX, moveZ, speed);
-
-
         
         if (directionOpt) {
             lastDirection = directionOpt;
@@ -158,29 +155,8 @@ const createScene = function () {
         // COLLISION JOUEUR → BALLE
         checkBallCollision(activePlayer, ball, playerFacing);
 
-        myTeam.players.forEach(player => {
-
-            const d = BABYLON.Vector3.Distance(player.position, ball.position);
-
-            if(d < 2){
-
-                if(activePlayer !== player){
-
-                    activePlayer.isHuman = false;
-
-                    activePlayer = player;
-
-                    activePlayer.isHuman = true;
-
-                    camera.lockedTarget = activePlayer;
-
-                }
-
-            }
-
-        });
-
-
+        // UPDATE ADVERSAIRES
+        opponentTeam.update(ball);
 
         // UPDATE JAUGE
         if(isCharging){
@@ -198,8 +174,6 @@ const createScene = function () {
         else{
             hideKickGauge(kickGauge);
         }
-
-        
 
     });
 

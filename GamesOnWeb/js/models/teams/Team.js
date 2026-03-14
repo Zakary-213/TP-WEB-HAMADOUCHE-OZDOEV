@@ -29,7 +29,6 @@ class Team {
         // side = -1 : équipe de droite (regarde vers -X, donc vers l'adversaire)
         newPlayer.side = side;
 
-        newPlayer.homePosition = position.clone();
         this.players.push(newPlayer);
         return newPlayer;
     }
@@ -50,15 +49,9 @@ class Team {
         formationPositions.forEach(pos => {
             this.addPlayer(pos, side);
         });
-
-        this.players[0].role = "goalkeeper";
-        this.players[1].role = "defender";
-        this.players[2].role = "defender";
-        this.players[3].role = "attacker";
-        this.players[4].role = "attacker";
     }
 
-
-
-
+    update(ball) {
+        // Logique commune de mise à jour à chaque frame
+    }
 }
