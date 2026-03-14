@@ -82,10 +82,18 @@ const createPlayer = (scene, position, teamColor, meshIndex = 0) => {
 
     wPlayer.move = function(moveX, moveZ, speed) {
         if (moveX !== 0 || moveZ !== 0) {
-            this.playAnimation("run");
-            
+
             // Normalisation pour ne pas aller plus vite en diagonale
             const length = Math.sqrt(moveX * moveX + moveZ * moveZ);
+
+            // sécurité (évite NaN)
+            if(length === 0){
+                this.playAnimation("idle");
+                return null;
+            }
+
+            this.playAnimation("run");
+
             const normX = moveX / length;
             const normZ = moveZ / length;
 
@@ -94,6 +102,7 @@ const createPlayer = (scene, position, teamColor, meshIndex = 0) => {
 
             // Rotation du modèle vers la direction
             if (this.model) {
+
                 const angle = Math.atan2(normZ, normX);
                 const targetRotation = -angle;
 
@@ -102,11 +111,12 @@ const createPlayer = (scene, position, teamColor, meshIndex = 0) => {
                     targetRotation,
                     0.15
                 );
+
             }
 
-            // Retourner la direction pour la logique externe (tir, collision)
             return new BABYLON.Vector3(normX, 0, normZ);
-        } else {
+        }
+        else {
             this.playAnimation("idle");
             return null; // Pas de mouvement
         }

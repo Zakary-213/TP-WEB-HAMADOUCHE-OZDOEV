@@ -29,6 +29,7 @@ class Team {
         // side = -1 : équipe de droite (regarde vers -X, donc vers l'adversaire)
         newPlayer.side = side;
 
+        newPlayer.homePosition = position.clone();
         this.players.push(newPlayer);
         return newPlayer;
     }
@@ -49,9 +50,92 @@ class Team {
         formationPositions.forEach(pos => {
             this.addPlayer(pos, side);
         });
+
+        this.players[0].role = "goalkeeper";
+        this.players[1].role = "defender";
+        this.players[2].role = "defender";
+        this.players[3].role = "attacker";
+        this.players[4].role = "attacker";
     }
 
-    update(ball) {
-        // Logique commune de mise à jour à chaque frame
+
+update(ball, activePlayer){
+
+    const attacking = ball.position.x * this.players[0].side > 0;
+
+    // joueur le plus proche de la balle
+    let closest = null;
+    let minDist = Infinity;
+
+    this.players.forEach(player => {
+
+        const d = BABYLON.Vector3.Distance(player.position, ball.position);
+
+        if(d < minDist){
+            minDist = d;
+            closest = player;
+        }
+
+    });
+
+    this.players.forEach(player => {
+
+        if(player.isHuman) return;
+
+        // joueur le plus proche → pression balle
+        if(player === closest){
+
+            const dir = ball.position.subtract(player.position);
+            dir.normalize();
+
+            player.move(dir.x, dir.z, 0.07);
+            return;
+        }
+
+        let target = player.homePosition.clone();
+
+        if(attacking){
+
+            if(player.role === "attacker"){
+                target.x = ball.position.x - player.side * 6;
+            }
+
+            if(player.role === "defender"){
+                target.x = ball.position.x - player.side * 16;
+            }
+
+        }else{
+
+            if(player.role === "attacker"){
+                target.x = player.homePosition.x - player.side * 5;
+            }
+
+            if(player.role === "defender"){
+                target = player.homePosition.clone();
+            }
+
+        }
+
+        this.moveToPosition(player,target);
+
+    });
+
+}
+
+    moveToPosition(player, target){
+
+        const dir = target.subtract(player.position);
+
+        const dist = dir.length();
+
+        if(dist < 0.5){
+            player.move(0,0,0);
+            return;
+        }
+
+        dir.normalize();
+
+        player.move(dir.x, dir.z, 0.05);
     }
+
 }
