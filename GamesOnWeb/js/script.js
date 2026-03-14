@@ -148,8 +148,7 @@ const createScene = function () {
         // Appel de la méthode encapsulée dans player.js
         const directionOpt = activePlayer.move(moveX, moveZ, speed);
 
-        // update coéquipiers IA
-        myTeam.update(ball, activePlayer);
+
         
         if (directionOpt) {
             lastDirection = directionOpt;
@@ -181,8 +180,7 @@ const createScene = function () {
 
         });
 
-        // UPDATE ADVERSAIRES
-        opponentTeam.update(ball, null);
+
 
         // UPDATE JAUGE
         if(isCharging){
