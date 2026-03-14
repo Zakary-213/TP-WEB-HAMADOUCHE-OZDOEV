@@ -12,11 +12,16 @@ function checkBallCollision(player, ball, playerFacing) {
 
     // Empêche le ballon de sortir des limites du terrain
     // Le terrain fait 100x60 (voir field.js), centré en (0,0)
-    // On garde une petite marge pour rester à l'intérieur des lignes
-    const minX = -49;
-    const maxX = 49;
+    let minX = -49;
+    let maxX = 49;
     const minZ = -29;
     const maxZ = 29;
+
+    // Si le ballon est face au but (au centre sur l'axe Z), on agrandit la limite X
+    if (ball.position.z > -7.5 && ball.position.z < 7.5) {
+        minX = -54; // Profondeur du but (environ 4)
+        maxX = 54;
+    }
 
     if (ball.position.x < minX) ball.position.x = minX;
     if (ball.position.x > maxX) ball.position.x = maxX;
@@ -36,44 +41,25 @@ function kick(scene, ball, player, lastDirection, force) {
         return;
     }
 
-    const startPos = ball.position.clone();
+    // Direction horizontale normalisée du tir
+    const dir = new BABYLON.Vector3(lastDirection.x, 0, lastDirection.z);
+    if (dir.lengthSquared() === 0) {
+        return;
+    }
+    const dirNorm = dir.normalize();
 
-    let targetX = startPos.x + lastDirection.x * force;
-    let targetZ = startPos.z + lastDirection.z * force;
+    // On utilise une physique simple : vitesse initiale proportionnelle à la force
+    // L'unité correspond à des unités de terrain / seconde (le dt est géré dans script.js)
+    const speed = force; // 8, 15 ou 25 selon la jauge
 
-    // Boundaries check
-    if (targetX > 48) targetX = 48;
-    if (targetX < -48) targetX = -48;
-    if (targetZ > 28) targetZ = 28;
-    if (targetZ < -28) targetZ = -28;
+    if (!ball.velocity) {
+        ball.velocity = new BABYLON.Vector3(0, 0, 0);
+    }
 
-    const frameRate = 60;
+    // On annule toute ancienne animation Babylon éventuellement en cours
+    scene.stopAnimation(ball);
 
-    const animation = new BABYLON.Animation(
-        "kickAnimation",
-        "position",
-        frameRate,BABYLON.Animation.ANIMATIONTYPE_VECTOR3,
-        BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT
-    );
-
-    const keys = [];
-
-    keys.push({
-        frame: 0,
-        value: startPos
-    });
-
-    keys.push({
-        frame: frameRate,
-        value: new BABYLON.Vector3(targetX, 0.75, targetZ)
-    });
-
-    animation.setKeys(keys);
-
-    ball.animations = [];
-    ball.animations.push(animation);
-
-    scene.beginAnimation(ball, 0, frameRate, false);
+    ball.velocity = dirNorm.scale(speed);
 }
 
 function createKickGauge(scene){

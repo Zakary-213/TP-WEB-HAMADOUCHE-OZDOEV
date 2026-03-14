@@ -7,8 +7,11 @@ const createBall = (scene) => {
     const ball = new BABYLON.TransformNode("ball", scene);
     ball.position = new BABYLON.Vector3(0, 0.75, 0);
 
+    // Vitesse personnalisée pour la physique simple (tir, rebonds)
+    ball.velocity = new BABYLON.Vector3(0, 0, 0);
+
     // Placeholder sphérique au cas où le .glb met du temps à charger
-    const placeholder = BABYLON.MeshBuilder.CreateSphere("ballPlaceholder", { diameter: 1.5 }, scene);
+    const placeholder = BABYLON.MeshBuilder.CreateSphere("ballPlaceholder", { diameter: 1.1 }, scene);
     placeholder.parent = ball;
     const ballMaterial = new BABYLON.StandardMaterial("ballMat", scene);
     ballMaterial.emissiveColor = new BABYLON.Color3(0.5, 0.5, 0.5);
@@ -34,7 +37,7 @@ const createBall = (scene) => {
             });
 
             // Optionnel: on peut ajuster l'échelle globale du ballon importé ici
-            // ball.scaling = new BABYLON.Vector3(0.5, 0.5, 0.5);
+            ball.scaling = new BABYLON.Vector3(0.5, 0.5, 0.5);
 
             // On masque la sphère de secours une fois le .glb chargé
             placeholder.setEnabled(false);
@@ -43,7 +46,7 @@ const createBall = (scene) => {
 
     // --- Rotation automatique : le ballon roule dans le sens de son déplacement ---
     let lastPosition = ball.position.clone();
-    const radius = 0.75; // rayon approximatif du ballon (diamètre 1.5)
+    const radius = 0.55; // rayon approximatif du ballon (diamètre 1.1)
 
     scene.onBeforeRenderObservable.add(() => {
         const current = ball.position.clone();

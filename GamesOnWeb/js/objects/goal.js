@@ -1,10 +1,10 @@
 // Goals (Cages)
 const createGoal = (scene, position, rotationY) => {
     // Goal Dimensions
-    const goalWidth = 7.32;
-    const goalHeight = 2.44;
-    const goalDepth = 2;
-    const postThickness = 0.2;
+    const goalWidth = 14.64; // Doublé par rapport à l'original (7.32)
+    const goalHeight = 4.88; // Doublé par rapport à l'original (2.44)
+    const goalDepth = 4;     // Doublé (2)
+    const postThickness = 0.4; // Doublé (0.2)
 
     // Goal Materials
     const goalPostMaterial = new BABYLON.StandardMaterial("goalPostMat", scene);
@@ -88,6 +88,21 @@ const createGoal = (scene, position, rotationY) => {
     netTop.position = new BABYLON.Vector3(0, goalHeight, -goalDepth/2);
     netTop.material = netMaterial;
     netTop.parent = goalGroup;
+
+    // Invisible Goal Trigger Box (to detect when the ball is inside)
+    // We make it slightly smaller than the goal to ensure the ball is fully in
+    const triggerBox = BABYLON.MeshBuilder.CreateBox("goalTrigger", { width: goalWidth - 1, height: goalHeight - 0.5, depth: goalDepth - 1 }, scene);
+    triggerBox.position = new BABYLON.Vector3(0, goalHeight / 2, -goalDepth / 2);
+    triggerBox.isVisible = false;
+    triggerBox.parent = goalGroup;
+    
+    // Attach the trigger box to the returned group so we can access it later
+    goalGroup.triggerBox = triggerBox;
+
+    // Expose key parts of the goal (useful for collisions / rebonds)
+    goalGroup.leftPost = leftPost;
+    goalGroup.rightPost = rightPost;
+    goalGroup.crossbar = crossbar;
 
     return goalGroup;
 };
