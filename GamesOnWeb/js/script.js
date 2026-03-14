@@ -59,6 +59,9 @@ const createScene = function () {
     ball.checkCollisions = true;
     ball.ellipsoid = new BABYLON.Vector3(0.55, 0.55, 0.55);
 
+    // Panneaux de score 3D style stade
+    createScoreboard3D(scene);
+
     // Jauge de tir
     const kickGauge = createKickGauge(scene);
     drawGaugeColors(kickGauge);
@@ -232,11 +235,17 @@ const createScene = function () {
             // Méthode simple : on regarde la boundingbox du trigger
             const ballCenter = ball.position;
             
-            if (leftGoal.triggerBox.intersectsPoint(ballCenter) || rightGoal.triggerBox.intersectsPoint(ballCenter)) {
-                
-                // Le ballon a marqué !
-                console.log("GOOOOOAAALLLLL !");
-                
+            // On ajoute une vérification de sécurité : le ballon doit être près des cages (X > 45 ou X < -45)
+            // pour éviter un but fantôme si la position d'initialisation croise brièvement un trigger mal placé
+            let playerScored = false;
+            let aiScored = false;
+
+            if (Math.abs(ballCenter.x) > 45) {
+                playerScored = rightGoal.triggerBox.intersectsPoint(ballCenter);
+                aiScored = leftGoal.triggerBox.intersectsPoint(ballCenter);
+            }
+
+            if (playerScored || aiScored) {
                 // Stopper l'animation physique (si le ballon vole)
                 scene.stopAnimation(ball);
                 
@@ -248,32 +257,31 @@ const createScene = function () {
                     ball.velocity.set(0, 0, 0);
                 }
 
-                // Optionnel : Réinitialiser la vitesse si on avait un système de vélocité
+                // Mise à jour du score en fonction de qui a marqué
+                if (playerScored) {
+                    window.gameScoreboard.playerScored();
+                } else if (aiScored) {
+                    window.gameScoreboard.aiScored();
+                }
+
+                // Replacer tous les joueurs à leur position de départ
+                if (myTeam && myTeam.resetPositions) myTeam.resetPositions();
+                if (opponentTeam && opponentTeam.resetPositions) opponentTeam.resetPositions();
             }
         }
 
     });
 
 
-    // KICK logic has been moved to gameLogic.js
 
-    // RESET
-    const resetButton = document.getElementById("resetButton");
+    // --- UI Update (Chronomètre) ---
+    // Start the timer when the match actually begins
+    window.gameScoreboard.startTimer();
 
-    resetButton.addEventListener("click",function(){
-
-        scene.stopAnimation(ball);
-
-        
-
-        ball.position = new BABYLON.Vector3(0,0.65,0);
-        ball.rotation = new BABYLON.Vector3(0,0,0);
-
-        if (ball.velocity) {
-            ball.velocity.set(0, 0, 0);
-        }
-
+    scene.onBeforeRenderObservable.add(() => {
+        window.gameScoreboard.updateTimer(scene.getEngine().getDeltaTime() / 1000);
     });
+
 
     return scene;
 };

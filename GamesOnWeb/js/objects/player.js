@@ -3,6 +3,7 @@ const createPlayer = (scene, position, teamColor, meshIndex = 0) => {
     wPlayer.position = position;
 
     wPlayer.animations = {};
+    wPlayer.wobbleTime = 0;
 
     BABYLON.SceneLoader.ImportMesh(
         "",
@@ -90,6 +91,10 @@ const createPlayer = (scene, position, teamColor, meshIndex = 0) => {
         if (moveX !== 0 || moveZ !== 0) {
             this.playAnimation("run");
             
+            // Animation procédurale de dandinement ("wobble")
+            const dt = scene.getEngine().getDeltaTime() / 1000;
+            this.wobbleTime += dt * 15; // Vitesse de balancement
+            
             // Normalisation pour ne pas aller plus vite en diagonale
             const length = Math.sqrt(moveX * moveX + moveZ * moveZ);
             const normX = moveX / length;
@@ -99,7 +104,6 @@ const createPlayer = (scene, position, teamColor, meshIndex = 0) => {
             this.position.z += normZ * speed;
 
             // Empêche le joueur de sortir des limites du terrain
-            // Le terrain fait 100x60 (voir field.js), centré en (0,0)
             let minX = -49;
             let maxX = 49;
             const minZ = -29;
@@ -126,12 +130,22 @@ const createPlayer = (scene, position, teamColor, meshIndex = 0) => {
                     targetRotation,
                     0.15
                 );
+                
+                // Appliquer le wobble (balancement gauche / droite)
+                // L'axe X du modèle est son "front/back" roll selon la setup
+                this.model.rotation.x = -Math.PI / 2 + Math.sin(this.wobbleTime) * 0.15; 
             }
 
             // Retourner la direction pour la logique externe (tir, collision)
             return new BABYLON.Vector3(normX, 0, normZ);
         } else {
             this.playAnimation("idle");
+            
+            // Revenir doucement à la position droite quand on s'arrête
+            if (this.model) {
+                this.model.rotation.x = BABYLON.Scalar.Lerp(this.model.rotation.x, -Math.PI / 2, 0.1);
+            }
+            
             return null; // Pas de mouvement
         }
     };

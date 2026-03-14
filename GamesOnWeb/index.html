@@ -13,8 +13,29 @@
 
 <body>
 
-    <button id="kickButton">Kick!</button>
-    <button id="resetButton">Reset</button>
+    <!-- HUD Global (Tableau des scores + Chrono) -->
+    <div id="match-hud">
+        <!-- Tableau des scores façon FIFA -->
+        <div id="scoreboard-container">
+            <div class="team team-left">
+                <span class="team-name">YOU</span>
+                <span class="team-color" style="background-color: #ff3333;"></span>
+            </div>
+            <div class="score-display">
+                <span id="score-player">0</span>
+                <span class="score-separator">-</span>
+                <span id="score-ai">0</span>
+            </div>
+            <div class="team team-right">
+                <span class="team-color" style="background-color: #3333ff;"></span>
+                <span class="team-name">IA</span>
+            </div>
+        </div>
+        
+        <!-- Chronomètre -->
+        <div id="match-timer">00:00</div>
+    </div>
+
     <canvas id="renderCanvas" touch-action="none"></canvas>
 
     <!-- Project Structure Scripts -->
@@ -29,6 +50,7 @@
     <script src="js/objects/ball.js"></script>
     <script src="js/objects/player.js"></script>
     <script src="js/objects/cameras.js"></script>
+    <script src="js/objects/scoreboard3d.js"></script>
 
     <!-- Teams -->
     <script src="js/models/teams/Team.js"></script>
@@ -38,6 +60,9 @@
     <script src="js/models/teams/AITeamQuart.js"></script>
     <script src="js/models/teams/AITeamDemi.js"></script>
     <script src="js/models/teams/AITeamFinale.js"></script>
+    <!-- UI -->
+    <script src="js/ui/scoreboard.js"></script>
+
     <!-- Main Script -->
     <script src="js/models/gameLogic.js"></script>
     <script src="js/script.js"></script>

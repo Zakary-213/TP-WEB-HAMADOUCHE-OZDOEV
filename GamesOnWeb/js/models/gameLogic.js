@@ -59,7 +59,55 @@ function kick(scene, ball, player, lastDirection, force) {
     // On annule toute ancienne animation Babylon éventuellement en cours
     scene.stopAnimation(ball);
 
-    ball.velocity = dirNorm.scale(speed);
+    // --- Animation procédurale de Frappe (Recul puis Frappe) ---
+    if (player.model) {
+        // Enregistrer la rotation de base
+        const baseRotX = player.model.rotation.x; // Généralement -PI/2
+        
+        // Créer l'animation de recul (wind-up) puis de frappe (snap)
+        const kickAnim = new BABYLON.Animation(
+            "kickAnim",
+            "rotation.x",
+            60, // fps
+            BABYLON.Animation.ANIMATIONTYPE_FLOAT,
+            BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT
+        );
+
+        const keys = [];
+        // Frame 0 : position de départ
+        keys.push({ frame: 0, value: baseRotX });
+        // Frame 15 : Le joueur se penche en arrière pour prendre de l'élan
+        keys.push({ frame: 15, value: baseRotX - 0.5 });
+        // Frame 25 : Le joueur frappe violemment vers l'avant
+        keys.push({ frame: 25, value: baseRotX + 0.3 });
+        // Frame 40 : Retour à la position initiale
+        keys.push({ frame: 40, value: baseRotX });
+
+        kickAnim.setKeys(keys);
+        
+        // Ajouter une fonction d'easing (élastique/rebond) pour rendre la frappe dynamique
+        const easingFunction = new BABYLON.CubicEase();
+        easingFunction.setEasingMode(BABYLON.EasingFunction.EASINGMODE_EASEOUT);
+        kickAnim.setEasingFunction(easingFunction);
+
+        player.model.animations.push(kickAnim);
+
+        // Lancer l'animation
+        scene.beginDirectAnimation(player.model, [kickAnim], 0, 40, false, 1.5, () => {
+            // Nettoyage une fois terminé
+            player.model.animations = player.model.animations.filter(a => a.name !== "kickAnim");
+        });
+
+        // La balle part au moment de la frappe (vers la frame 20-25),
+        // On met un petit délai de 200ms
+        setTimeout(() => {
+            ball.velocity = dirNorm.scale(speed);
+        }, 200);
+
+    } else {
+        // Fallback si pas de modèle
+        ball.velocity = dirNorm.scale(speed);
+    }
 }
 
 function createKickGauge(scene){
