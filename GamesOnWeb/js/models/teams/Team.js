@@ -226,9 +226,8 @@ class Team {
 
             const target = this.activePlayer.position.clone();
 
-            target.x -= 10 * player.side;
-
-            target.z = player.homePosition.z;
+            target.x -= 14 * player.side;
+            target.z = player.homePosition.z * 1.2;
 
             const liveOffset = this.getLiveOffset(player, 0.8, 0.0018);
             target.addInPlace(liveOffset);
@@ -263,11 +262,11 @@ class Team {
             const target = player.homePosition.clone();
 
             // l'attaquant avance avec le jeu mais ne dépasse pas une limite
-            const attackLine = ball.position.x + (6 * player.side);
+            const attackLine = ball.position.x + (10 * player.side);
 
             target.x = Math.max(player.minX, Math.min(player.maxX, attackLine));
 
-            target.z = player.homePosition.z;
+            target.z = player.homePosition.z * 1.4;
 
             const liveOffset = this.getLiveOffset(player, 1.0, 0.002);
             target.addInPlace(liveOffset);
