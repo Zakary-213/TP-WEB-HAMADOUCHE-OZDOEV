@@ -148,6 +148,11 @@ const createScene = function () {
 
     scene.onBeforeRenderObservable.add(()=>{
 
+        myTeam.autoSwitch(ball, cameras);
+        activePlayer = myTeam.activePlayer;
+        
+        myTeam.update(ball);
+
         const dt = scene.getEngine().getDeltaTime() / 1000;
 
         let moveX = 0;

@@ -9,6 +9,8 @@ class Team {
         this.players = []; 
         this.score = 0;
         this.activePlayer = null;
+        this.lastSwitchTime = 0;
+        this.switchCooldown = 1000; // ms
     }
 
     addPlayer(position, side = 1) {
@@ -39,25 +41,138 @@ class Team {
     }
 
     createTeamFormation(side) {
-        // side = 1 (gauche, notre équipe) ou -1 (droite, adversaire)
-        const startX = -20 * side; // Milieu de notre moitié de terrain
 
-        // Positions relatives pour une formation basique (ex: 1 gardien, 2 défenseurs, 2 attaquants)
-        const formationPositions = [
-            new BABYLON.Vector3(startX - (15 * side), 0, 0),     // Gardien
-            new BABYLON.Vector3(startX - (5 * side), 0, -10),    // Défenseur 1
-            new BABYLON.Vector3(startX - (5 * side), 0, 10),     // Défenseur 2
-            new BABYLON.Vector3(startX + (5 * side), 0, -8),     // Attaquant 1
-            new BABYLON.Vector3(startX + (5 * side), 0, 8)       // Attaquant 2
+        const startX = -20 * side;
+
+        const formation = [
+            { role: "GK",  pos: new BABYLON.Vector3(startX - (15 * side), 0, 0) },
+            { role: "DEF", pos: new BABYLON.Vector3(startX - (5 * side), 0, -10) },
+            { role: "DEF", pos: new BABYLON.Vector3(startX - (5 * side), 0, 10) },
+            { role: "ATT", pos: new BABYLON.Vector3(startX + (5 * side), 0, -8) },
+            { role: "ATT", pos: new BABYLON.Vector3(startX + (5 * side), 0, 8) }
         ];
 
-        formationPositions.forEach(pos => {
-            this.addPlayer(pos, side);
+        formation.forEach(data => {
+
+            const player = this.addPlayer(data.pos, side);
+
+            player.role = data.role;
+
+            // position tactique de base
+            player.homePosition = data.pos.clone();
+
+            // état de l'IA
+            player.state = "IDLE";
+
+            if(player.role === "GK"){
+                player.minX = player.homePosition.x - 2;
+                player.maxX = player.homePosition.x + 2;
+            }
+
+            if(player.role === "DEF"){
+                player.minX = player.homePosition.x - 10;
+                player.maxX = 10;
+            }
+
+            if(player.role === "ATT"){
+                player.minX = -10;
+                player.maxX = 40;
+            }
+
+            player.minZ = -25;
+            player.maxZ = 25;
+
+
+
         });
+
     }
 
-    update(ball) {
-        // Logique commune de mise à jour à chaque frame
+    update(ball){
+
+        const closest = this.getClosestPlayerToBall(ball);
+
+        this.players.forEach(player => {
+
+            if(player === this.activePlayer) return;
+
+            if(player === closest){
+                player.state = "CHASE";
+            }
+            else{
+                player.state = "POSITION";
+            }
+
+            this.updatePlayerAI(player, ball);
+
+        });
+
+    }
+
+    updatePlayerAI(player, ball){
+
+        if(player.state === "CHASE"){
+
+            this.movePlayerTowards(player, ball.position);
+            return;
+
+        }
+
+        const ballPos = ball.position;
+
+        let target = player.homePosition.clone();
+
+        // petit mouvement naturel
+        const time = performance.now() * 0.005;
+
+        target.z += Math.sin(time + player.position.x) * 0.5;
+        target.x += Math.cos(time + player.position.z) * 0.5;
+
+        // influence de la balle selon le rôle
+
+        if(player.role === "DEF"){
+
+            target.x += (ballPos.x - player.homePosition.x) * 0.3;
+            target.z += (ballPos.z - player.homePosition.z) * 0.3;
+
+        }
+
+        if(player.role === "ATT"){
+
+            target.x += (ballPos.x - player.homePosition.x) * 0.7;
+            target.z += (ballPos.z - player.homePosition.z) * 0.7;
+
+        }
+
+        if(player.role === "GK"){
+
+            target.x = player.homePosition.x;
+
+            target.z += (ballPos.z - player.homePosition.z) * 0.2;
+
+        }
+
+        target.x = Math.max(player.minX, Math.min(player.maxX, target.x));
+        target.z = Math.max(player.minZ, Math.min(player.maxZ, target.z));
+
+        this.movePlayerTowards(player, target);
+
+    }
+
+    movePlayerTowards(player, target){
+
+        const dir = target.subtract(player.position);
+
+        const dist = dir.length();
+
+        if(dist < 0.2) return;
+
+        dir.normalize();
+
+        const speed = 0.04;
+
+        player.move(dir.x, dir.z, speed);
+
     }
 
     resetPositions() {
@@ -156,6 +271,60 @@ class Team {
 
         const p = this.getPlayerOnSide("right");
         this.switchPlayer(p, cameras);
+
+    }
+
+    getClosestPlayerToBall(ball){
+
+        let closest = null;
+        let bestDist = Infinity;
+
+        this.players.forEach(player => {
+
+            const dist = BABYLON.Vector3.Distance(
+                player.position,
+                ball.position
+            );
+
+            if(dist < bestDist){
+                bestDist = dist;
+                closest = player;
+            }
+
+        });
+
+        return closest;
+    }
+
+    autoSwitch(ball, cameras){
+
+        const now = performance.now();
+
+        if(now - this.lastSwitchTime < this.switchCooldown) return;
+
+        const closest = this.getClosestPlayerToBall(ball);
+
+        if(!closest) return;
+
+        if(closest === this.activePlayer) return;
+
+        const distActive = BABYLON.Vector3.Distance(
+            this.activePlayer.position,
+            ball.position
+        );
+
+        const distClosest = BABYLON.Vector3.Distance(
+            closest.position,
+            ball.position
+        );
+
+        // on exige un vrai avantage
+        if(distClosest + 1 < distActive){
+
+            this.switchPlayer(closest, cameras);
+            this.lastSwitchTime = now;
+
+        }
 
     }
 
