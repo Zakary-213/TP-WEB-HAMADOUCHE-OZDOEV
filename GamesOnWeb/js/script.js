@@ -131,7 +131,7 @@ const createScene = function () {
             const force = computeKickPower(kickGauge);
 
             hideKickGauge(kickGauge);
-            kick(scene, ball, activePlayer, lastDirection, force);
+            kick(scene, ball, activePlayer, lastDirection, force, myTeam);
 
             isCharging = false;
         }
@@ -150,7 +150,7 @@ const createScene = function () {
 
         myTeam.autoSwitch(ball, cameras);
         activePlayer = myTeam.activePlayer;
-        
+
         myTeam.update(ball);
 
         const dt = scene.getEngine().getDeltaTime() / 1000;
@@ -172,7 +172,7 @@ const createScene = function () {
         }
 
         // COLLISION JOUEUR → BALLE
-        checkBallCollision(activePlayer, ball, playerFacing);
+        checkBallCollision(activePlayer, ball, playerFacing, myTeam);
 
         // UPDATE JAUGE
         if(isCharging){

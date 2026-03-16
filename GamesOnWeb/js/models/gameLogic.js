@@ -1,10 +1,16 @@
-function checkBallCollision(player, ball, playerFacing) {
+function checkBallCollision(player, ball, playerFacing, team) {
     const distance = BABYLON.Vector3.Distance(
         player.position,
         ball.position
     );
 
     if (distance < 2) {
+
+        // si ce joueur n'est pas le joueur actif on ne pousse pas la balle
+        if(player !== team.activePlayer){
+            return;
+        }
+
         const pushForce = 1.2;
         ball.position.x += playerFacing.x * pushForce;
         ball.position.z += playerFacing.z * pushForce;
@@ -31,7 +37,11 @@ function checkBallCollision(player, ball, playerFacing) {
     ball.position.y = 0.75;
 }
 
-function kick(scene, ball, player, lastDirection, force) {
+function kick(scene, ball, player, lastDirection, force, team) {
+
+    team.lastBallPlayer = player;
+    team.lockAutoSwitch(1150);
+    
     const distance = BABYLON.Vector3.Distance(
         player.position,
         ball.position

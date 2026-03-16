@@ -4,7 +4,7 @@ const setupCameras = (scene, canvas, playerNode) => {
         "tpsCamera",
         Math.PI,
         0.01,
-        60,
+        150, // Distance camera par défaut 60
         new BABYLON.Vector3(0, 0, 0),
         scene
     );
