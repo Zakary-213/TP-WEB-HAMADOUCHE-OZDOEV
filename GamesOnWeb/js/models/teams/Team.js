@@ -19,6 +19,9 @@ class Team {
         // joueur qui a touché la balle en dernier (pour éviter qu'il chase sa propre passe)
         this.lastBallPlayer = null;
 
+        // petit délai pendant lequel on considère encore qu'on a la possession
+        this.teamPossessionLockUntil = 0;
+
         
     }
 
@@ -395,6 +398,12 @@ class Team {
 
     hasBall(ball){
 
+        // pendant un court instant après une passe / frappe,
+        // on considère encore que l'équipe a la possession
+        if(performance.now() < this.teamPossessionLockUntil){
+            return true;
+        }
+
         if(!this.activePlayer) return false;
 
         const dist = BABYLON.Vector3.Distance(
@@ -470,6 +479,10 @@ class Team {
 
     lockAutoSwitch(duration = 600){
         this.switchLockUntil = performance.now() + duration;
+    }
+
+    lockTeamPossession(duration = 1200){
+        this.teamPossessionLockUntil = performance.now() + duration;
     }
 
     switchLeft(cameras){

@@ -41,6 +41,7 @@ function kick(scene, ball, player, lastDirection, force, team) {
 
     team.lastBallPlayer = player;
     team.lockAutoSwitch(1150);
+    team.lockTeamPossession(1550);
     
     const distance = BABYLON.Vector3.Distance(
         player.position,
@@ -251,12 +252,12 @@ function computeKickPower(gauge){
     const value = gauge.currentValue;
 
     if(value < 0.33)
-        return 15; // vert
+        return 20; // vert
 
     if(value < 0.66)
-        return 30; // orange
+        return 35; // orange
 
-    return 45; // rouge
+    return 50; // rouge
 }
 
 function hideKickGauge(gauge){
