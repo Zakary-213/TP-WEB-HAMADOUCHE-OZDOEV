@@ -84,8 +84,18 @@ class Team {
 
         this.activePlayer = newPlayer;
 
-        if(cameras && cameras.tpsCamera){
-            cameras.tpsCamera.lockedTarget = newPlayer;
+        if(cameras){
+
+            // TPS camera
+            if(cameras.tpsCamera){
+                cameras.tpsCamera.lockedTarget = newPlayer;
+            }
+
+            // FPV camera
+            if(cameras.fpvCamera){
+                cameras.fpvCamera.parent = newPlayer;
+            }
+
         }
 
     }
