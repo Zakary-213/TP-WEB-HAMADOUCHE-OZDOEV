@@ -49,7 +49,7 @@ const createScene = function () {
 
     // --- TOURNAMENT STATE ---
     // Change this variable to test different stages: "huitieme", "quart", "demi", "finale"
-    let tournamentStage = "huitieme";
+    let tournamentStage = "quart";
 
     // --- Structure ---
     
@@ -91,6 +91,10 @@ const createScene = function () {
     ball.isOutOfPlay = false;
     ball.outTimer = 0;
     ball.outFallDelay = 0;
+
+    ball.pushLockUntil = 0;
+    ball.ignorePlayerCollisionUntil = 0;
+    ball.lastKicker = null;
 
     // Panneaux de score 3D style stade
     createScoreboard3D(scene);
@@ -196,6 +200,9 @@ const createScene = function () {
 
     let lastDirection = new BABYLON.Vector3(1,0,0);
     let playerFacing = new BABYLON.Vector3(1,0,0);
+
+    let previousPlayerPosition = activePlayer.position.clone();
+    let playerMoveVelocity = new BABYLON.Vector3(0, 0, 0);
 
     let lastKickTime = 0;
     const kickCooldown = 300;
@@ -304,6 +311,10 @@ const createScene = function () {
         const movement = tackleController.updateAndMove(activePlayer, moveX, moveZ, speed);
         const controlledPlayer = movement.controlledPlayer;
         const directionOpt = movement.directionOpt;
+
+        const currentPlayerPosition = controlledPlayer.position.clone();
+        playerMoveVelocity = currentPlayerPosition.subtract(previousPlayerPosition);
+        previousPlayerPosition = currentPlayerPosition;
         
         if (directionOpt) {
             lastDirection = directionOpt;
@@ -311,7 +322,7 @@ const createScene = function () {
         }
 
         // COLLISION JOUEUR HUMAIN → BALLE
-        checkBallCollision(controlledPlayer, ball, playerFacing, myTeam);
+        checkBallCollision(controlledPlayer, ball, playerFacing, myTeam, playerMoveVelocity);
 
         // Si la balle sort du terrain, on lance l'animation de chute
         if (
@@ -414,6 +425,15 @@ const createScene = function () {
             allPlayers.forEach(p => {
                 if (!p || !p.position) return;
 
+                // Ignore temporairement le joueur qui vient de tirer / pousser
+                if (
+                    ball.lastKicker === p &&
+                    ball.ignorePlayerCollisionUntil &&
+                    performance.now() < ball.ignorePlayerCollisionUntil
+                ) {
+                    return;
+                }
+
                 const dx   = ball.position.x - p.position.x;
                 const dz   = ball.position.z - p.position.z;
                 const dist = Math.sqrt(dx * dx + dz * dz);
@@ -422,17 +442,16 @@ const createScene = function () {
                     const nx = dx / dist;
                     const nz = dz / dist;
 
-                    // Réflexion de la vitesse (réponse physique)
                     const dot = ball.velocity.x * nx + ball.velocity.z * nz;
-                    if (dot < 0) { // La balle va vers le joueur
+                    if (dot < 0) {
                         ball.velocity.x -= 2 * dot * nx;
                         ball.velocity.z -= 2 * dot * nz;
-                        // Légère perte d'énergie au contact
+
+                        // légère perte d'énergie
                         ball.velocity.x *= 0.75;
                         ball.velocity.z *= 0.75;
                     }
 
-                    // Repousser la balle hors de la zone de collision
                     const overlap = COMBINED_R - dist;
                     ball.position.x += nx * overlap;
                     ball.position.z += nz * overlap;

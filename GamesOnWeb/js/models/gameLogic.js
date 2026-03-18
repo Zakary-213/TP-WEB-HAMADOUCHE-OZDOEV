@@ -1,5 +1,10 @@
-function checkBallCollision(player, ball, playerFacing, team) {
+function checkBallCollision(player, ball, playerFacing, team, playerMoveVelocity = null) {
     if (ball.isOutAnimationPlaying || ball.isOutOfPlay) return;
+
+    if (ball.pushLockUntil && performance.now() < ball.pushLockUntil) {
+        ball.position.y = 0.75;
+        return;
+    }
 
     const distance = BABYLON.Vector3.Distance(player.position, ball.position);
 
@@ -8,10 +13,7 @@ function checkBallCollision(player, ball, playerFacing, team) {
     }
 
     if (distance < 2) {
-        // Pour l'équipe contrôlée par le joueur :
-        // seul le joueur actif peut pousser la balle.
-        // Pour l'IA :
-        // tous les joueurs peuvent pousser.
+        // Equipe joueur : seul le joueur actif pousse
         if (team && team.isPlayerControlled && player !== team.activePlayer) {
             return;
         }
@@ -21,8 +23,23 @@ function checkBallCollision(player, ball, playerFacing, team) {
         if (pushDir.lengthSquared() > 0) {
             pushDir.normalize();
 
-            const targetSpeed = 7;
-            const smoothing = 0.15;
+            // vitesse du joueur mesurée sur la frame
+            let moveBoost = 0;
+            if (playerMoveVelocity) {
+                const horizontalMove = new BABYLON.Vector3(
+                    playerMoveVelocity.x,
+                    0,
+                    playerMoveVelocity.z
+                );
+                moveBoost = horizontalMove.length() * 55;
+            }
+
+            // vitesse cible de la balle
+            const basePushSpeed = 7;
+            const targetSpeed = Math.min(basePushSpeed + moveBoost, 13);
+
+            // lissage plus réactif qu'avant, sans coller la balle
+            const smoothing = 0.35;
 
             const desiredVelocity = pushDir.scale(targetSpeed);
 
@@ -40,7 +57,6 @@ function checkBallCollision(player, ball, playerFacing, team) {
         }
     }
 
-    // Tant que la balle est en jeu, on la garde au sol
     ball.position.y = 0.75;
 }
 
@@ -49,6 +65,10 @@ function kick(scene, ball, player, lastDirection, force, team) {
     team.lastBallPlayer = player;
     team.lockAutoSwitch(1150);
     team.lockTeamPossession(1550);
+
+    ball.lastKicker = player;
+    ball.pushLockUntil = performance.now() + 380;
+    ball.ignorePlayerCollisionUntil = performance.now() + 380;
     
     const distance = BABYLON.Vector3.Distance(
         player.position,
@@ -120,12 +140,30 @@ function kick(scene, ball, player, lastDirection, force, team) {
         // On met un petit délai de 200ms
         setTimeout(() => {
             resetBallOutState(ball);
+
+            // Re-verrouille un tout petit peu la poussée au moment exact où la balle part
+            ball.pushLockUntil = performance.now() + 220;
+            ball.ignorePlayerCollisionUntil = performance.now() + 220;
+            ball.lastKicker = player;
+
+            // Petit décalage pour sortir la balle du corps du joueur
+            ball.position.x += dirNorm.x * 1.2;
+            ball.position.z += dirNorm.z * 1.2;
+
             ball.velocity = dirNorm.scale(speed);
         }, 200);
 
     } else {
         // Fallback si pas de modèle
         resetBallOutState(ball);
+
+        ball.pushLockUntil = performance.now() + 220;
+        ball.ignorePlayerCollisionUntil = performance.now() + 220;
+        ball.lastKicker = player;
+
+        ball.position.x += dirNorm.x * 1.2;
+        ball.position.z += dirNorm.z * 1.2;
+
         ball.velocity = dirNorm.scale(speed);
     }
 }
@@ -261,12 +299,12 @@ function computeKickPower(gauge){
     const value = gauge.currentValue;
 
     if(value < 0.33)
-        return 20; // vert
+        return 30; // vert
 
     if(value < 0.66)
-        return 35; // orange
+        return 45; // orange
 
-    return 50; // rouge
+    return 60; // rouge
 }
 
 function hideKickGauge(gauge){
