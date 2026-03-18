@@ -4,13 +4,13 @@ class AITeamHuitieme extends AITeam {
 
         // ─── Paramètres tactiques : "Bloc médian conservateur" ───────────────
         this.speed          = 0.1;
-        this.chaseSpeed     = 0.1;
-        this.reactionDelay  = 1.4;    // Prise de décision lente (> 1s)
+        this.chaseSpeed     = 0.085;  // Légèrement plus lent que le joueur
+        this.reactionDelay  = 2.0;    // Prise de décision lente (2s)
         this._reactionTimer = 0;
         this._frozenBall    = null;
         this._shootCooldown = 0;
         this.shootInterval  = 8.0;    // Tirs peu fréquents
-        this.pressRadius    = 16;     // Pressing faible : ne s'active qu'à 16u max
+        this.pressRadius    = 10;     // Pressing faible : ne s'active qu'à 10u max
         this.aiImplemented  = true;
     }
 
