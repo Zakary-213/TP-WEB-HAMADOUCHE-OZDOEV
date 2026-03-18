@@ -443,6 +443,30 @@ class Team {
         return dist < 8;
     }
 
+    teamHasBall(ball){
+
+        // Pendant un court instant après une passe / frappe,
+        // on considère encore que l'équipe a la possession
+        if(performance.now() < this.teamPossessionLockUntil){
+            return true;
+        }
+
+        for(const player of this.players){
+            if(!player || !player.position) continue;
+
+            const dist = BABYLON.Vector3.Distance(
+                player.position,
+                ball.position
+            );
+
+            if(dist < 3){
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     // Trouve le joueur de champ le plus proche de la balle
     getClosestFieldPlayerToBall(ball){
 
@@ -476,6 +500,9 @@ class Team {
 
         const now = performance.now();
 
+        // Auto switch uniquement quand MON équipe a la balle
+        if(!this.teamHasBall(ball)) return;
+
         if(now < this.switchLockUntil) return;
 
         if(now - this.lastSwitchTime < this.switchCooldown) return;
@@ -496,14 +523,12 @@ class Team {
             ball.position
         );
 
-        // on exige un vrai avantage
+        // On exige un vrai avantage
         if(distClosest + 1 < distActive){
 
             this.switchPlayerSmooth(closest, cameras, this.scene, 180);
             this.lastSwitchTime = now;
-
         }
-
     }
 
     lockAutoSwitch(duration = 600){

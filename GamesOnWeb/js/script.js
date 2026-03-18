@@ -49,7 +49,7 @@ const createScene = function () {
 
     // --- TOURNAMENT STATE ---
     // Change this variable to test different stages: "huitieme", "quart", "demi", "finale"
-    let tournamentStage = "quart";
+    let tournamentStage = "huitieme";
 
     // --- Structure ---
     
@@ -218,7 +218,7 @@ const createScene = function () {
             );
         }
 
-        //myTeam.autoSwitch(ball, cameras);
+        myTeam.autoSwitch(ball, cameras);
         activePlayer = myTeam.activePlayer;
 
         myTeam.players.forEach(player => {
