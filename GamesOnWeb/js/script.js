@@ -23,7 +23,7 @@ const createScene = function () {
 
     // --- TOURNAMENT STATE ---
     // Change this variable to test different stages: "huitieme", "quart", "demi", "finale"
-    let tournamentStage = "finale";
+    let tournamentStage = "huitieme";
 
     // --- Structure ---
     
@@ -152,6 +152,27 @@ const createScene = function () {
         activePlayer = myTeam.activePlayer;
 
         myTeam.update(ball);
+        // Met à jour l'IA uniquement si son comportement est implémenté pour ce stade
+        if (opponentTeam && opponentTeam.aiImplemented) opponentTeam.update(ball);
+
+        // COLLISIONS ENTRE JOUEURS (évite qu'ils se traversent)
+        const PLAYER_RADIUS = 1.2;
+        if (opponentTeam) {
+            // Joueurs de myTeam vs joueurs de opponentTeam
+            myTeam.players.forEach(pA => {
+                if (!pA) return;
+                opponentTeam.players.forEach(pB => {
+                    if (!pB) return;
+                    resolvePlayerCollision(pA, pB, PLAYER_RADIUS, PLAYER_RADIUS);
+                });
+            });
+            // Joueurs de la même équipe (myTeam)
+            for (let i = 0; i < myTeam.players.length; i++) {
+                for (let j = i + 1; j < myTeam.players.length; j++) {
+                    resolvePlayerCollision(myTeam.players[i], myTeam.players[j], PLAYER_RADIUS, PLAYER_RADIUS);
+                }
+            }
+        }
 
         const dt = scene.getEngine().getDeltaTime() / 1000;
 
@@ -171,8 +192,21 @@ const createScene = function () {
             playerFacing = lastDirection.clone();
         }
 
-        // COLLISION JOUEUR → BALLE
+        // COLLISION JOUEUR HUMAIN → BALLE
         checkBallCollision(activePlayer, ball, playerFacing, myTeam);
+
+        // COLLISION JOUEURS IA → BALLE (uniquement si le comportement IA est implémenté)
+        if (opponentTeam && opponentTeam.aiImplemented) {
+            opponentTeam.players.forEach(bot => {
+                if (!bot) return;
+
+                const toBall = ball.position.subtract(bot.position);
+                if (toBall.lengthSquared() === 0) return;
+
+                const dir = toBall.normalize();
+                checkBallCollision(bot, ball, dir, opponentTeam);
+            });
+        }
 
         // UPDATE JAUGE
         if(isCharging){
@@ -238,6 +272,44 @@ const createScene = function () {
                     hasBounced = true;
                 }
             }
+
+            // ─── DÉFLEXION BALLE ↔ JOUEURS ──────────────────────────────────────
+            // Empêche la balle de traverser un joueur quand elle est en mouvement
+            const BALL_RADIUS   = 0.55;
+            const PLAYER_COLR   = 1.1; // rayon de collision des joueurs
+            const COMBINED_R    = BALL_RADIUS + PLAYER_COLR;
+
+            // Construire la liste de tous les joueurs à vérifier
+            const allPlayers = [...myTeam.players];
+            if (opponentTeam) allPlayers.push(...opponentTeam.players);
+
+            allPlayers.forEach(p => {
+                if (!p || !p.position) return;
+
+                const dx   = ball.position.x - p.position.x;
+                const dz   = ball.position.z - p.position.z;
+                const dist = Math.sqrt(dx * dx + dz * dz);
+
+                if (dist < COMBINED_R && dist > 0.001) {
+                    const nx = dx / dist;
+                    const nz = dz / dist;
+
+                    // Réflexion de la vitesse (réponse physique)
+                    const dot = ball.velocity.x * nx + ball.velocity.z * nz;
+                    if (dot < 0) { // La balle va vers le joueur
+                        ball.velocity.x -= 2 * dot * nx;
+                        ball.velocity.z -= 2 * dot * nz;
+                        // Légère perte d'énergie au contact
+                        ball.velocity.x *= 0.75;
+                        ball.velocity.z *= 0.75;
+                    }
+
+                    // Repousser la balle hors de la zone de collision
+                    const overlap = COMBINED_R - dist;
+                    ball.position.x += nx * overlap;
+                    ball.position.z += nz * overlap;
+                }
+            });
         }
 
         // GOAL DETECTION (Vérifie si le ballon est dans un des triggers de but)

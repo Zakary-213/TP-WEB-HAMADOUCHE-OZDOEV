@@ -6,8 +6,9 @@ function checkBallCollision(player, ball, playerFacing, team) {
 
     if (distance < 2) {
 
-        // si ce joueur n'est pas le joueur actif on ne pousse pas la balle
-        if(player !== team.activePlayer){
+        // Pour l'équipe contrôlée par le joueur : seule la star active pousse la balle.
+        // Pour une équipe IA (isPlayerControlled = false), tous les joueurs peuvent pousser.
+        if (team && team.isPlayerControlled && player !== team.activePlayer) {
             return;
         }
 

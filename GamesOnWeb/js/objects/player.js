@@ -128,21 +128,25 @@ const createPlayer = (scene, position, teamColor, meshIndex = 0) => {
             if (this.position.z < minZ) this.position.z = minZ;
             if (this.position.z > maxZ) this.position.z = maxZ;
 
-            // Rotation du modèle vers la direction
+            // Rotation du modèle vers la direction de déplacement
             if (this.model) {
 
-                const angle = Math.atan2(normZ, normX);
-                const targetRotation = -angle;
+                // Calcul du yaw (rotation autour de Y) à partir de la direction XZ
+                // Pour un mesh dont l'avant est +Z : yaw = atan2(dirX, dirZ)
+                const yaw = Math.atan2(normX, normZ);
 
-                this.model.rotation.z = BABYLON.Scalar.Lerp(
-                    this.model.rotation.z,
-                    targetRotation,
+                this.model.rotation.y = BABYLON.Scalar.Lerp(
+                    this.model.rotation.y,
+                    yaw,
                     0.15
                 );
-                
-                // Appliquer le wobble (balancement gauche / droite)
-                // L'axe X du modèle est son "front/back" roll selon la setup
-                this.model.rotation.x = -Math.PI / 2 + Math.sin(this.wobbleTime) * 0.15; 
+
+                // Appliquer le wobble (balancement gauche / droite) sur l'axe X
+                // On garde le -PI/2 de base et on ajoute une petite oscillation
+                this.model.rotation.x = -Math.PI / 2 + Math.sin(this.wobbleTime) * 0.15;
+
+                // On s'assure que l'axe Z reste neutre pour éviter un "penché de côté"
+                this.model.rotation.z = 0;
             }
 
             return new BABYLON.Vector3(normX, 0, normZ);
