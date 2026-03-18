@@ -151,6 +151,14 @@ const createScene = function () {
         myTeam.autoSwitch(ball, cameras);
         activePlayer = myTeam.activePlayer;
 
+        myTeam.players.forEach(player => {
+            player.isInFpv = false;
+        });
+
+        if (scene.activeCamera === cameras.fpvCamera) {
+            activePlayer.isInFpv = true;
+        }
+
         myTeam.update(ball);
 
         const dt = scene.getEngine().getDeltaTime() / 1000;

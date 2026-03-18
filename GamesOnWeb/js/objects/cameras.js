@@ -25,6 +25,10 @@ const setupCameras = (scene, canvas, playerNode) => {
     // On lui donne un angle de vue naturel
     fpvCamera.fov = 1.2;
 
+    // Coupe l'affichage des parties du modèle trop proches de la caméra
+    // (évite de voir l'intérieur du maillot / épaules quand le joueur bouge)
+    fpvCamera.minZ = 1.2;
+
     // Activer les contrôles de la souris pour tourner la tête
     fpvCamera.attachControl(canvas, true);
     
@@ -46,10 +50,10 @@ const setupCameras = (scene, canvas, playerNode) => {
             if (isFpv) {
                 scene.activeCamera = fpvCamera;
                 // Optionnel : masquer le joueur quand on est dedans
-                if(playerNode.model) playerNode.model.setEnabled(false);
+                //if(playerNode.model) playerNode.model.setEnabled(false);
             } else {
                 scene.activeCamera = tpsCamera;
-                if(playerNode.model) playerNode.model.setEnabled(true);
+                //if(playerNode.model) playerNode.model.setEnabled(true);
             }
         }
     });

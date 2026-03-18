@@ -4,6 +4,7 @@ const createPlayer = (scene, position, teamColor, meshIndex = 0) => {
 
     wPlayer.animations = {};
     wPlayer.wobbleTime = 0;
+    wPlayer.isInFpv = false;
 
     BABYLON.SceneLoader.ImportMesh(
         "",
@@ -142,7 +143,8 @@ const createPlayer = (scene, position, teamColor, meshIndex = 0) => {
                 
                 // Appliquer le wobble (balancement gauche / droite)
                 // L'axe X du modèle est son "front/back" roll selon la setup
-                this.model.rotation.x = -Math.PI / 2 + Math.sin(this.wobbleTime) * 0.15; 
+                const wobbleAmount = this.isInFpv ? 0.04 : 0.15;
+                this.model.rotation.x = -Math.PI / 2 + Math.sin(this.wobbleTime) * wobbleAmount;
             }
 
             return new BABYLON.Vector3(normX, 0, normZ);
