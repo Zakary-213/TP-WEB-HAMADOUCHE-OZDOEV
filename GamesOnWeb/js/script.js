@@ -49,7 +49,7 @@ const createScene = function () {
 
     // --- TOURNAMENT STATE ---
     // Change this variable to test different stages: "huitieme", "quart", "demi", "finale"
-    let tournamentStage = "huitieme";
+    let tournamentStage = "demi";
 
     // --- Structure ---
     
@@ -256,7 +256,10 @@ const createScene = function () {
             return;
         }
 
-        if (scene.activeCamera === cameras.tpsCamera && activePlayer) {
+        if (
+            (scene.activeCamera === cameras.tpsCamera || scene.activeCamera === cameras.broadcastCamera) &&
+            activePlayer
+        ) {
             // suit doucement le joueur actif même hors switch
             cameras.cameraTargetNode.position = BABYLON.Vector3.Lerp(
                 cameras.cameraTargetNode.position,
@@ -339,8 +342,8 @@ const createScene = function () {
         let moveX = 0;
         let moveZ = 0;
 
-        // TPS : déplacement en axes fixes du terrain
-        if (scene.activeCamera === cameras.tpsCamera) {
+        // TPS + Broadcast : déplacement en axes fixes du terrain
+        if (scene.activeCamera === cameras.tpsCamera || scene.activeCamera === cameras.broadcastCamera) {
             if(input.forward) moveX += 1;
             if(input.backward) moveX -= 1;
             if(input.left) moveZ += 1;

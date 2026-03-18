@@ -16,6 +16,19 @@ const setupCameras = (scene, canvas, playerNode) => {
     tpsCamera.lockedTarget = cameraTargetNode;
     tpsCamera.inputs.clear(); // Désactive la souris pour cette caméra
 
+    // 1.b Caméra latérale type retransmission (style FIFA)
+    const broadcastCamera = new BABYLON.ArcRotateCamera(
+        "broadcastCamera",
+        -Math.PI / 2,
+        1.05,
+        90,
+        new BABYLON.Vector3(0, 0, 0),
+        scene
+    );
+    broadcastCamera.lockedTarget = cameraTargetNode;
+    broadcastCamera.inputs.clear();
+    broadcastCamera.fov = 0.72;
+
     // 2. Caméra à la première personne (First Person View)
     const fpvCamera = new BABYLON.UniversalCamera(
         "fpvCamera",
@@ -58,20 +71,20 @@ const setupCameras = (scene, canvas, playerNode) => {
         fpvCamera.rotation.y = Math.atan2(direction.x, direction.z);
     }
 
-    // Petit système pour écouter une touche et changer de caméra
-    let isFpv = false;
+    // Petit système pour écouter des touches et changer de caméra
+    let cameraMode = "tps"; // tps | fpv | broadcast
     window.addEventListener("keydown", (e) => {
         if (e.key === "c" || e.key === "C") {
-            isFpv = !isFpv;
+            cameraMode = cameraMode === "fpv" ? "tps" : "fpv";
+            scene.activeCamera = cameraMode === "fpv" ? fpvCamera : tpsCamera;
+        }
 
-            if (isFpv) {
-                scene.activeCamera = fpvCamera;
-            } else {
-                scene.activeCamera = tpsCamera;
-            }
+        if (e.key === "r" || e.key === "R") {
+            cameraMode = cameraMode === "broadcast" ? "tps" : "broadcast";
+            scene.activeCamera = cameraMode === "broadcast" ? broadcastCamera : tpsCamera;
         }
     });
 
-    return { tpsCamera, fpvCamera, cameraTargetNode, alignFpvToDirection };
+    return { tpsCamera, broadcastCamera, fpvCamera, cameraTargetNode, alignFpvToDirection };
 
 };
