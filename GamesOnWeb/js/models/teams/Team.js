@@ -363,14 +363,43 @@ class Team {
         this.activePlayer = newPlayer;
 
         if(cameras){
-
-            if(cameras.tpsCamera){
-                cameras.tpsCamera.lockedTarget = newPlayer;
-            }
+            // Très important :
+            // on NE change PAS lockedTarget ici
+            // la TPS doit rester lock sur cameraTargetNode
 
             if(cameras.fpvCamera){
                 cameras.fpvCamera.parent = newPlayer;
             }
+        }
+    }
+
+    switchPlayerSmooth(newPlayer, cameras, scene, duration = 180){
+
+        if(!newPlayer) return;
+        if(newPlayer === this.activePlayer) return;
+
+        const oldPlayer = this.activePlayer;
+
+        this.activePlayer = newPlayer;
+
+        if(cameras?.fpvCamera){
+            cameras.fpvCamera.parent = newPlayer;
+        }
+
+        // Si on est en TPS, on anime le pivot caméra
+        if(
+            scene &&
+            cameras &&
+            cameras.tpsCamera &&
+            cameras.cameraTargetNode &&
+            scene.activeCamera === cameras.tpsCamera &&
+            oldPlayer
+        ){
+            animateCameraSwitch(scene, cameras, oldPlayer, newPlayer, duration);
+        }
+        else if(cameras?.cameraTargetNode){
+            // sinon on replace direct le pivot
+            cameras.cameraTargetNode.position.copyFrom(newPlayer.position);
         }
     }
 
@@ -470,7 +499,7 @@ class Team {
         // on exige un vrai avantage
         if(distClosest + 1 < distActive){
 
-            this.switchPlayer(closest, cameras);
+            this.switchPlayerSmooth(closest, cameras, this.scene, 180);
             this.lastSwitchTime = now;
 
         }
@@ -485,18 +514,12 @@ class Team {
         this.teamPossessionLockUntil = performance.now() + duration;
     }
 
-    switchLeft(cameras){
-
-        const p = this.getPlayerOnSide("left");
-        this.switchPlayer(p, cameras);
-
+    switchLeft(){
+        return this.getPlayerOnSide("left");
     }
 
-    switchRight(cameras){
-
-        const p = this.getPlayerOnSide("right");
-        this.switchPlayer(p, cameras);
-
+    switchRight(){
+        return this.getPlayerOnSide("right");
     }
 
     getPlayerOnSide(direction){

@@ -4,6 +4,10 @@ const createPlayer = (scene, position, teamColor, meshIndex = 0) => {
 
     wPlayer.animations = {};
     wPlayer.wobbleTime = 0;
+    wPlayer.isInFpv = false;
+    // Direction actuelle du joueur
+    // Par défaut, l'équipe de gauche regarde vers +X
+    wPlayer.facingDirection = new BABYLON.Vector3(1, 0, 0);
 
     BABYLON.SceneLoader.ImportMesh(
         "",
@@ -108,6 +112,9 @@ const createPlayer = (scene, position, teamColor, meshIndex = 0) => {
             const normX = moveX / length;
             const normZ = moveZ / length;
 
+            // Mémorise la dernière direction du joueur
+            this.facingDirection.copyFromFloats(normX, 0, normZ);
+
             this.position.x += normX * speed;
             this.position.z += normZ * speed;
 
@@ -140,13 +147,11 @@ const createPlayer = (scene, position, teamColor, meshIndex = 0) => {
                     yaw,
                     0.15
                 );
-
-                // Appliquer le wobble (balancement gauche / droite) sur l'axe X
-                // On garde le -PI/2 de base et on ajoute une petite oscillation
-                this.model.rotation.x = -Math.PI / 2 + Math.sin(this.wobbleTime) * 0.15;
-
-                // On s'assure que l'axe Z reste neutre pour éviter un "penché de côté"
-                this.model.rotation.z = 0;
+                
+                // Appliquer le wobble (balancement gauche / droite)
+                // L'axe X du modèle est son "front/back" roll selon la setup
+                const wobbleAmount = this.isInFpv ? 0.04 : 0.15;
+                this.model.rotation.x = -Math.PI / 2 + Math.sin(this.wobbleTime) * wobbleAmount;
             }
 
             return new BABYLON.Vector3(normX, 0, normZ);

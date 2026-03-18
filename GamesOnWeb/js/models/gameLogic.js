@@ -1,10 +1,33 @@
 function checkBallCollision(player, ball, playerFacing, team) {
-    const distance = BABYLON.Vector3.Distance(
-        player.position,
-        ball.position
-    );
+    if (ball.isOutAnimationPlaying || ball.isOutOfPlay) return;
+
+    const distance = BABYLON.Vector3.Distance(player.position, ball.position);
+
+    if (!ball.velocity) {
+        ball.velocity = new BABYLON.Vector3(0, 0, 0);
+    }
 
     if (distance < 2) {
+        if (player !== team.activePlayer) return;
+
+        const pushDir = new BABYLON.Vector3(playerFacing.x, 0, playerFacing.z);
+
+        if (pushDir.lengthSquared() > 0) {
+            pushDir.normalize();
+
+            const targetSpeed = 7; // vitesse voulue de la balle pendant la poussée
+            const smoothing = 0.15; // plus petit = plus doux
+
+            const desiredVelocity = pushDir.scale(targetSpeed);
+
+            ball.velocity.x = BABYLON.Scalar.Lerp(ball.velocity.x, desiredVelocity.x, smoothing);
+            ball.velocity.z = BABYLON.Scalar.Lerp(ball.velocity.z, desiredVelocity.z, smoothing);
+        }
+    }
+
+    if (!ball.isOutAnimationPlaying) {
+        ball.position.y = 0.75;
+    }
 
         // Pour l'équipe contrôlée par le joueur : seule la star active pousse la balle.
         // Pour une équipe IA (isPlayerControlled = false), tous les joueurs peuvent pousser.
@@ -113,11 +136,13 @@ function kick(scene, ball, player, lastDirection, force, team) {
         // La balle part au moment de la frappe (vers la frame 20-25),
         // On met un petit délai de 200ms
         setTimeout(() => {
+            resetBallOutState(ball);
             ball.velocity = dirNorm.scale(speed);
         }, 200);
 
     } else {
         // Fallback si pas de modèle
+        resetBallOutState(ball);
         ball.velocity = dirNorm.scale(speed);
     }
 }
@@ -267,4 +292,139 @@ function hideKickGauge(gauge){
     gauge.cursor.isVisible = false;
 
     gauge.started = false;
+}
+
+function isBallOutOfBounds(ball) {
+    let minX = -49;
+    let maxX = 49;
+    const minZ = -29;
+    const maxZ = 29;
+
+    // Derrière les buts, on laisse un peu plus de profondeur
+    if (ball.position.z > -7.5 && ball.position.z < 7.5) {
+        minX = -54;
+        maxX = 54;
+    }
+
+    return (
+        ball.position.x < minX ||
+        ball.position.x > maxX ||
+        ball.position.z < minZ ||
+        ball.position.z > maxZ
+    );
+}
+
+function startBallOutAnimation(ball) {
+    if (ball.isOutAnimationPlaying || ball.isOutOfPlay) return;
+
+    ball.isOutAnimationPlaying = true;
+    ball.outAnimationFinished = false;
+    ball.outTimer = 0;
+    ball.outFallDelay = 0.18; // petit délai avant de commencer à tomber
+
+    if (!ball.velocity) {
+        ball.velocity = new BABYLON.Vector3(0, 0, 0);
+    }
+
+    let outDir = new BABYLON.Vector3(ball.velocity.x, 0, ball.velocity.z);
+
+    // Si la balle sort presque sans vitesse (cas poussée),
+    // on déduit la direction selon le bord franchi
+    if (outDir.lengthSquared() < 0.0001) {
+        outDir = BABYLON.Vector3.Zero();
+
+        let minX = -49;
+        let maxX = 49;
+        const minZ = -29;
+        const maxZ = 29;
+
+        if (ball.position.z > -7.5 && ball.position.z < 7.5) {
+            minX = -54;
+            maxX = 54;
+        }
+
+        if (ball.position.x < minX) outDir.x = -1;
+        else if (ball.position.x > maxX) outDir.x = 1;
+
+        if (ball.position.z < minZ) outDir.z = -1;
+        else if (ball.position.z > maxZ) outDir.z = 1;
+    }
+
+    if (outDir.lengthSquared() > 0) {
+        outDir.normalize();
+    }
+
+    // minimum de mouvement horizontal pour voir la sortie
+    const horizontalSpeed = Math.max(ball.velocity.length() * 0.65, 4.2);
+
+    ball.outVelocity = new BABYLON.Vector3(
+        outDir.x * horizontalSpeed,
+        0,
+        outDir.z * horizontalSpeed
+    );
+
+    // On coupe la physique normale
+    ball.velocity.set(0, 0, 0);
+}
+
+function updateBallOutAnimation(ball, dt) {
+    if (!ball.isOutAnimationPlaying) return;
+
+    ball.outTimer += dt;
+
+    // Glissement horizontal toujours présent
+    ball.outVelocity.x *= 0.975;
+    ball.outVelocity.z *= 0.975;
+
+    // Pendant un très court instant, la balle glisse sans tomber
+    if (ball.outTimer >= ball.outFallDelay) {
+        ball.outVelocity.y -= 14 * dt;
+    }
+
+    ball.position.x += ball.outVelocity.x * dt;
+    ball.position.y += ball.outVelocity.y * dt;
+    ball.position.z += ball.outVelocity.z * dt;
+
+    // on laisse un peu plus de temps visible
+    const minVisibleTime = 0.60;
+
+    if (ball.outTimer >= minVisibleTime && ball.position.y < -8) {
+        ball.isOutAnimationPlaying = false;
+        ball.outAnimationFinished = true;
+        ball.isOutOfPlay = true;
+
+        ball.outVelocity.set(0, 0, 0);
+
+        if (ball.velocity) {
+            ball.velocity.set(0, 0, 0);
+        }
+
+        setBallVisibility(ball, false);
+    }
+}
+
+function setBallVisibility(ball, visible) {
+    if (!ball) return;
+
+    if ("isVisible" in ball) {
+        ball.isVisible = visible;
+    }
+
+    if (ball.getChildMeshes) {
+        const childMeshes = ball.getChildMeshes();
+        childMeshes.forEach(mesh => {
+            mesh.isVisible = visible;
+        });
+    }
+}
+
+function resetBallOutState(ball) {
+    ball.isOutAnimationPlaying = false;
+    ball.outAnimationFinished = false;
+    ball.isOutOfPlay = false;
+    ball.outTimer = 0;
+    ball.outFallDelay = 0;
+    ball.outVelocity = new BABYLON.Vector3(0, 0, 0);
+
+    setBallVisibility(ball, true);
 }

@@ -1,6 +1,32 @@
 const canvas = document.getElementById("renderCanvas");
 const engine = new BABYLON.Engine(canvas, true);
 
+function animateCameraSwitch(scene, cameras, fromPlayer, toPlayer, duration = 180) {
+    if (!fromPlayer || !toPlayer || !cameras?.cameraTargetNode) return;
+
+    const start = cameras.cameraTargetNode.position.clone();
+    const end = toPlayer.position.clone();
+
+    const startTime = performance.now();
+
+    const observer = scene.onBeforeRenderObservable.add(() => {
+        const elapsed = performance.now() - startTime;
+        let t = elapsed / duration;
+
+        if (t >= 1) t = 1;
+
+        // easing smooth
+        const eased = t * t * (3 - 2 * t);
+
+        cameras.cameraTargetNode.position = BABYLON.Vector3.Lerp(start, end, eased);
+
+        if (t === 1) {
+            scene.onBeforeRenderObservable.remove(observer);
+            cameras.cameraTargetNode.position.copyFrom(toPlayer.position);
+        }
+    });
+}
+
 const createScene = function () {
 
     // VARIABLES 
@@ -59,6 +85,13 @@ const createScene = function () {
     ball.checkCollisions = true;
     ball.ellipsoid = new BABYLON.Vector3(0.55, 0.55, 0.55);
 
+    ball.isOutAnimationPlaying = false;
+    ball.outAnimationFinished = false;
+    ball.outVelocity = new BABYLON.Vector3(0, 0, 0);
+    ball.isOutOfPlay = false;
+    ball.outTimer = 0;
+    ball.outFallDelay = 0;
+
     // Panneaux de score 3D style stade
     createScoreboard3D(scene);
 
@@ -108,13 +141,23 @@ const createScene = function () {
         }
 
         if(e.key==="a" || e.key==="A"){
-            myTeam.switchLeft(cameras);
+            const p = myTeam.getPlayerOnSide("left");
+            myTeam.switchPlayerSmooth(p, cameras, scene, 180);
             activePlayer = myTeam.activePlayer;
         }
 
         if(e.key==="e" || e.key==="E"){
-            myTeam.switchRight(cameras);
+            const p = myTeam.getPlayerOnSide("right");
+            myTeam.switchPlayerSmooth(p, cameras, scene, 180);
             activePlayer = myTeam.activePlayer;
+        }
+
+        if(e.key==="c" || e.key==="C"){
+            // Laisse cameras.js faire le switch TPS / FPV,
+            // puis aligne une seule fois la caméra sur la direction du joueur
+            setTimeout(() => {
+                cameras.alignFpvToDirection(activePlayer.facingDirection);
+            }, 0);
         }
         
     });
@@ -148,8 +191,25 @@ const createScene = function () {
 
     scene.onBeforeRenderObservable.add(()=>{
 
+        if (scene.activeCamera === cameras.tpsCamera && activePlayer) {
+            // suit doucement le joueur actif même hors switch
+            cameras.cameraTargetNode.position = BABYLON.Vector3.Lerp(
+                cameras.cameraTargetNode.position,
+                activePlayer.position,
+                0.12
+            );
+        }
+
         myTeam.autoSwitch(ball, cameras);
         activePlayer = myTeam.activePlayer;
+
+        myTeam.players.forEach(player => {
+            player.isInFpv = false;
+        });
+
+        if (scene.activeCamera === cameras.fpvCamera) {
+            activePlayer.isInFpv = true;
+        }
 
         myTeam.update(ball);
         // Met à jour l'IA uniquement si son comportement est implémenté pour ce stade
@@ -179,10 +239,38 @@ const createScene = function () {
         let moveX = 0;
         let moveZ = 0;
 
-        if(input.forward) moveX+=1;
-        if(input.backward) moveX-=1;
-        if(input.left) moveZ+=1;
-        if(input.right) moveZ-=1;
+        // TPS : déplacement en axes fixes du terrain
+        if (scene.activeCamera === cameras.tpsCamera) {
+            if(input.forward) moveX += 1;
+            if(input.backward) moveX -= 1;
+            if(input.left) moveZ += 1;
+            if(input.right) moveZ -= 1;
+        }
+        // FPV : déplacement relatif à la direction de la caméra
+        else if (scene.activeCamera === cameras.fpvCamera) {
+
+            // Direction "avant" de la caméra projetée sur le sol
+            const forward = cameras.fpvCamera.getForwardRay().direction.clone();
+            forward.y = 0;
+            forward.normalize();
+
+            // Direction "droite" de la caméra projetée sur le sol
+            const right = new BABYLON.Vector3(forward.z, 0, -forward.x);
+
+            let moveVector = BABYLON.Vector3.Zero();
+
+            if(input.forward) moveVector.addInPlace(forward);       // Z = avance
+            if(input.backward) moveVector.subtractInPlace(forward); // S = recule
+            if(input.right) moveVector.addInPlace(right);           // D = droite
+            if(input.left) moveVector.subtractInPlace(right);       // Q = gauche
+
+            // On convertit le vecteur final en moveX / moveZ pour réutiliser activePlayer.move()
+            if (moveVector.lengthSquared() > 0) {
+                moveVector.normalize();
+                moveX = moveVector.x;
+                moveZ = moveVector.z;
+            }
+        }
 
         // Appel de la méthode encapsulée dans player.js
         const directionOpt = activePlayer.move(moveX, moveZ, speed);
@@ -194,6 +282,17 @@ const createScene = function () {
 
         // COLLISION JOUEUR HUMAIN → BALLE
         checkBallCollision(activePlayer, ball, playerFacing, myTeam);
+
+        // Si la balle sort du terrain, on lance l'animation de chute
+        if (
+            ball &&
+            ball.position &&
+            !ball.isOutAnimationPlaying &&
+            !ball.isOutOfPlay &&
+            isBallOutOfBounds(ball)
+        ) {
+            startBallOutAnimation(ball);
+        }
 
         // COLLISION JOUEURS IA → BALLE (uniquement si le comportement IA est implémenté)
         if (opponentTeam && opponentTeam.aiImplemented) {
@@ -230,46 +329,45 @@ const createScene = function () {
             ball.velocity = new BABYLON.Vector3(0, 0, 0);
         }
 
-        // Mise à jour de la position de la balle en fonction de sa vitesse
-        if (ball.velocity.lengthSquared() > 0.000001) {
-            ball.position.x += ball.velocity.x * dt;
-            ball.position.z += ball.velocity.z * dt;
+        if (ball.isOutAnimationPlaying) {
+            updateBallOutAnimation(ball, dt);
+        } else if (!ball.isOutOfPlay) {
+            // Mise à jour de la position de la balle en fonction de sa vitesse
+            if (ball.velocity.lengthSquared() > 0.000001) {
+                ball.position.x += ball.velocity.x * dt;
+                ball.position.z += ball.velocity.z * dt;
 
-            // Frottement au sol pour que la balle ralentisse
-            const friction = 0.985;
-            ball.velocity.scaleInPlace(friction);
+                const friction = 0.985;
+                ball.velocity.scaleInPlace(friction);
 
-            if (ball.velocity.lengthSquared() < 0.0001) {
-                ball.velocity.set(0, 0, 0);
-            }
+                if (ball.velocity.lengthSquared() < 0.0001) {
+                    ball.velocity.set(0, 0, 0);
+                }
 
-            // Rebond sur les poteaux
-            const ballRadius = 0.55; // cohérent avec ball.js (diamètre 1.1)
-            const postRadius = 0.2;  // moitié de postThickness (0.4)
-            const collisionDistance = ballRadius + postRadius;
+                const ballRadius = 0.55;
+                const postRadius = 0.2;
+                const collisionDistance = ballRadius + postRadius;
 
-            let hasBounced = false;
+                let hasBounced = false;
 
-            for (let i = 0; i < goalPosts.length; i++) {
-                const post = goalPosts[i];
-                if (!post || hasBounced) continue;
+                for (let i = 0; i < goalPosts.length; i++) {
+                    const post = goalPosts[i];
+                    if (!post || hasBounced) continue;
 
-                const postPos = post.getAbsolutePosition();
-                const diff = ball.position.subtract(postPos);
-                const horizontal = new BABYLON.Vector3(diff.x, 0, diff.z);
-                const dist = horizontal.length();
+                    const postPos = post.getAbsolutePosition();
+                    const diff = ball.position.subtract(postPos);
+                    const horizontal = new BABYLON.Vector3(diff.x, 0, diff.z);
+                    const dist = horizontal.length();
 
-                if (dist > 0 && dist < collisionDistance) {
-                    const normal = horizontal.normalize();
+                    if (dist > 0 && dist < collisionDistance) {
+                        const normal = horizontal.normalize();
 
-                    // Réflexion de la vitesse par rapport à la normale du poteau
-                    const reflected = BABYLON.Vector3.Reflect(ball.velocity, normal);
-                    // On atténue un peu l'énergie du rebond
-                    ball.velocity = reflected.scale(0.7);
+                        const reflected = BABYLON.Vector3.Reflect(ball.velocity, normal);
+                        ball.velocity = reflected.scale(0.7);
 
-                    // On repousse la balle juste à l'extérieur du rayon de collision
-                    ball.position = postPos.add(normal.scale(collisionDistance));
-                    hasBounced = true;
+                        ball.position = postPos.add(normal.scale(collisionDistance));
+                        hasBounced = true;
+                    }
                 }
             }
 
@@ -312,9 +410,11 @@ const createScene = function () {
             });
         }
 
+        
+
         // GOAL DETECTION (Vérifie si le ballon est dans un des triggers de but)
         // On vérifie d'abord que le ballon a une vraie position
-        if (ball && ball.position) {
+        if (ball && ball.position && !ball.isOutAnimationPlaying && !ball.isOutOfPlay) {
             
             // Pour des TransformNodes complexes, on peut utiliser des Sphères virtuelles ou vérifier le Mesh enfant
             // Ici, le ballon gère sa propre physique donc sa position est suffisante
@@ -368,6 +468,8 @@ const createScene = function () {
     scene.onBeforeRenderObservable.add(() => {
         window.gameScoreboard.updateTimer(scene.getEngine().getDeltaTime() / 1000);
     });
+
+    
 
 
     return scene;
