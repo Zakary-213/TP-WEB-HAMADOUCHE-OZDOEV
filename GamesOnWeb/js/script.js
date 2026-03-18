@@ -116,6 +116,10 @@ const createScene = function () {
         default: opponentTeam = new AITeamHuitieme(scene, "Adversaire", new BABYLON.Color3(0, 0, 1)); break;
     }
     opponentTeam.createTeamFormation(-1); // -1 pour le côté droit
+    myTeam.opponents = opponentTeam.players;
+    opponentTeam.opponents = myTeam.players;
+
+    const tackleController = new TackleController();
 
     // Cameras Setup (TPS et FPS gérées dans cameras.js)
     const cameras = setupCameras(scene, canvas, activePlayer);
@@ -159,6 +163,13 @@ const createScene = function () {
                 cameras.alignFpvToDirection(activePlayer.facingDirection);
             }, 0);
         }
+
+        tackleController.handleKeyDown(e, {
+            activePlayer,
+            playerFacing,
+            ball,
+            opponentTeam
+        });
         
     });
 
@@ -215,24 +226,41 @@ const createScene = function () {
         // Met à jour l'IA uniquement si son comportement est implémenté pour ce stade
         if (opponentTeam && opponentTeam.aiImplemented) opponentTeam.update(ball);
 
+        // Applique l'etat "au sol" des joueurs tacles (stun temporaire)
+        tackleController.updateStunnedPlayers(myTeam);
+        tackleController.updateStunnedPlayers(opponentTeam);
+
         // COLLISIONS ENTRE JOUEURS (évite qu'ils se traversent)
         const PLAYER_RADIUS = 1.2;
+        tackleController.beginFrame();
+
         if (opponentTeam) {
             // Joueurs de myTeam vs joueurs de opponentTeam
             myTeam.players.forEach(pA => {
                 if (!pA) return;
                 opponentTeam.players.forEach(pB => {
                     if (!pB) return;
+
+                    if (tackleController.shouldIgnoreCollision(pA, pB)) {
+                        tackleController.registerPotentialHit(pA, pB);
+                        return;
+                    }
+
                     resolvePlayerCollision(pA, pB, PLAYER_RADIUS, PLAYER_RADIUS);
                 });
             });
             // Joueurs de la même équipe (myTeam)
             for (let i = 0; i < myTeam.players.length; i++) {
                 for (let j = i + 1; j < myTeam.players.length; j++) {
+                    if (tackleController.shouldIgnoreCollision(myTeam.players[i], myTeam.players[j])) {
+                        continue;
+                    }
                     resolvePlayerCollision(myTeam.players[i], myTeam.players[j], PLAYER_RADIUS, PLAYER_RADIUS);
                 }
             }
         }
+
+        tackleController.applyBallSteal(ball);
 
         const dt = scene.getEngine().getDeltaTime() / 1000;
 
@@ -272,8 +300,10 @@ const createScene = function () {
             }
         }
 
-        // Appel de la méthode encapsulée dans player.js
-        const directionOpt = activePlayer.move(moveX, moveZ, speed);
+        // Déplacement normal / tacle glissé
+        const movement = tackleController.updateAndMove(activePlayer, moveX, moveZ, speed);
+        const controlledPlayer = movement.controlledPlayer;
+        const directionOpt = movement.directionOpt;
         
         if (directionOpt) {
             lastDirection = directionOpt;
@@ -281,7 +311,7 @@ const createScene = function () {
         }
 
         // COLLISION JOUEUR HUMAIN → BALLE
-        checkBallCollision(activePlayer, ball, playerFacing, myTeam);
+        checkBallCollision(controlledPlayer, ball, playerFacing, myTeam);
 
         // Si la balle sort du terrain, on lance l'animation de chute
         if (
@@ -314,7 +344,7 @@ const createScene = function () {
 
             updateKickGauge(
                 kickGauge,
-                activePlayer,
+                controlledPlayer,
                 lastDirection,
                 time
             );
