@@ -1,6 +1,13 @@
 function checkBallCollision(player, ball, playerFacing, team, playerMoveVelocity = null) {
     if (ball.isOutAnimationPlaying || ball.isOutOfPlay) return;
 
+    // Pendant une remise en jeu, la balle est verrouillée :
+    // personne ne peut la pousser / récupérer tant que la passe n'est pas partie
+    if (ball.restartLocked) {
+        ball.position.y = 0.75;
+        return;
+    }
+
     if (ball.pushLockUntil && performance.now() < ball.pushLockUntil) {
         ball.position.y = 0.75;
         return;
@@ -17,6 +24,10 @@ function checkBallCollision(player, ball, playerFacing, team, playerMoveVelocity
         if (team && team.isPlayerControlled && player !== team.activePlayer) {
             return;
         }
+
+        // mémorise le dernier joueur / la dernière équipe qui a touché la balle
+        ball.lastKicker = player;
+        ball.lastTouchTeam = team;
 
         const pushDir = new BABYLON.Vector3(playerFacing.x, 0, playerFacing.z);
 
@@ -67,6 +78,7 @@ function kick(scene, ball, player, lastDirection, force, team) {
     team.lockTeamPossession(1550);
 
     ball.lastKicker = player;
+    ball.lastTouchTeam = team;
     ball.pushLockUntil = performance.now() + 380;
     ball.ignorePlayerCollisionUntil = performance.now() + 380;
     
@@ -145,6 +157,7 @@ function kick(scene, ball, player, lastDirection, force, team) {
             ball.pushLockUntil = performance.now() + 220;
             ball.ignorePlayerCollisionUntil = performance.now() + 220;
             ball.lastKicker = player;
+            ball.lastTouchTeam = team;
 
             // Petit décalage pour sortir la balle du corps du joueur
             ball.position.x += dirNorm.x * 1.2;
@@ -160,6 +173,7 @@ function kick(scene, ball, player, lastDirection, force, team) {
         ball.pushLockUntil = performance.now() + 220;
         ball.ignorePlayerCollisionUntil = performance.now() + 220;
         ball.lastKicker = player;
+        ball.lastTouchTeam = team;
 
         ball.position.x += dirNorm.x * 1.2;
         ball.position.z += dirNorm.z * 1.2;

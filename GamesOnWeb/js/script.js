@@ -95,6 +95,13 @@ const createScene = function () {
     ball.pushLockUntil = 0;
     ball.ignorePlayerCollisionUntil = 0;
     ball.lastKicker = null;
+    ball.lastTouchTeam = null;
+
+    ball.outDecision = null;
+    ball.outExitPosition = null;
+
+    ball.restartLocked = false;
+    ball.restartTaker = null;
 
     // Panneaux de score 3D style stade
     createScoreboard3D(scene);
@@ -143,9 +150,9 @@ const createScene = function () {
         if(e.key==="q"||e.key==="Q") input.left=true;
         if(e.key==="d"||e.key==="D") input.right=true;
 
-        if(e.code === "Space" && !isCharging){
+        if (e.code === "Space" && !isCharging) {
             chargeStart = Date.now();
-            isCharging = true; 
+            isCharging = true;
         }
 
         if(e.key==="a" || e.key==="A"){
@@ -184,16 +191,19 @@ const createScene = function () {
         if(e.key==="q"||e.key==="Q") input.left=false;
         if(e.key==="d"||e.key==="D") input.right=false;
 
-        if(e.code === "Space" && isCharging){
-
+       if (e.code === "Space" && isCharging) {
             const force = computeKickPower(kickGauge);
 
             hideKickGauge(kickGauge);
-            kick(scene, ball, activePlayer, lastDirection, force, myTeam);
+
+            if (isRestartWaitingKick()) {
+                takeRestartKick(ball, lastDirection, force);
+            } else {
+                kick(scene, ball, activePlayer, lastDirection, force, myTeam);
+            }
 
             isCharging = false;
         }
-
     });
 
     const speed = 0.1;
@@ -208,7 +218,6 @@ const createScene = function () {
     const kickCooldown = 300;
 
     scene.onBeforeRenderObservable.add(()=>{
-
         if (scene.activeCamera === cameras.tpsCamera && activePlayer) {
             // suit doucement le joueur actif même hors switch
             cameras.cameraTargetNode.position = BABYLON.Vector3.Lerp(
@@ -218,8 +227,26 @@ const createScene = function () {
             );
         }
 
-        myTeam.autoSwitch(ball, cameras);
+        if (!isRestartWaitingKick()) {
+            myTeam.autoSwitch(ball, cameras);
+        }
         activePlayer = myTeam.activePlayer;
+
+        if (isRestartWaitingKick() && restartState.position) {
+            ball.position.x = restartState.position.x;
+            ball.position.y = 0.75;
+            ball.position.z = restartState.position.z;
+
+            if (ball.velocity) {
+                ball.velocity.set(0, 0, 0);
+            }
+        }
+
+        if (isRestartWaitingKick()) {
+            enforceRestartClearance(ball, myTeam, opponentTeam);
+        }
+
+        updateAIRestart(ball);
 
         myTeam.players.forEach(player => {
             player.isInFpv = false;
@@ -308,7 +335,37 @@ const createScene = function () {
         }
 
         // Déplacement normal / tacle glissé
-        const movement = tackleController.updateAndMove(activePlayer, moveX, moveZ, speed);
+        let movement;
+        const restartTakerLocked = isRestartTaker(activePlayer);
+
+        if (restartTakerLocked) {
+            // Pendant une remise : le tireur ne bouge pas,
+            // mais on peut quand même changer la direction visée
+            movement = tackleController.updateAndMove(activePlayer, 0, 0, speed);
+
+            let aimX = 0;
+            let aimZ = 0;
+
+            // On garde la même logique d'axes que ton mode TPS
+            if (input.forward) aimX += 1;
+            if (input.backward) aimX -= 1;
+            if (input.left) aimZ += 1;
+            if (input.right) aimZ -= 1;
+
+            if (aimX !== 0 || aimZ !== 0) {
+                const aim = new BABYLON.Vector3(aimX, 0, aimZ);
+                aim.normalize();
+
+                lastDirection = sanitizeRestartDirection(aim, restartState);
+                playerFacing = lastDirection.clone();
+            } else {
+                lastDirection = getDefaultRestartDirection(restartState);
+                playerFacing = lastDirection.clone();
+            }
+        } else {
+            movement = tackleController.updateAndMove(activePlayer, moveX, moveZ, speed);
+        }
+
         const controlledPlayer = movement.controlledPlayer;
         const directionOpt = movement.directionOpt;
 
@@ -316,7 +373,7 @@ const createScene = function () {
         playerMoveVelocity = currentPlayerPosition.subtract(previousPlayerPosition);
         previousPlayerPosition = currentPlayerPosition;
         
-        if (directionOpt) {
+        if (!restartTakerLocked && directionOpt) {
             lastDirection = directionOpt;
             playerFacing = lastDirection.clone();
         }
@@ -332,6 +389,9 @@ const createScene = function () {
             !ball.isOutOfPlay &&
             isBallOutOfBounds(ball)
         ) {
+            ball.outExitPosition = ball.position.clone();
+            ball.outDecision = getRestartDecision(ball, myTeam, opponentTeam);
+
             startBallOutAnimation(ball);
         }
 
@@ -349,8 +409,7 @@ const createScene = function () {
         }
 
         // UPDATE JAUGE
-        if(isCharging){
-
+        if (isCharging) {
             const time = performance.now() / 1000;
 
             updateKickGauge(
@@ -359,9 +418,7 @@ const createScene = function () {
                 lastDirection,
                 time
             );
-
-        }
-        else{
+        } else {
             hideKickGauge(kickGauge);
         }
 
@@ -414,49 +471,58 @@ const createScene = function () {
 
             // ─── DÉFLEXION BALLE ↔ JOUEURS ──────────────────────────────────────
             // Empêche la balle de traverser un joueur quand elle est en mouvement
-            const BALL_RADIUS   = 0.55;
-            const PLAYER_COLR   = 1.1; // rayon de collision des joueurs
-            const COMBINED_R    = BALL_RADIUS + PLAYER_COLR;
+            if (!ball.restartLocked) {
+                const BALL_RADIUS   = 0.55;
+                const PLAYER_COLR   = 1.1; // rayon de collision des joueurs
+                const COMBINED_R    = BALL_RADIUS + PLAYER_COLR;
 
-            // Construire la liste de tous les joueurs à vérifier
-            const allPlayers = [...myTeam.players];
-            if (opponentTeam) allPlayers.push(...opponentTeam.players);
+                // Construire la liste de tous les joueurs à vérifier
+                const allPlayers = [...myTeam.players];
+                if (opponentTeam) allPlayers.push(...opponentTeam.players);
 
-            allPlayers.forEach(p => {
-                if (!p || !p.position) return;
+                allPlayers.forEach(p => {
+                    if (!p || !p.position) return;
 
-                // Ignore temporairement le joueur qui vient de tirer / pousser
-                if (
-                    ball.lastKicker === p &&
-                    ball.ignorePlayerCollisionUntil &&
-                    performance.now() < ball.ignorePlayerCollisionUntil
-                ) {
-                    return;
-                }
-
-                const dx   = ball.position.x - p.position.x;
-                const dz   = ball.position.z - p.position.z;
-                const dist = Math.sqrt(dx * dx + dz * dz);
-
-                if (dist < COMBINED_R && dist > 0.001) {
-                    const nx = dx / dist;
-                    const nz = dz / dist;
-
-                    const dot = ball.velocity.x * nx + ball.velocity.z * nz;
-                    if (dot < 0) {
-                        ball.velocity.x -= 2 * dot * nx;
-                        ball.velocity.z -= 2 * dot * nz;
-
-                        // légère perte d'énergie
-                        ball.velocity.x *= 0.75;
-                        ball.velocity.z *= 0.75;
+                    // Ignore temporairement le joueur qui vient de tirer / pousser
+                    if (
+                        ball.lastKicker === p &&
+                        ball.ignorePlayerCollisionUntil &&
+                        performance.now() < ball.ignorePlayerCollisionUntil
+                    ) {
+                        return;
                     }
 
-                    const overlap = COMBINED_R - dist;
-                    ball.position.x += nx * overlap;
-                    ball.position.z += nz * overlap;
-                }
-            });
+                    const dx   = ball.position.x - p.position.x;
+                    const dz   = ball.position.z - p.position.z;
+                    const dist = Math.sqrt(dx * dx + dz * dz);
+
+                    if (dist < COMBINED_R && dist > 0.001) {
+                        const nx = dx / dist;
+                        const nz = dz / dist;
+
+                        const dot = ball.velocity.x * nx + ball.velocity.z * nz;
+                        if (dot < 0) {
+                            ball.velocity.x -= 2 * dot * nx;
+                            ball.velocity.z -= 2 * dot * nz;
+
+                            // légère perte d'énergie
+                            ball.velocity.x *= 0.75;
+                            ball.velocity.z *= 0.75;
+                        }
+
+                        const overlap = COMBINED_R - dist;
+                        ball.position.x += nx * overlap;
+                        ball.position.z += nz * overlap;
+                    }
+                });
+            }
+
+        }
+
+        if (ball.outAnimationFinished && ball.outDecision) {
+            startRestart(ball, ball.outDecision, myTeam, opponentTeam, cameras);
+            ball.outAnimationFinished = false;
+            ball.outDecision = null;
         }
 
         
