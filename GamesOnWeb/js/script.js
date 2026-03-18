@@ -1,6 +1,98 @@
 const canvas = document.getElementById("renderCanvas");
 const engine = new BABYLON.Engine(canvas, true);
 
+function animateCameraSwitch(scene, cameras, fromPlayer, toPlayer, duration = 180) {
+    if (!fromPlayer || !toPlayer || !cameras?.cameraTargetNode) return;
+
+    const start = cameras.cameraTargetNode.position.clone();
+    const end = toPlayer.position.clone();
+
+    const startTime = performance.now();
+
+    const observer = scene.onBeforeRenderObservable.add(() => {
+        const elapsed = performance.now() - startTime;
+        let t = elapsed / duration;
+
+        if (t >= 1) t = 1;
+
+        // easing smooth
+        const eased = t * t * (3 - 2 * t);
+
+        cameras.cameraTargetNode.position = BABYLON.Vector3.Lerp(start, end, eased);
+
+        if (t === 1) {
+            scene.onBeforeRenderObservable.remove(observer);
+            cameras.cameraTargetNode.position.copyFrom(toPlayer.position);
+        }
+    });
+}
+
+function animateFpvSwitch(scene, cameras, fromPlayer, toPlayer, duration = 140) {
+    if (!scene || !cameras?.fpvCamera || !fromPlayer || !toPlayer) return;
+
+    const fpvCamera = cameras.fpvCamera;
+
+    // Position monde actuelle de la caméra
+    const startPos = fpvCamera.getAbsolutePosition().clone();
+
+    // Rotation monde actuelle
+    const startRotY = fpvCamera.absoluteRotation.toEulerAngles().y;
+
+    // Position cible = tête / yeux du nouveau joueur
+    const targetLocalOffset = new BABYLON.Vector3(0, 4.3, 0);
+    const endPos = toPlayer.getAbsolutePosition().add(targetLocalOffset);
+
+    // Angle cible selon la direction du nouveau joueur
+    let endRotY = startRotY;
+    if (toPlayer.facingDirection && toPlayer.facingDirection.lengthSquared() > 0) {
+        endRotY = Math.atan2(toPlayer.facingDirection.x, toPlayer.facingDirection.z);
+    }
+
+    // On détache temporairement la caméra pour l'animer librement en monde
+    fpvCamera.parent = null;
+    fpvCamera.position.copyFrom(startPos);
+    fpvCamera.rotation.x = 0;
+    fpvCamera.rotation.z = 0;
+    fpvCamera.rotation.y = startRotY;
+
+    const startTime = performance.now();
+
+    // Si une ancienne transition FPV existe, on la coupe
+    if (cameras.fpvSwitchObserver) {
+        scene.onBeforeRenderObservable.remove(cameras.fpvSwitchObserver);
+        cameras.fpvSwitchObserver = null;
+    }
+
+    cameras.fpvSwitchObserver = scene.onBeforeRenderObservable.add(() => {
+        const elapsed = performance.now() - startTime;
+        let t = elapsed / duration;
+
+        if (t >= 1) t = 1;
+
+        // easing smoothstep
+        const eased = t * t * (3 - 2 * t);
+
+        fpvCamera.position = BABYLON.Vector3.Lerp(startPos, endPos, eased);
+
+        // interpolation d'angle propre
+        const delta = BABYLON.Angle.FromRadians(endRotY - startRotY).degrees();
+        const shortestDelta = BABYLON.Tools.ToRadians(delta);
+        fpvCamera.rotation.y = startRotY + shortestDelta * eased;
+
+        if (t === 1) {
+            scene.onBeforeRenderObservable.remove(cameras.fpvSwitchObserver);
+            cameras.fpvSwitchObserver = null;
+
+            // on rattache au nouveau joueur une fois arrivé
+            fpvCamera.parent = toPlayer;
+            fpvCamera.position.copyFromFloats(0, 4.3, 0);
+            fpvCamera.rotation.x = 0;
+            fpvCamera.rotation.z = 0;
+            fpvCamera.rotation.y = 0;
+        }
+    });
+}
+
 const createScene = function () {
 
     // VARIABLES 
@@ -108,12 +200,14 @@ const createScene = function () {
         }
 
         if(e.key==="a" || e.key==="A"){
-            myTeam.switchLeft(cameras);
+            const p = myTeam.getPlayerOnSide("left");
+            myTeam.switchPlayerSmooth(p, cameras, scene, 180);
             activePlayer = myTeam.activePlayer;
         }
 
         if(e.key==="e" || e.key==="E"){
-            myTeam.switchRight(cameras);
+            const p = myTeam.getPlayerOnSide("right");
+            myTeam.switchPlayerSmooth(p, cameras, scene, 180);
             activePlayer = myTeam.activePlayer;
         }
 
@@ -155,6 +249,15 @@ const createScene = function () {
     const kickCooldown = 300;
 
     scene.onBeforeRenderObservable.add(()=>{
+
+        if (scene.activeCamera === cameras.tpsCamera && activePlayer) {
+            // suit doucement le joueur actif même hors switch
+            cameras.cameraTargetNode.position = BABYLON.Vector3.Lerp(
+                cameras.cameraTargetNode.position,
+                activePlayer.position,
+                0.12
+            );
+        }
 
         myTeam.autoSwitch(ball, cameras);
         activePlayer = myTeam.activePlayer;
@@ -340,6 +443,8 @@ const createScene = function () {
     scene.onBeforeRenderObservable.add(() => {
         window.gameScoreboard.updateTimer(scene.getEngine().getDeltaTime() / 1000);
     });
+
+    
 
 
     return scene;

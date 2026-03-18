@@ -1,4 +1,8 @@
 const setupCameras = (scene, canvas, playerNode) => {
+    // Node intermédiaire pour lisser le suivi caméra
+    const cameraTargetNode = new BABYLON.TransformNode("cameraTargetNode", scene);
+    cameraTargetNode.position.copyFrom(playerNode.position);
+
     // 1. Caméra de dessus (Third Person Shooter / Globale)
     const tpsCamera = new BABYLON.ArcRotateCamera(
         "tpsCamera",
@@ -9,7 +13,7 @@ const setupCameras = (scene, canvas, playerNode) => {
         scene
     );
     // On centre la caméra globale sur le joueur
-    tpsCamera.lockedTarget = playerNode;
+    tpsCamera.lockedTarget = cameraTargetNode;
     tpsCamera.inputs.clear(); // Désactive la souris pour cette caméra
 
     // 2. Caméra à la première personne (First Person View)
@@ -46,13 +50,13 @@ const setupCameras = (scene, canvas, playerNode) => {
     scene.activeCamera = tpsCamera;
 
     // Oriente la caméra FPV selon la direction actuelle du joueur
-// Cette fonction sert au moment où on passe en FPV
-function alignFpvToDirection(direction) {
-    if (!direction || direction.lengthSquared() === 0) return;
+    // Cette fonction sert au moment où on passe en FPV
+    function alignFpvToDirection(direction) {
+        if (!direction || direction.lengthSquared() === 0) return;
 
-    // Calcule l'angle horizontal à partir de la direction X/Z
-    fpvCamera.rotation.y = Math.atan2(direction.x, direction.z);
-}
+        // Calcule l'angle horizontal à partir de la direction X/Z
+        fpvCamera.rotation.y = Math.atan2(direction.x, direction.z);
+    }
 
     // Petit système pour écouter une touche et changer de caméra
     let isFpv = false;
@@ -61,8 +65,6 @@ function alignFpvToDirection(direction) {
             isFpv = !isFpv;
 
             if (isFpv) {
-                // Quand on passe en FPV, on remet toujours la caméra devant le joueur
-                alignFpvToDirection(playerNode.facingDirection);
                 scene.activeCamera = fpvCamera;
             } else {
                 scene.activeCamera = tpsCamera;
@@ -70,6 +72,6 @@ function alignFpvToDirection(direction) {
         }
     });
 
-    return { tpsCamera, fpvCamera, alignFpvToDirection };
+    return { tpsCamera, fpvCamera, cameraTargetNode, alignFpvToDirection };
 
 };
