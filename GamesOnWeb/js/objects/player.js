@@ -5,6 +5,9 @@ const createPlayer = (scene, position, teamColor, meshIndex = 0) => {
     wPlayer.animations = {};
     wPlayer.wobbleTime = 0;
     wPlayer.isInFpv = false;
+    // Direction actuelle du joueur
+    // Par défaut, l'équipe de gauche regarde vers +X
+    wPlayer.facingDirection = new BABYLON.Vector3(1, 0, 0);
 
     BABYLON.SceneLoader.ImportMesh(
         "",
@@ -108,6 +111,9 @@ const createPlayer = (scene, position, teamColor, meshIndex = 0) => {
 
             const normX = moveX / length;
             const normZ = moveZ / length;
+
+            // Mémorise la dernière direction du joueur
+            this.facingDirection.copyFromFloats(normX, 0, normZ);
 
             this.position.x += normX * speed;
             this.position.z += normZ * speed;

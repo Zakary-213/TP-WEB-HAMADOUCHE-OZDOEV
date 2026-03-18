@@ -29,6 +29,9 @@ const setupCameras = (scene, canvas, playerNode) => {
     // (évite de voir l'intérieur du maillot / épaules quand le joueur bouge)
     fpvCamera.minZ = 1.2;
 
+    // Orientation initiale de la caméra FPV : le joueur regarde devant lui au lancement
+    fpvCamera.rotation.y = Math.PI / 2;
+
     // Activer les contrôles de la souris pour tourner la tête
     fpvCamera.attachControl(canvas, true);
     
@@ -42,21 +45,31 @@ const setupCameras = (scene, canvas, playerNode) => {
     // Définir la caméra active par défaut (Global)
     scene.activeCamera = tpsCamera;
 
+    // Oriente la caméra FPV selon la direction actuelle du joueur
+// Cette fonction sert au moment où on passe en FPV
+function alignFpvToDirection(direction) {
+    if (!direction || direction.lengthSquared() === 0) return;
+
+    // Calcule l'angle horizontal à partir de la direction X/Z
+    fpvCamera.rotation.y = Math.atan2(direction.x, direction.z);
+}
+
     // Petit système pour écouter une touche et changer de caméra
     let isFpv = false;
     window.addEventListener("keydown", (e) => {
         if (e.key === "c" || e.key === "C") {
             isFpv = !isFpv;
+
             if (isFpv) {
+                // Quand on passe en FPV, on remet toujours la caméra devant le joueur
+                alignFpvToDirection(playerNode.facingDirection);
                 scene.activeCamera = fpvCamera;
-                // Optionnel : masquer le joueur quand on est dedans
-                //if(playerNode.model) playerNode.model.setEnabled(false);
             } else {
                 scene.activeCamera = tpsCamera;
-                //if(playerNode.model) playerNode.model.setEnabled(true);
             }
         }
     });
 
-    return { tpsCamera, fpvCamera };
+    return { tpsCamera, fpvCamera, alignFpvToDirection };
+
 };

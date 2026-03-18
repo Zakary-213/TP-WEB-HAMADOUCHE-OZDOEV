@@ -116,6 +116,14 @@ const createScene = function () {
             myTeam.switchRight(cameras);
             activePlayer = myTeam.activePlayer;
         }
+
+        if(e.key==="c" || e.key==="C"){
+            // Laisse cameras.js faire le switch TPS / FPV,
+            // puis aligne une seule fois la caméra sur la direction du joueur
+            setTimeout(() => {
+                cameras.alignFpvToDirection(activePlayer.facingDirection);
+            }, 0);
+        }
         
     });
 
