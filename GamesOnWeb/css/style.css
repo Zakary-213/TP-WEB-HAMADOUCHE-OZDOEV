@@ -7,6 +7,9 @@ body {
     padding: 0;
 }
 
+/* Police "style foot" pour l'overlay mi-temps */
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@500;700;800;900&display=swap');
+
 #renderCanvas {
     width: 100%;
     height: 100%;
@@ -121,4 +124,176 @@ body {
     color: #666;
     margin: 0 10px;
     font-size: 20px;
+}
+
+/* -- MI-TEMPS (overlay au centre) -- */
+#halftime-overlay {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 20;
+    text-align: center;
+    color: white;
+    display: none; /* activé par script.js pendant la mi-temps */
+    pointer-events: none;
+    padding: 22px 36px;
+    border-radius: 14px;
+    border: 2px solid rgba(255, 215, 0, 0.75); /* doré */
+    background:
+        linear-gradient(180deg, rgba(0,0,0,0.70) 0%, rgba(0,0,0,0.35) 100%),
+        repeating-linear-gradient(
+            45deg,
+            rgba(255,255,255,0.05) 0px,
+            rgba(255,255,255,0.05) 8px,
+            rgba(255,255,255,0) 8px,
+            rgba(255,255,255,0) 18px
+        );
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.55),
+        0 0 18px rgba(255, 215, 0, 0.20);
+}
+
+#halftime-title {
+    font-family: "Bebas Neue", "Montserrat", "Segoe UI", sans-serif;
+    font-weight: 400;
+    font-size: 44px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-shadow: 0 4px 18px rgba(0, 0, 0, 0.75);
+}
+
+#halftime-reprise {
+    margin-top: 10px;
+    font-family: "Montserrat", "Segoe UI", sans-serif;
+    font-weight: 800;
+    font-size: 20px;
+    color: rgba(255, 255, 255, 0.95);
+    text-shadow: 0 3px 14px rgba(0, 0, 0, 0.7);
+}
+
+#halftime-countdown {
+    display: inline-block;
+    min-width: 26px;
+    font-size: 26px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 215, 0, 0.35);
+    box-shadow: inset 0 0 10px rgba(255, 215, 0, 0.12);
+    transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+@keyframes halftimeIn {
+    0% { opacity: 0; transform: translate(-50%, -55%) scale(0.98); }
+    60% { opacity: 1; transform: translate(-50%, -50%) scale(1.02); }
+    100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* Classe temporaire pour relancer l'animation */
+#halftime-overlay.halftime-overlay--show {
+    animation: halftimeIn 0.55s ease-out both;
+}
+
+/* Pulse à chaque seconde */
+#halftime-countdown.halftime-countdown--beat {
+    transform: scale(1.22);
+    background: rgba(255, 215, 0, 0.18);
+    border-color: rgba(255, 215, 0, 0.7);
+    color: #fff;
+}
+
+#halftime-countdown.halftime-countdown--danger {
+    background: rgba(231, 76, 60, 0.22);
+    border-color: rgba(231, 76, 60, 0.9);
+    box-shadow: inset 0 0 10px rgba(231, 76, 60, 0.22);
+}
+
+/* -- FIN DU MATCH (overlay au centre) -- */
+#match-end-overlay {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 25;
+    text-align: center;
+    color: white;
+    display: none; /* activé par script.js / matchFlow.js */
+    pointer-events: none;
+    padding: 26px 40px;
+    border-radius: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    background:
+        linear-gradient(180deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.35) 100%),
+        repeating-linear-gradient(
+            45deg,
+            rgba(255,255,255,0.05) 0px,
+            rgba(255,255,255,0.05) 8px,
+            rgba(255,255,255,0) 8px,
+            rgba(255,255,255,0) 18px
+        );
+    box-shadow:
+        0 22px 60px rgba(0, 0, 0, 0.60),
+        0 0 20px rgba(255, 215, 0, 0.12);
+}
+
+#match-end-overlay.match-end--you {
+    border-color: rgba(46, 204, 113, 0.95);
+    box-shadow:
+        0 22px 60px rgba(0, 0, 0, 0.60),
+        0 0 22px rgba(46, 204, 113, 0.28);
+}
+
+#match-end-overlay.match-end--you #match-end-result,
+#match-end-overlay.match-end--you #match-end-score {
+    color: rgba(46, 204, 113, 0.98);
+}
+
+#match-end-overlay.match-end--ai {
+    border-color: rgba(231, 76, 60, 0.95);
+    box-shadow:
+        0 22px 60px rgba(0, 0, 0, 0.60),
+        0 0 22px rgba(231, 76, 60, 0.28);
+}
+
+#match-end-overlay.match-end--ai #match-end-result,
+#match-end-overlay.match-end--ai #match-end-score {
+    color: rgba(231, 76, 60, 0.98);
+}
+
+#match-end-overlay.match-end--draw {
+    border-color: rgba(200, 200, 200, 0.90);
+    box-shadow:
+        0 22px 60px rgba(0, 0, 0, 0.60),
+        0 0 22px rgba(200, 200, 200, 0.18);
+}
+
+#match-end-overlay.match-end--draw #match-end-result,
+#match-end-overlay.match-end--draw #match-end-score {
+    color: rgba(200, 200, 200, 0.98);
+}
+
+#match-end-title {
+    font-family: "Bebas Neue", "Montserrat", "Segoe UI", sans-serif;
+    font-size: 46px;
+    letter-spacing: 2px;
+    font-weight: 400;
+    text-transform: uppercase;
+    text-shadow: 0 4px 22px rgba(0, 0, 0, 0.75);
+}
+
+#match-end-result {
+    margin-top: 10px;
+    font-family: "Montserrat", "Segoe UI", sans-serif;
+    font-weight: 900;
+    font-size: 28px;
+    text-shadow: 0 3px 14px rgba(0, 0, 0, 0.7);
+}
+
+#match-end-score {
+    margin-top: 8px;
+    font-family: "Montserrat", "Segoe UI", sans-serif;
+    font-weight: 800;
+    font-size: 20px;
+    color: rgba(255, 255, 255, 0.95);
 }
