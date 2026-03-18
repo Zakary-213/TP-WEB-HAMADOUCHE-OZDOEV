@@ -115,6 +115,7 @@ const createScene = function () {
 
     // Pour l'instant, le "joueur actif" est le premier attaquant (index 3)
     let activePlayer = myTeam.players[3]; 
+    const basePlayer = activePlayer;
     myTeam.activePlayer = activePlayer;
 
     // Opponent team based on tournament stage
@@ -132,8 +133,40 @@ const createScene = function () {
 
     const tackleController = new TackleController();
 
+    // Mi-temps / fin de match (piloté par js/ui/matchFlow.js)
+    // Pour les tests, on a réglé la "mi-temps" à 30s.
+    const HALF_TIME_SECONDS = 30;
+    const HALF_TIME_PAUSE_SECONDS = 10;
+
+    let gameplayPaused = false;
+    const setGameplayPaused = (v) => {
+        gameplayPaused = !!v;
+    };
+
+    let matchFlow = null;
+
     // Cameras Setup (TPS et FPS gérées dans cameras.js)
     const cameras = setupCameras(scene, canvas, activePlayer);
+
+    // Branche la gestion mi-temps / fin du match (affichage + pause/reprise)
+    if (window.createMatchFlow) {
+        const setActivePlayerFn = (p) => {
+            activePlayer = p;
+            myTeam.activePlayer = p;
+        };
+
+        matchFlow = window.createMatchFlow({
+            halfSeconds: HALF_TIME_SECONDS,
+            halftimePauseSeconds: HALF_TIME_PAUSE_SECONDS,
+            setGameplayPaused,
+            myTeam,
+            opponentTeam,
+            cameras,
+            ball,
+            basePlayer,
+            setActivePlayerFn
+        });
+    }
 
     // Input & Variables de base
     const input = {
@@ -218,6 +251,11 @@ const createScene = function () {
     const kickCooldown = 300;
 
     scene.onBeforeRenderObservable.add(()=>{
+        if (gameplayPaused) {
+            // On fige le gameplay à la mi-temps (10 secondes)
+            return;
+        }
+
         if (scene.activeCamera === cameras.tpsCamera && activePlayer) {
             // suit doucement le joueur actif même hors switch
             cameras.cameraTargetNode.position = BABYLON.Vector3.Lerp(
@@ -581,7 +619,11 @@ const createScene = function () {
     window.gameScoreboard.startTimer();
 
     scene.onBeforeRenderObservable.add(() => {
-        window.gameScoreboard.updateTimer(scene.getEngine().getDeltaTime() / 1000);
+        const deltaSeconds = scene.getEngine().getDeltaTime() / 1000;
+        window.gameScoreboard.updateTimer(deltaSeconds);
+
+        // Gère la mi-temps + fin de match (dans js/ui/matchFlow.js)
+        if (matchFlow) matchFlow.update();
     });
 
     
