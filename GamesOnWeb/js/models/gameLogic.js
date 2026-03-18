@@ -8,56 +8,39 @@ function checkBallCollision(player, ball, playerFacing, team) {
     }
 
     if (distance < 2) {
-        if (player !== team.activePlayer) return;
+        // Pour l'équipe contrôlée par le joueur :
+        // seul le joueur actif peut pousser la balle.
+        // Pour l'IA :
+        // tous les joueurs peuvent pousser.
+        if (team && team.isPlayerControlled && player !== team.activePlayer) {
+            return;
+        }
 
         const pushDir = new BABYLON.Vector3(playerFacing.x, 0, playerFacing.z);
 
         if (pushDir.lengthSquared() > 0) {
             pushDir.normalize();
 
-            const targetSpeed = 7; // vitesse voulue de la balle pendant la poussée
-            const smoothing = 0.15; // plus petit = plus doux
+            const targetSpeed = 7;
+            const smoothing = 0.15;
 
             const desiredVelocity = pushDir.scale(targetSpeed);
 
-            ball.velocity.x = BABYLON.Scalar.Lerp(ball.velocity.x, desiredVelocity.x, smoothing);
-            ball.velocity.z = BABYLON.Scalar.Lerp(ball.velocity.z, desiredVelocity.z, smoothing);
+            ball.velocity.x = BABYLON.Scalar.Lerp(
+                ball.velocity.x,
+                desiredVelocity.x,
+                smoothing
+            );
+
+            ball.velocity.z = BABYLON.Scalar.Lerp(
+                ball.velocity.z,
+                desiredVelocity.z,
+                smoothing
+            );
         }
     }
 
-    if (!ball.isOutAnimationPlaying) {
-        ball.position.y = 0.75;
-    }
-
-        // Pour l'équipe contrôlée par le joueur : seule la star active pousse la balle.
-        // Pour une équipe IA (isPlayerControlled = false), tous les joueurs peuvent pousser.
-        if (team && team.isPlayerControlled && player !== team.activePlayer) {
-            return;
-        }
-
-        const pushForce = 1.2;
-        ball.position.x += playerFacing.x * pushForce;
-        ball.position.z += playerFacing.z * pushForce;
-    }
-
-    // Empêche le ballon de sortir des limites du terrain
-    // Le terrain fait 100x60 (voir field.js), centré en (0,0)
-    let minX = -49;
-    let maxX = 49;
-    const minZ = -29;
-    const maxZ = 29;
-
-    // Si le ballon est face au but (au centre sur l'axe Z), on agrandit la limite X
-    if (ball.position.z > -7.5 && ball.position.z < 7.5) {
-        minX = -54; // Profondeur du but (environ 4)
-        maxX = 54;
-    }
-
-    if (ball.position.x < minX) ball.position.x = minX;
-    if (ball.position.x > maxX) ball.position.x = maxX;
-    if (ball.position.z < minZ) ball.position.z = minZ;
-    if (ball.position.z > maxZ) ball.position.z = maxZ;
-
+    // Tant que la balle est en jeu, on la garde au sol
     ball.position.y = 0.75;
 }
 

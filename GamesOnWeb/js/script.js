@@ -49,7 +49,7 @@ const createScene = function () {
 
     // --- TOURNAMENT STATE ---
     // Change this variable to test different stages: "huitieme", "quart", "demi", "finale"
-    let tournamentStage = "huitieme";
+    let tournamentStage = "quart";
 
     // --- Structure ---
     
