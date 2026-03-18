@@ -74,7 +74,7 @@ function checkBallCollision(player, ball, playerFacing, team, playerMoveVelocity
 function kick(scene, ball, player, lastDirection, force, team) {
 
     team.lastBallPlayer = player;
-    team.lockAutoSwitch(1150);
+    team.lockAutoSwitch(500);
     team.lockTeamPossession(1550);
 
     ball.lastKicker = player;

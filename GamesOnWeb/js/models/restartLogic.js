@@ -433,14 +433,14 @@ function takeRestartKick(ball, direction, gaugeForce) {
     // On adapte la jauge normale (30 / 45 / 60)
     // à des plages plus cohérentes selon la remise
     if (restartState.type === "throwIn") {
-        if (gaugeForce <= 30) force = 18;
-        else if (gaugeForce <= 45) force = 26;
-        else force = 34;
+        if (gaugeForce <= 30) force = 30;
+        else if (gaugeForce <= 45) force = 45;
+        else force = 65;
     } 
     else if (restartState.type === "corner") {
-        if (gaugeForce <= 30) force = 26;
-        else if (gaugeForce <= 45) force = 36;
-        else force = 48;
+        if (gaugeForce <= 30) force = 30;
+        else if (gaugeForce <= 45) force = 45;
+        else force = 60;
     } 
     else if (restartState.type === "goalKick") {
         if (gaugeForce <= 30) force = 32;
