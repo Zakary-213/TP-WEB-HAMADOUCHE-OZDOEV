@@ -174,10 +174,38 @@ const createScene = function () {
         let moveX = 0;
         let moveZ = 0;
 
-        if(input.forward) moveX+=1;
-        if(input.backward) moveX-=1;
-        if(input.left) moveZ+=1;
-        if(input.right) moveZ-=1;
+        // TPS : déplacement en axes fixes du terrain
+        if (scene.activeCamera === cameras.tpsCamera) {
+            if(input.forward) moveX += 1;
+            if(input.backward) moveX -= 1;
+            if(input.left) moveZ += 1;
+            if(input.right) moveZ -= 1;
+        }
+        // FPV : déplacement relatif à la direction de la caméra
+        else if (scene.activeCamera === cameras.fpvCamera) {
+
+            // Direction "avant" de la caméra projetée sur le sol
+            const forward = cameras.fpvCamera.getForwardRay().direction.clone();
+            forward.y = 0;
+            forward.normalize();
+
+            // Direction "droite" de la caméra projetée sur le sol
+            const right = new BABYLON.Vector3(forward.z, 0, -forward.x);
+
+            let moveVector = BABYLON.Vector3.Zero();
+
+            if(input.forward) moveVector.addInPlace(forward);       // Z = avance
+            if(input.backward) moveVector.subtractInPlace(forward); // S = recule
+            if(input.right) moveVector.addInPlace(right);           // D = droite
+            if(input.left) moveVector.subtractInPlace(right);       // Q = gauche
+
+            // On convertit le vecteur final en moveX / moveZ pour réutiliser activePlayer.move()
+            if (moveVector.lengthSquared() > 0) {
+                moveVector.normalize();
+                moveX = moveVector.x;
+                moveZ = moveVector.z;
+            }
+        }
 
         // Appel de la méthode encapsulée dans player.js
         const directionOpt = activePlayer.move(moveX, moveZ, speed);
