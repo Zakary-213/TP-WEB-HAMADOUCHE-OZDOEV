@@ -1,31 +1,35 @@
 function checkBallCollision(player, ball, playerFacing, team) {
-    const distance = BABYLON.Vector3.Distance(
-        player.position,
-        ball.position
-    );
+    const distance = BABYLON.Vector3.Distance(player.position, ball.position);
 
-    if (distance < 2) {
-
-        // si ce joueur n'est pas le joueur actif on ne pousse pas la balle
-        if(player !== team.activePlayer){
-            return;
-        }
-
-        const pushForce = 1.2;
-        ball.position.x += playerFacing.x * pushForce;
-        ball.position.z += playerFacing.z * pushForce;
+    if (!ball.velocity) {
+        ball.velocity = new BABYLON.Vector3(0, 0, 0);
     }
 
-    // Empêche le ballon de sortir des limites du terrain
-    // Le terrain fait 100x60 (voir field.js), centré en (0,0)
+    if (distance < 2) {
+        if (player !== team.activePlayer) return;
+
+        const pushDir = new BABYLON.Vector3(playerFacing.x, 0, playerFacing.z);
+
+        if (pushDir.lengthSquared() > 0) {
+            pushDir.normalize();
+
+            const targetSpeed = 7; // vitesse voulue de la balle pendant la poussée
+            const smoothing = 0.15; // plus petit = plus doux
+
+            const desiredVelocity = pushDir.scale(targetSpeed);
+
+            ball.velocity.x = BABYLON.Scalar.Lerp(ball.velocity.x, desiredVelocity.x, smoothing);
+            ball.velocity.z = BABYLON.Scalar.Lerp(ball.velocity.z, desiredVelocity.z, smoothing);
+        }
+    }
+
     let minX = -49;
     let maxX = 49;
     const minZ = -29;
     const maxZ = 29;
 
-    // Si le ballon est face au but (au centre sur l'axe Z), on agrandit la limite X
     if (ball.position.z > -7.5 && ball.position.z < 7.5) {
-        minX = -54; // Profondeur du but (environ 4)
+        minX = -54;
         maxX = 54;
     }
 
