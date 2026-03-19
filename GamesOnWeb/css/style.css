@@ -297,3 +297,145 @@ body {
     font-size: 20px;
     color: rgba(255, 255, 255, 0.95);
 }
+
+/* -- INTRO TOURNOI (style composition FIFA) -- */
+#pre-match-tournament-overlay {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 24;
+    display: none;
+    opacity: 0;
+    pointer-events: none;
+    width: min(92vw, 1100px);
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+}
+
+.pre-match-tournament-line {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    color: #ffffff;
+    text-shadow:
+        0 4px 14px rgba(0, 0, 0, 0.55),
+        0 0 20px rgba(1, 205, 254, 0.25);
+}
+
+.pre-match-tournament-head,
+.pre-match-tournament-tail span {
+    font-family: "Montserrat", "Segoe UI", sans-serif;
+    font-weight: 900;
+    font-size: clamp(30px, 5vw, 74px);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+}
+
+.pre-match-tournament-head {
+    color: #ffffff;
+    animation: none;
+    opacity: 0;
+}
+
+.pre-match-tournament-tail {
+    width: 0;
+    overflow: hidden;
+    opacity: 0;
+    margin-left: 10px;
+    animation: none;
+}
+
+.pre-match-tournament-tail span {
+    display: inline-block;
+    margin-left: var(--slide-start, -360px);
+    color: #01cdfe;
+    text-shadow:
+        0 0 12px rgba(1, 205, 254, 0.6),
+        0 0 24px rgba(5, 255, 161, 0.4);
+    animation: none;
+}
+
+@keyframes preMatchTournamentIn {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) translateY(38px) scale(0.9);
+        filter: blur(7px);
+    }
+    65% {
+        opacity: 1;
+        transform: translate(-50%, -50%) translateY(-4px) scale(1.03);
+        filter: blur(0);
+    }
+    100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) translateY(0) scale(1);
+        filter: blur(0);
+    }
+}
+
+@keyframes preMatchTournamentOut {
+    0% {
+        opacity: 1;
+        transform: translate(-50%, -50%) translateY(0) scale(1);
+        filter: blur(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) translateY(-26px) scale(0.97);
+        filter: blur(6px);
+    }
+}
+
+#pre-match-tournament-overlay.pre-match-tournament--show .pre-match-tournament-head {
+    animation: preMatchRevealShowup 3.6s ease-out both;
+}
+
+#pre-match-tournament-overlay.pre-match-tournament--show .pre-match-tournament-tail {
+    animation: preMatchReveal 3.6s ease-out both;
+}
+
+#pre-match-tournament-overlay.pre-match-tournament--show .pre-match-tournament-tail span {
+    animation: preMatchSlideIn 3.6s ease-out both;
+}
+
+@keyframes preMatchRevealShowup {
+    0% { opacity: 0; }
+    20% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+@keyframes preMatchSlideIn {
+    0% { margin-left: var(--slide-start, -360px); }
+    20% { margin-left: var(--slide-start, -360px); }
+    35% { margin-left: 0; }
+    100% { margin-left: 0; }
+}
+
+@keyframes preMatchReveal {
+    0% { opacity: 0; width: 0; }
+    20% { opacity: 1; width: 0; }
+    30% { width: var(--reveal-width, 360px); }
+    80% { opacity: 1; }
+    100% { opacity: 0; width: var(--reveal-width, 360px); }
+}
+
+#pre-match-tournament-overlay.pre-match-tournament--show {
+    display: flex;
+    animation: preMatchTournamentIn 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+#pre-match-tournament-overlay.pre-match-tournament--hide {
+    display: flex;
+    animation: preMatchTournamentOut 0.55s ease forwards;
+}
+
+#pre-match-tournament-overlay.pre-match-tournament--hide .pre-match-tournament-head,
+#pre-match-tournament-overlay.pre-match-tournament--hide .pre-match-tournament-tail {
+    opacity: 0;
+}

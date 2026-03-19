@@ -49,7 +49,7 @@ const createScene = function () {
 
     // --- TOURNAMENT STATE ---
     // Change this variable to test different stages: "huitieme", "quart", "demi", "finale"
-    let tournamentStage = "demi";
+    let tournamentStage = "huitieme";
 
     // --- Structure ---
     
@@ -139,6 +139,8 @@ const createScene = function () {
     const HALF_TIME_PAUSE_SECONDS = 10;
 
     let gameplayPaused = false;
+    let preMatchIntroPlaying = true;
+
     const setGameplayPaused = (v) => {
         gameplayPaused = !!v;
     };
@@ -177,6 +179,7 @@ const createScene = function () {
     };
 
     window.addEventListener("keydown",(e)=>{
+        if (preMatchIntroPlaying) return;
 
         if(e.key==="z"||e.key==="Z") input.forward=true;
         if(e.key==="s"||e.key==="S") input.backward=true;
@@ -218,6 +221,7 @@ const createScene = function () {
     });
 
     window.addEventListener("keyup",(e)=>{
+        if (preMatchIntroPlaying) return;
 
         if(e.key==="z"||e.key==="Z") input.forward=false;
         if(e.key==="s"||e.key==="S") input.backward=false;
@@ -251,7 +255,7 @@ const createScene = function () {
     const kickCooldown = 300;
 
     scene.onBeforeRenderObservable.add(()=>{
-        if (gameplayPaused) {
+        if (preMatchIntroPlaying || gameplayPaused) {
             // On fige le gameplay à la mi-temps (10 secondes)
             return;
         }
@@ -618,8 +622,36 @@ const createScene = function () {
 
 
     // --- UI Update (Chronomètre) ---
-    // Start the timer when the match actually begins
-    window.gameScoreboard.startTimer();
+    const ENABLE_PRE_MATCH_INTRO = true;
+    const PRE_MATCH_INTRO_DURATION_MS = 10000;
+    const PRE_MATCH_INTRO_TURNS = 1; // 0.5 tour = 180°
+    const TOURNAMENT_INTRO_LABEL_BY_STAGE = {
+        huitieme: "Huitieme de finale",
+        quart: "Quart de finale",
+        demi: "Demi-finale",
+        finale: "Finale"
+    };
+    const tournamentIntroLabel = TOURNAMENT_INTRO_LABEL_BY_STAGE[tournamentStage] || "Huitieme de finale";
+
+    // Lancement du match après l'intro caméra
+    if (typeof window.startPreMatchIntro === "function") {
+        window.startPreMatchIntro(scene, cameras, ENABLE_PRE_MATCH_INTRO, {
+            durationMs: PRE_MATCH_INTRO_DURATION_MS,
+            rotationTurns: PRE_MATCH_INTRO_TURNS,
+            tournamentLabel: tournamentIntroLabel,
+            fromBeta: 0.45,
+            toBeta: 0.75,
+            fromRadius: 220,
+            toRadius: 100,
+            onComplete: () => {
+                preMatchIntroPlaying = false;
+                window.gameScoreboard.startTimer();
+            }
+        });
+    } else {
+        preMatchIntroPlaying = false;
+        window.gameScoreboard.startTimer();
+    }
 
     scene.onBeforeRenderObservable.add(() => {
         const deltaSeconds = scene.getEngine().getDeltaTime() / 1000;

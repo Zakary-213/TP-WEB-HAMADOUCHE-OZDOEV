@@ -49,6 +49,16 @@
         <div id="match-end-score">YOU 0 - 0 IA</div>
     </div>
 
+    <!-- Intro d'avant-match (apparition style broadcast) -->
+    <div id="pre-match-tournament-overlay">
+        <div id="pre-match-tournament-line" class="pre-match-tournament-line">
+            <div id="pre-match-tournament-head" class="pre-match-tournament-head">HUITIEME</div>
+            <div id="pre-match-tournament-tail" class="pre-match-tournament-tail">
+                <span id="pre-match-tournament-tail-text">DE FINALE</span>
+            </div>
+        </div>
+    </div>
+
     <canvas id="renderCanvas" touch-action="none"></canvas>
 
     <!-- Utility functions -->
@@ -79,6 +89,7 @@
     <!-- UI -->
     <script src="js/ui/scoreboard.js"></script>
     <script src="js/ui/matchFlow.js"></script>
+    <script src="js/ui/preMatchIntro.js"></script>
 
     <!-- Main Script -->
     <script src="js/models/gameLogic.js"></script>

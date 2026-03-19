@@ -59,8 +59,8 @@ const setupCameras = (scene, canvas, playerNode) => {
     fpvCamera.keysLeft = [];
     fpvCamera.keysRight = [];
 
-    // Définir la caméra active par défaut (Global)
-    scene.activeCamera = tpsCamera;
+    // Définir la caméra active par défaut (Broadcast)
+    scene.activeCamera = broadcastCamera;
 
     // Oriente la caméra FPV selon la direction actuelle du joueur
     // Cette fonction sert au moment où on passe en FPV
@@ -72,11 +72,11 @@ const setupCameras = (scene, canvas, playerNode) => {
     }
 
     // Petit système pour écouter des touches et changer de caméra
-    let cameraMode = "tps"; // tps | fpv | broadcast
+    let cameraMode = "broadcast"; // tps | fpv | broadcast
     window.addEventListener("keydown", (e) => {
         if (e.key === "c" || e.key === "C") {
-            cameraMode = cameraMode === "fpv" ? "tps" : "fpv";
-            scene.activeCamera = cameraMode === "fpv" ? fpvCamera : tpsCamera;
+            cameraMode = cameraMode === "fpv" ? "broadcast" : "fpv";
+            scene.activeCamera = cameraMode === "fpv" ? fpvCamera : broadcastCamera;
         }
 
         if (e.key === "r" || e.key === "R") {
