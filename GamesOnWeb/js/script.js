@@ -27,6 +27,60 @@ function animateCameraSwitch(scene, cameras, fromPlayer, toPlayer, duration = 18
     });
 }
 
+// Crée un indicateur visuel (petite flèche) au-dessus d'un joueur sélectionné
+function createSelectionIndicator(scene, playerNode) {
+        const root = new BABYLON.TransformNode("selectionIndicatorRoot", scene);
+        // Hauteur suffisante pour être bien au-dessus de la tête, même avec les skins les plus grands
+        root.position = new BABYLON.Vector3(0, 10, 0);
+
+        const arrow = BABYLON.MeshBuilder.CreateCylinder("selectionArrow", {
+            height: 1.6,
+            diameterTop: 0,
+            diameterBottom: 0.9,
+            tessellation: 4
+        }, scene);
+        arrow.parent = root;
+
+        const mat = new BABYLON.StandardMaterial("selectionArrowMat", scene);
+        mat.emissiveColor = new BABYLON.Color3(1, 0.9, 0.2); // jaune lumineux
+        mat.specularColor = new BABYLON.Color3(0, 0, 0);
+        arrow.material = mat;
+
+        if (playerNode) {
+            root.parent = playerNode;
+        }
+        return root;
+}
+
+// Place les deux équipes en lignes pour l'intro de match
+function placeTeamsForIntro(myTeam, opponentTeam) {
+    const placeTeamLine = (team, side) => {
+        if (!team || !team.players) return;
+
+        const lineX = -5 * side; // proche de la ligne médiane côté équipe
+        const baseZ = -12;
+        const spacingZ = 6;
+
+        team.players.forEach((p, index) => {
+            if (!p || !p.position) return;
+
+            p.position.x = lineX;
+            p.position.y = 0;
+            p.position.z = baseZ + spacingZ * index;
+
+            if (p.model) {
+                // Orientation vers le centre du terrain
+                p.model.rotation.y = side === 1 ? Math.PI / 2 : -Math.PI / 2;
+                p.model.rotation.z = 0;
+            }
+        });
+    };
+
+    // Équipe de gauche (side = 1) et de droite (side = -1)
+    placeTeamLine(myTeam, 1);
+    placeTeamLine(opponentTeam, -1);
+}
+
 const createScene = function () {
 
     // VARIABLES 
@@ -48,14 +102,12 @@ const createScene = function () {
     createEnvironment(scene); // Defined in js/structure/environnement.js
 
     // --- TOURNAMENT STATE ---
-    // Change this variable to test different stages: "huitieme", "quart", "demi", "finale"
     let tournamentStage = "huitieme";
 
     // --- Structure ---
-    
-    createField(scene); // Defined in js/structure/field.js
 
-    // Grandstands (Tribunes)
+    createField(scene); 
+
     let tribune;
     switch(tournamentStage) {
         case "huitieme": tribune = new TribuneHuitieme(scene); break;
@@ -68,7 +120,6 @@ const createScene = function () {
 
     
     // --- Objects ---
-    // Goals
     const leftGoal = createGoal(scene, new BABYLON.Vector3(-50, 0, 0), Math.PI / 2);
     const rightGoal = createGoal(scene, new BABYLON.Vector3(50, 0, 0), -Math.PI / 2);
 
@@ -109,7 +160,7 @@ const createScene = function () {
     // Jauge de tir
     const kickGauge = createKickGauge(scene);
     drawGaugeColors(kickGauge);
-    // Players (using Team Architecture)
+
     const myTeam = new PlayerTeam(scene, "My Team", new BABYLON.Color3(1, 0, 0));
     myTeam.createTeamFormation(1); // 1 pour le côté gauche
 
@@ -117,6 +168,9 @@ const createScene = function () {
     let activePlayer = myTeam.players[3]; 
     const basePlayer = activePlayer;
     myTeam.activePlayer = activePlayer;
+
+        // Indicateur de sélection (flèche) au-dessus du joueur actif
+        const selectionIndicator = createSelectionIndicator(scene, activePlayer);
 
     // Opponent team based on tournament stage
     let opponentTeam;
@@ -134,7 +188,7 @@ const createScene = function () {
     const tackleController = new TackleController();
 
     // Mi-temps / fin de match (piloté par js/ui/matchFlow.js)
-    // Pour les tests, on a réglé la "mi-temps" à 30s.
+    // Mi-temps réglée à 30 secondes.
     const HALF_TIME_SECONDS = 30;
     const HALF_TIME_PAUSE_SECONDS = 10;
 
@@ -155,6 +209,9 @@ const createScene = function () {
         const setActivePlayerFn = (p) => {
             activePlayer = p;
             myTeam.activePlayer = p;
+            if (selectionIndicator && p) {
+                selectionIndicator.parent = p;
+            }
         };
 
         matchFlow = window.createMatchFlow({
@@ -175,7 +232,8 @@ const createScene = function () {
         forward:false,
         backward:false,
         left:false,
-        right:false
+        right:false,
+        sprint:false
     };
 
     window.addEventListener("keydown",(e)=>{
@@ -185,6 +243,7 @@ const createScene = function () {
         if(e.key==="s"||e.key==="S") input.backward=true;
         if(e.key==="q"||e.key==="Q") input.left=true;
         if(e.key==="d"||e.key==="D") input.right=true;
+        if(e.key==="Shift") input.sprint = true;
 
         if (e.code === "Space" && !isCharging) {
             chargeStart = Date.now();
@@ -195,12 +254,18 @@ const createScene = function () {
             const p = myTeam.getPlayerOnSide("left");
             myTeam.switchPlayerSmooth(p, cameras, scene, 180);
             activePlayer = myTeam.activePlayer;
+            if (selectionIndicator && activePlayer) {
+                selectionIndicator.parent = activePlayer;
+            }
         }
 
         if(e.key==="e" || e.key==="E"){
             const p = myTeam.getPlayerOnSide("right");
             myTeam.switchPlayerSmooth(p, cameras, scene, 180);
             activePlayer = myTeam.activePlayer;
+            if (selectionIndicator && activePlayer) {
+                selectionIndicator.parent = activePlayer;
+            }
         }
 
         if(e.key==="c" || e.key==="C"){
@@ -227,6 +292,7 @@ const createScene = function () {
         if(e.key==="s"||e.key==="S") input.backward=false;
         if(e.key==="q"||e.key==="Q") input.left=false;
         if(e.key==="d"||e.key==="D") input.right=false;
+        if(e.key==="Shift") input.sprint = false;
 
        if (e.code === "Space" && isCharging) {
             const force = computeKickPower(kickGauge);
@@ -243,7 +309,12 @@ const createScene = function () {
         }
     });
 
-    const speed = 0.1;
+    // Vitesse de marche de base
+    const baseSpeed = 0.07;
+    // Multiplicateur de sprint (un peu plus rapide aussi)
+    const SPRINT_MULTIPLIER = 1.8;
+    const STAMINA_DRAIN_RATE = 0.35; // par seconde en sprint
+    const STAMINA_REGEN_RATE = 0.25; // par seconde en marche/repos
 
     let lastDirection = new BABYLON.Vector3(1,0,0);
     let playerFacing = new BABYLON.Vector3(1,0,0);
@@ -277,6 +348,11 @@ const createScene = function () {
         }
         activePlayer = myTeam.activePlayer;
 
+        // Si l'auto-switch a changé de joueur actif, on recolle la flèche dessus
+        if (selectionIndicator && activePlayer && selectionIndicator.parent !== activePlayer) {
+            selectionIndicator.parent = activePlayer;
+        }
+
         if (isRestartWaitingKick() && restartState.position) {
             ball.position.x = restartState.position.x;
             ball.position.y = 0.75;
@@ -299,6 +375,20 @@ const createScene = function () {
 
         if (scene.activeCamera === cameras.fpvCamera) {
             activePlayer.isInFpv = true;
+        }
+
+        // Affiche la flèche uniquement en vues TPS / broadcast (R),
+        // on la masque en vue FPS (C)
+        if (selectionIndicator) {
+            const showIndicator = scene.activeCamera !== cameras.fpvCamera;
+            selectionIndicator.setEnabled(showIndicator);
+
+            // Utilise la hauteur de la flèche comme jauge d'endurance
+            const staminaForIndicator = activePlayer.stamina ?? 1;
+            const minScale = 0.25;
+            const maxScale = 1.0;
+            const s = minScale + (maxScale - minScale) * staminaForIndicator;
+            selectionIndicator.scaling.y = s;
         }
 
         myTeam.update(ball);
@@ -379,14 +469,34 @@ const createScene = function () {
             }
         }
 
-        // Déplacement normal / tacle glissé
+        // Déplacement normal / tacle glissé avec gestion du sprint / endurance
         let movement;
         const restartTakerLocked = isRestartTaker(activePlayer);
+
+        // Mise à jour de l'endurance du joueur actif
+        let stamina = activePlayer.stamina;
+        const maxStamina = activePlayer.maxStamina || 1;
+        const isTryingToMove = (moveX !== 0 || moveZ !== 0);
+
+        let effectiveSpeed = baseSpeed;
+
+        if (!restartTakerLocked && isTryingToMove && input.sprint && stamina > 0.05) {
+            // Sprint : vitesse augmentée, jauge qui se vide
+            effectiveSpeed = baseSpeed * SPRINT_MULTIPLIER;
+            stamina -= STAMINA_DRAIN_RATE * dt;
+        } else {
+            // Pas de sprint ou joueur à l'arrêt : la jauge se régénère
+            stamina += STAMINA_REGEN_RATE * dt;
+        }
+
+        if (stamina < 0) stamina = 0;
+        if (stamina > maxStamina) stamina = maxStamina;
+        activePlayer.stamina = stamina;
 
         if (restartTakerLocked) {
             // Pendant une remise : le tireur ne bouge pas,
             // mais on peut quand même changer la direction visée
-            movement = tackleController.updateAndMove(activePlayer, 0, 0, speed);
+            movement = tackleController.updateAndMove(activePlayer, 0, 0, baseSpeed);
 
             let aimX = 0;
             let aimZ = 0;
@@ -408,7 +518,7 @@ const createScene = function () {
                 playerFacing = lastDirection.clone();
             }
         } else {
-            movement = tackleController.updateAndMove(activePlayer, moveX, moveZ, speed);
+            movement = tackleController.updateAndMove(activePlayer, moveX, moveZ, effectiveSpeed);
         }
 
         const controlledPlayer = movement.controlledPlayer;
@@ -614,6 +724,19 @@ const createScene = function () {
                 // Replacer tous les joueurs à leur position de départ
                 if (myTeam && myTeam.resetPositions) myTeam.resetPositions();
                 if (opponentTeam && opponentTeam.resetPositions) opponentTeam.resetPositions();
+
+                // Reset de l'endurance pour tous les joueurs après un but
+                const resetTeamStamina = (team) => {
+                    if (!team || !team.players) return;
+                    team.players.forEach(p => {
+                        if (!p) return;
+                        const max = p.maxStamina || 1;
+                        p.stamina = max;
+                    });
+                };
+
+                resetTeamStamina(myTeam);
+                resetTeamStamina(opponentTeam);
             }
         }
 
@@ -644,6 +767,11 @@ const createScene = function () {
             fromRadius: 220,
             toRadius: 100,
             onComplete: () => {
+                // On recolle le pivot caméra sur le joueur actif
+                if (cameras?.cameraTargetNode && activePlayer?.position) {
+                    cameras.cameraTargetNode.position.copyFrom(activePlayer.position);
+                }
+
                 preMatchIntroPlaying = false;
                 window.gameScoreboard.startTimer();
             }

@@ -159,6 +159,20 @@
             window.setTimeout(function () {
                 // reprise du jeu (phase 2)
                 stage = 2;
+
+                // Reset de l'endurance de tous les joueurs à la reprise de la 2ème mi-temps
+                const resetTeamStamina = (team) => {
+                    if (!team || !team.players) return;
+                    team.players.forEach(p => {
+                        if (!p) return;
+                        const max = p.maxStamina || 1;
+                        p.stamina = max;
+                    });
+                };
+
+                resetTeamStamina(myTeam);
+                resetTeamStamina(opponentTeam);
+
                 setGameplayPaused(false);
                 startTimerIfPossible();
                 hideHalftimeOverlay();

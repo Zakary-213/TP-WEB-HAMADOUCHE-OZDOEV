@@ -5,6 +5,9 @@ const createPlayer = (scene, position, teamColor, meshIndex = 0) => {
     wPlayer.animations = {};
     wPlayer.wobbleTime = 0;
     wPlayer.isInFpv = false;
+    // Endurance (0-1) utilisée pour le sprint
+    wPlayer.stamina = 1;
+    wPlayer.maxStamina = 1;
     // Direction actuelle du joueur
     // Par défaut, l'équipe de gauche regarde vers +X
     wPlayer.facingDirection = new BABYLON.Vector3(1, 0, 0);
