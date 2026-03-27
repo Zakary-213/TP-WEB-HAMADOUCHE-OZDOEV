@@ -50,49 +50,32 @@ class AITeamHuitieme extends AITeam {
             const distBall = BABYLON.Vector3.Distance(player.position, ball.position);
             const isChaser = (player === chaser);
 
-            // ─── GARDIEN : reste dans ses cages, avec mouvement animé ──────
+            // ─── GARDIEN (logique gardée car fonctionnelle) ───────────────────
             if (role === "GK") {
-                // Ligne de but proche des cages (pas au point homePos.x qui est plus haut)
-                const goalX = (side === -1) ? 48 : -48;
-
-                // Distance balle–gardien
-                const distToBall = distBall;
-
-                // Cible X : par défaut sur la ligne de but
-                let gkTargetX = goalX;
-
-                // Si la balle est dans / proche de la surface, le gardien fait un petit pas en avant
-                const inBoxX = Math.abs(ball.position.x - goalX) < 20;
-                const inBoxZ = Math.abs(ball.position.z) < 12;
-                if (inBoxX && inBoxZ && distToBall < 18) {
-                    const insideDir = goalX >= 0 ? -1 : 1; // vers l'intérieur du terrain
-                    gkTargetX = goalX + insideDir * 4;
-                }
-
-                // Cible Z : suit la balle latéralement pour fermer l'angle
-                const gkTargetZ = homePos.z + (ball.position.z - homePos.z) * 0.7;
+                // Cible Z : suit la balle à 70% pour couvrir les angles
+                const gkTargetZ = homePos.z + (ball.position.z - homePos.z) * 0.70;
                 const clampedZ  = Math.max(-7.5, Math.min(7.5, gkTargetZ));
 
-                // Construire la cible et utiliser _moveTowards pour profiter de player.move()
-                const gkTarget = new BABYLON.Vector3(gkTargetX, 0, clampedZ);
+                // Interpole directement en Z (pas de dist < 0.25 qui bloquerait le mouvement)
+                const dz = clampedZ - player.position.z;
+                if (Math.abs(dz) > 0.05) {
+                    player.position.z += Math.sign(dz) * Math.min(Math.abs(dz), this.speed);
+                }
+
+                // X TOUJOURS fixe sur la ligne de but
+                player.position.x = homePos.x;
 
                 // Dégagement actif si balle à portée
                 if (player._gkCooldown === undefined) player._gkCooldown = 0;
                 player._gkCooldown -= dt;
-                if (distToBall < 2.5 && player._gkCooldown <= 0) {
+                if (distBall < 2.5 && player._gkCooldown <= 0) {
                     if (!ball.velocity) ball.velocity = new BABYLON.Vector3(0, 0, 0);
-
-                    // Dégagement vers l'avant (côté adversaire), léger angle latéral
-                    const clearSide  = ball.position.z >= 0 ? 1 : -1;
-                    const clearForce = 16 + Math.random() * 4;
-                    ball.velocity.x  = side * clearForce * 0.7;
-                    ball.velocity.z  = clearSide * clearForce * 0.6;
-
-                    player._gkCooldown = 1.7;
+                    const clearZ     = ball.position.z >= 0 ? 1 : -1;
+                    const clearForce = 14 + Math.random() * 6;
+                    ball.velocity.x  = side * clearForce * 0.5;
+                    ball.velocity.z  = clearZ * clearForce * 0.85;
+                    player._gkCooldown = 1.5;
                 }
-
-                // Déplacement animé du gardien vers sa cible
-                this._moveTowards(player, gkTarget, this.speed * 0.9);
                 return;
             }
 
