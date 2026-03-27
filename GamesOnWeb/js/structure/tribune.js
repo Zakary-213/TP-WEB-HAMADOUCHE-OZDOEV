@@ -17,6 +17,12 @@ class Tribune {
 
         this.initMaterials();
         this.calculateDimensions();
+
+        // Foule (Thin Instances)
+        this.crowd = new StadiumCrowd(scene);
+        this._crowdSeed = 0;
+        // Densité par défaut (adaptée par les sous-classes selon le tour)
+        this.crowdDensity = 1.0;
     }
 
     calculateDimensions() {
@@ -79,6 +85,9 @@ class Tribune {
         const numSections = 5;
         const sectionLength = (length - (numSections - 1) * aisleWidth) / numSections;
 
+        // Positions collectées pour la foule
+        const rowInfos = [];
+
         for (let t = 0; t < this.numTiers; t++) {
             const tierBaseY = t * (this.rowsPerTier * this.rowHeight + this.tierGapHeight);
             const tierBaseZ = t * (this.rowsPerTier * this.rowDepth + this.tierGapDepth);
@@ -108,6 +117,7 @@ class Tribune {
                 }
                 const y = tierBaseY + r * this.rowHeight + this.rowHeight / 2;
                 const z = tierBaseZ + r * this.rowDepth + this.rowDepth / 2;
+                rowInfos.push({ y, z });  // pour la foule
 
                 for (let s = 0; s < numSections; s++) {
                     const box = BABYLON.MeshBuilder.CreateBox(`${name}_t${t}_r${r}_s${s}`, {
@@ -149,6 +159,22 @@ class Tribune {
             roof.position = new BABYLON.Vector3(0, this.roofHeight, this.standDepth / 2 - 5);
             roof.parent = standGroup;
         }
+
+        // Supporters (Thin Instances) — couleur liée à l'équipe de la tribune
+        const RGB = {
+            blue:  [0.1, 0.3, 1.0],
+            red:   [1.0, 0.1, 0.1],
+            white: [0.9, 0.9, 0.9],
+            gold:  [1.0, 0.82, 0.1]
+        };
+        this.crowd.addCrowdToStand(
+            standGroup,
+            length,
+            RGB[teamColor] || RGB.blue,
+            rowInfos,
+            this._crowdSeed++ * 1.5,
+            this.crowdDensity
+        );
 
         return standGroup;
     }

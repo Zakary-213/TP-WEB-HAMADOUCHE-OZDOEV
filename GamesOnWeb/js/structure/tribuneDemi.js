@@ -1,6 +1,8 @@
 class TribuneDemi extends Tribune {
     constructor(scene) {
         super(scene);
+        // Demi : encore un peu plus remplie que le quart
+        this.crowdDensity = 0.8;
         // Vous pouvez par exemple changer le nombre d'étages ou la taille pour la demi-finale si vous le souhaitez:
         // this.numTiers = 2; // Demi finale plus petite par exemple
         // this.calculateDimensions(); // recalculer les dimensions si on change un paramètre
@@ -50,8 +52,11 @@ class TribuneDemi extends Tribune {
         trussEW2.material = this.trussMaterial;
         trussEW2.parent = this.stadiumRoot;
 
-        // Animation LED toujours présente
+        // Animation LED toujours présente + foule animée
         this.startLEDAnimation();
+        if (this.crowd && typeof this.crowd.startAnimation === "function") {
+            this.crowd.startAnimation();
+        }
 
         return this.stadiumRoot;
     }

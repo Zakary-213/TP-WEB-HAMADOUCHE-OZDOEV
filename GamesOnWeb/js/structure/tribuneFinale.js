@@ -2,6 +2,9 @@ class TribuneFinale extends Tribune {
     constructor(scene) {
         super(scene);
 
+		// Finale : stade plein
+		this.crowdDensity = 1.0;
+
         // Finale : grande arène fermée, plus imposante que tous les autres tours
         this.numTiers = 4;        // Plus de niveaux que la demi
         this.rowsPerTier = 14;    // Beaucoup de rangées pour un "mur" de supporters
@@ -50,9 +53,12 @@ class TribuneFinale extends Tribune {
             haloMat.emissiveColor = new BABYLON.Color3(1.0 * pulse, 0.9 * pulse, 0.5 * pulse);
         });
 
-        // --- 3. ANIMATIONS LED SUR LES BANDES PUB ---
+        // --- 3. ANIMATIONS LED SUR LES BANDES PUB + FOULE ---
         if (typeof this.startLEDAnimation === "function") {
             this.startLEDAnimation();
+        }
+        if (this.crowd && typeof this.crowd.startAnimation === "function") {
+            this.crowd.startAnimation();
         }
 
         return this.stadiumRoot;

@@ -102,7 +102,7 @@ const createScene = function () {
     createEnvironment(scene); // Defined in js/structure/environnement.js
 
     // --- TOURNAMENT STATE ---
-    let tournamentStage = "huitieme";
+    let tournamentStage = "finale";
 
     // --- Structure ---
 
