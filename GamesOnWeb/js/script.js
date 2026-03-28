@@ -192,6 +192,7 @@ const createScene = function () {
     const HALF_TIME_SECONDS = 30;
     const HALF_TIME_PAUSE_SECONDS = 10;
 
+
     let gameplayPaused = false;
     let preMatchIntroPlaying = true;
 
@@ -199,10 +200,50 @@ const createScene = function () {
         gameplayPaused = !!v;
     };
 
+    const resetTeamStamina = (team) => {
+        if (!team || !team.players) return;
+        team.players.forEach(p => {
+            if (!p) return;
+            const max = p.maxStamina || 1;
+            p.stamina = max;
+        });
+    };
+
     let matchFlow = null;
 
     // Cameras Setup (TPS et FPS gérées dans cameras.js)
     const cameras = setupCameras(scene, canvas, activePlayer);
+
+    const goalReplay = window.createGoalReplayController({
+        scene,
+        ball,
+        myTeam,
+        opponentTeam,
+        cameras,
+        maxReplayTimeMs: 5000,
+        replayFrameStepMs: 1000 / 60,
+        onReplayEnd: ({ playerScored, aiScored }) => {
+            scene.stopAnimation(ball);
+            ball.position = new BABYLON.Vector3(0, 0.65, 0);
+            ball.rotation = new BABYLON.Vector3(0, 0, 0);
+
+            if (ball.velocity) {
+                ball.velocity.set(0, 0, 0);
+            }
+
+            if (playerScored) {
+                window.gameScoreboard.playerScored();
+            } else if (aiScored) {
+                window.gameScoreboard.aiScored();
+            }
+
+            if (myTeam && myTeam.resetPositions) myTeam.resetPositions();
+            if (opponentTeam && opponentTeam.resetPositions) opponentTeam.resetPositions();
+
+            resetTeamStamina(myTeam);
+            resetTeamStamina(opponentTeam);
+        }
+    });
 
     // Branche la gestion mi-temps / fin du match (affichage + pause/reprise)
     if (window.createMatchFlow) {
@@ -328,6 +369,16 @@ const createScene = function () {
     scene.onBeforeRenderObservable.add(()=>{
         if (preMatchIntroPlaying || gameplayPaused) {
             // On fige le gameplay à la mi-temps (10 secondes)
+            return;
+        }
+
+        const now = performance.now();
+        goalReplay.captureFrame(now);
+
+        if (goalReplay.update(now)) {
+            // Pendant l'intro replay et le replay lui-meme, on masque la jauge de tir.
+            hideKickGauge(kickGauge);
+            if (selectionIndicator) selectionIndicator.setEnabled(false);
             return;
         }
 
@@ -702,41 +753,8 @@ const createScene = function () {
                 aiScored = leftGoal.triggerBox.intersectsPoint(ballCenter);
             }
 
-            if (playerScored || aiScored) {
-                // Stopper l'animation physique (si le ballon vole)
-                scene.stopAnimation(ball);
-                
-                // Remettre la balle au centre
-                ball.position = new BABYLON.Vector3(0, 0.65, 0);
-                ball.rotation = new BABYLON.Vector3(0, 0, 0);
-
-                if (ball.velocity) {
-                    ball.velocity.set(0, 0, 0);
-                }
-
-                // Mise à jour du score en fonction de qui a marqué
-                if (playerScored) {
-                    window.gameScoreboard.playerScored();
-                } else if (aiScored) {
-                    window.gameScoreboard.aiScored();
-                }
-
-                // Replacer tous les joueurs à leur position de départ
-                if (myTeam && myTeam.resetPositions) myTeam.resetPositions();
-                if (opponentTeam && opponentTeam.resetPositions) opponentTeam.resetPositions();
-
-                // Reset de l'endurance pour tous les joueurs après un but
-                const resetTeamStamina = (team) => {
-                    if (!team || !team.players) return;
-                    team.players.forEach(p => {
-                        if (!p) return;
-                        const max = p.maxStamina || 1;
-                        p.stamina = max;
-                    });
-                };
-
-                resetTeamStamina(myTeam);
-                resetTeamStamina(opponentTeam);
+            if ((playerScored || aiScored) && goalReplay.isPlaying()) {
+                goalReplay.triggerGoal({ playerScored, aiScored });
             }
         }
 
@@ -782,6 +800,11 @@ const createScene = function () {
     }
 
     scene.onBeforeRenderObservable.add(() => {
+        if (!goalReplay.isPlaying()) {
+            // Le chrono est gelé pendant le replay du but.
+            return;
+        }
+
         const deltaSeconds = scene.getEngine().getDeltaTime() / 1000;
         window.gameScoreboard.updateTimer(deltaSeconds);
 

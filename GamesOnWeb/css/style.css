@@ -392,15 +392,15 @@ body {
 }
 
 #pre-match-tournament-overlay.pre-match-tournament--show .pre-match-tournament-head {
-    animation: preMatchRevealShowup 3.6s ease-out both;
+    animation: preMatchRevealShowup var(--pre-match-text-duration, 3.6s) ease-out both;
 }
 
 #pre-match-tournament-overlay.pre-match-tournament--show .pre-match-tournament-tail {
-    animation: preMatchReveal 3.6s ease-out both;
+    animation: preMatchReveal var(--pre-match-text-duration, 3.6s) ease-out both;
 }
 
 #pre-match-tournament-overlay.pre-match-tournament--show .pre-match-tournament-tail span {
-    animation: preMatchSlideIn 3.6s ease-out both;
+    animation: preMatchSlideIn var(--pre-match-text-duration, 3.6s) ease-out both;
 }
 
 @keyframes preMatchRevealShowup {
@@ -438,4 +438,39 @@ body {
 #pre-match-tournament-overlay.pre-match-tournament--hide .pre-match-tournament-head,
 #pre-match-tournament-overlay.pre-match-tournament--hide .pre-match-tournament-tail {
     opacity: 0;
+}
+
+/* -- BOUTON SKIP REPLAY -- */
+#replay-skip-btn {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 40;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    background: rgba(9, 16, 28, 0.86);
+    color: #ffffff;
+    font-family: "Montserrat", "Segoe UI", sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(10px);
+    transition: opacity 0.18s ease, transform 0.18s ease, background 0.18s ease;
+}
+
+#replay-skip-btn:hover {
+    background: rgba(18, 28, 46, 0.92);
+}
+
+#replay-skip-btn.replay-skip-btn--show {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
 }
