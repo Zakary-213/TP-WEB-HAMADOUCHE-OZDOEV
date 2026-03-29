@@ -189,7 +189,7 @@ const createScene = function () {
 
     // Mi-temps / fin de match (piloté par js/ui/matchFlow.js)
     // Mi-temps réglée à 30 secondes.
-    const HALF_TIME_SECONDS = 30;
+    const HALF_TIME_SECONDS = 11111111111111111111130;
     const HALF_TIME_PAUSE_SECONDS = 10;
 
     let gameplayPaused = false;
@@ -745,7 +745,7 @@ const createScene = function () {
 
 
     // --- UI Update (Chronomètre) ---
-    const ENABLE_PRE_MATCH_INTRO = true;
+    const ENABLE_PRE_MATCH_INTRO = false;
     const PRE_MATCH_INTRO_DURATION_MS = 10000;
     const PRE_MATCH_INTRO_TURNS = 1; // 0.5 tour = 180°
     const TOURNAMENT_INTRO_LABEL_BY_STAGE = {

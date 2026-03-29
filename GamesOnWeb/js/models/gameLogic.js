@@ -313,12 +313,12 @@ function computeKickPower(gauge){
     const value = gauge.currentValue;
 
     if(value < 0.33)
-        return 30; // vert
+        return 15; // vert
 
     if(value < 0.66)
-        return 45; // orange
+        return 30; // orange
 
-    return 60; // rouge
+    return 45; // rouge
 }
 
 function hideKickGauge(gauge){
