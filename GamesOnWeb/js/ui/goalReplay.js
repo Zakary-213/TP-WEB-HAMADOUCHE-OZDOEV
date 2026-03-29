@@ -498,6 +498,8 @@
             pendingGoalReset = payload;
             setSkipButtonVisible(true);
 
+            window.dispatchEvent(new CustomEvent("match:goal"));
+
             if (window.matchAudio && typeof window.matchAudio.playGoalLoop === "function") {
                 window.matchAudio.playGoalLoop();
             }

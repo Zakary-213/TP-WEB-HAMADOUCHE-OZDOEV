@@ -1,32 +1,6 @@
 const canvas = document.getElementById("renderCanvas");
 const engine = new BABYLON.Engine(canvas, true);
 
-function animateCameraSwitch(scene, cameras, fromPlayer, toPlayer, duration = 180) {
-    if (!fromPlayer || !toPlayer || !cameras?.cameraTargetNode) return;
-
-    const start = cameras.cameraTargetNode.position.clone();
-    const end = toPlayer.position.clone();
-
-    const startTime = performance.now();
-
-    const observer = scene.onBeforeRenderObservable.add(() => {
-        const elapsed = performance.now() - startTime;
-        let t = elapsed / duration;
-
-        if (t >= 1) t = 1;
-
-        // easing smooth
-        const eased = t * t * (3 - 2 * t);
-
-        cameras.cameraTargetNode.position = BABYLON.Vector3.Lerp(start, end, eased);
-
-        if (t === 1) {
-            scene.onBeforeRenderObservable.remove(observer);
-            cameras.cameraTargetNode.position.copyFrom(toPlayer.position);
-        }
-    });
-}
-
 // Crée un indicateur visuel (petite flèche) au-dessus d'un joueur sélectionné
 function createSelectionIndicator(scene, playerNode) {
         const root = new BABYLON.TransformNode("selectionIndicatorRoot", scene);
@@ -198,7 +172,7 @@ const createScene = function () {
 
     // Mi-temps / fin de match (piloté par js/ui/matchFlow.js)
     // Mi-temps réglée à 30 secondes.
-    const HALF_TIME_SECONDS = 10;
+    const HALF_TIME_SECONDS = 30;
     const HALF_TIME_PAUSE_SECONDS = 2;
 
 
@@ -222,6 +196,9 @@ const createScene = function () {
 
     // Cameras Setup (TPS et FPS gérées dans cameras.js)
     const cameras = setupCameras(scene, canvas, activePlayer);
+    const cameraRuntime = (window.createCameraRuntimeController && typeof window.createCameraRuntimeController === "function")
+        ? window.createCameraRuntimeController({ scene, cameras, myTeam, selectionIndicator, ball })
+        : null;
 
     const goalReplay = window.createGoalReplayController({
         scene,
@@ -325,9 +302,13 @@ const createScene = function () {
         if(e.key==="c" || e.key==="C"){
             // Laisse cameras.js faire le switch TPS / FPV,
             // puis aligne une seule fois la caméra sur la direction du joueur
-            setTimeout(() => {
-                cameras.alignFpvToDirection(activePlayer.facingDirection);
-            }, 0);
+            if (cameraRuntime && typeof cameraRuntime.handleCameraToggle === "function") {
+                cameraRuntime.handleCameraToggle(activePlayer);
+            } else {
+                setTimeout(() => {
+                    cameras.alignFpvToDirection(activePlayer.facingDirection);
+                }, 0);
+            }
         }
 
         tackleController.handleKeyDown(e, {
@@ -395,18 +376,6 @@ const createScene = function () {
             return;
         }
 
-        if (
-            (scene.activeCamera === cameras.tpsCamera || scene.activeCamera === cameras.broadcastCamera) &&
-            activePlayer
-        ) {
-            // suit doucement le joueur actif même hors switch
-            cameras.cameraTargetNode.position = BABYLON.Vector3.Lerp(
-                cameras.cameraTargetNode.position,
-                activePlayer.position,
-                0.12
-            );
-        }
-
         if (!isRestartWaitingKick()) {
             myTeam.autoSwitch(ball, cameras);
         }
@@ -433,26 +402,27 @@ const createScene = function () {
 
         updateAIRestart(ball);
 
-        myTeam.players.forEach(player => {
-            player.isInFpv = false;
-        });
+        if (cameraRuntime && typeof cameraRuntime.update === "function") {
+            cameraRuntime.update(activePlayer, ball, playerMoveVelocity, gameplayPaused);
+        } else {
+            myTeam.players.forEach(player => {
+                player.isInFpv = false;
+            });
 
-        if (scene.activeCamera === cameras.fpvCamera) {
-            activePlayer.isInFpv = true;
-        }
+            if (scene.activeCamera === cameras.fpvCamera) {
+                activePlayer.isInFpv = true;
+            }
 
-        // Affiche la flèche uniquement en vues TPS / broadcast (R),
-        // on la masque en vue FPS (C)
-        if (selectionIndicator) {
-            const showIndicator = scene.activeCamera !== cameras.fpvCamera;
-            selectionIndicator.setEnabled(showIndicator);
+            if (selectionIndicator) {
+                const showIndicator = scene.activeCamera !== cameras.fpvCamera;
+                selectionIndicator.setEnabled(showIndicator);
 
-            // Utilise la hauteur de la flèche comme jauge d'endurance
-            const staminaForIndicator = activePlayer.stamina ?? 1;
-            const minScale = 0.25;
-            const maxScale = 1.0;
-            const s = minScale + (maxScale - minScale) * staminaForIndicator;
-            selectionIndicator.scaling.y = s;
+                const staminaForIndicator = activePlayer.stamina ?? 1;
+                const minScale = 0.25;
+                const maxScale = 1.0;
+                const s = minScale + (maxScale - minScale) * staminaForIndicator;
+                selectionIndicator.scaling.y = s;
+            }
         }
 
         myTeam.update(ball);
@@ -500,37 +470,10 @@ const createScene = function () {
         let moveX = 0;
         let moveZ = 0;
 
-        // TPS + Broadcast : déplacement en axes fixes du terrain
-        if (scene.activeCamera === cameras.tpsCamera || scene.activeCamera === cameras.broadcastCamera) {
-            if(input.forward) moveX += 1;
-            if(input.backward) moveX -= 1;
-            if(input.left) moveZ += 1;
-            if(input.right) moveZ -= 1;
-        }
-        // FPV : déplacement relatif à la direction de la caméra
-        else if (scene.activeCamera === cameras.fpvCamera) {
-
-            // Direction "avant" de la caméra projetée sur le sol
-            const forward = cameras.fpvCamera.getForwardRay().direction.clone();
-            forward.y = 0;
-            forward.normalize();
-
-            // Direction "droite" de la caméra projetée sur le sol
-            const right = new BABYLON.Vector3(forward.z, 0, -forward.x);
-
-            let moveVector = BABYLON.Vector3.Zero();
-
-            if(input.forward) moveVector.addInPlace(forward);       // Z = avance
-            if(input.backward) moveVector.subtractInPlace(forward); // S = recule
-            if(input.right) moveVector.addInPlace(right);           // D = droite
-            if(input.left) moveVector.subtractInPlace(right);       // Q = gauche
-
-            // On convertit le vecteur final en moveX / moveZ pour réutiliser activePlayer.move()
-            if (moveVector.lengthSquared() > 0) {
-                moveVector.normalize();
-                moveX = moveVector.x;
-                moveZ = moveVector.z;
-            }
+        if (cameraRuntime && typeof cameraRuntime.computeMoveAxes === "function") {
+            const move = cameraRuntime.computeMoveAxes(input);
+            moveX = move.moveX;
+            moveZ = move.moveZ;
         }
 
         // Déplacement normal / tacle glissé avec gestion du sprint / endurance
@@ -799,11 +742,15 @@ const createScene = function () {
             toRadius: 100,
             onComplete: () => {
                 // On recolle le pivot caméra sur le joueur actif
-                if (cameras?.cameraTargetNode && activePlayer?.position) {
+                if (cameraRuntime && typeof cameraRuntime.syncTargetToActivePlayer === "function") {
+                    cameraRuntime.syncTargetToActivePlayer(activePlayer);
+                } else if (cameras?.cameraTargetNode && activePlayer?.position) {
                     cameras.cameraTargetNode.position.copyFrom(activePlayer.position);
                 }
 
                 preMatchIntroPlaying = false;
+                if (cameras) cameras.allowManualSwitch = true;
+                
                 if (window.matchAudio && typeof window.matchAudio.playWhistle === "function") {
                     window.matchAudio.playWhistle();
                 }
@@ -812,6 +759,8 @@ const createScene = function () {
         });
     } else {
         preMatchIntroPlaying = false;
+        if (cameras) cameras.allowManualSwitch = true;
+        
         if (window.matchAudio && typeof window.matchAudio.playWhistle === "function") {
             window.matchAudio.playWhistle();
         }
