@@ -267,6 +267,10 @@
                 window.hideTournamentOverlayBanner();
             }
 
+            if (window.matchAudio && typeof window.matchAudio.stopGoal === "function") {
+                window.matchAudio.stopGoal();
+            }
+
             if (typeof onReplayEnd === "function") {
                 onReplayEnd(result);
             }
@@ -493,6 +497,10 @@
 
             pendingGoalReset = payload;
             setSkipButtonVisible(true);
+
+            if (window.matchAudio && typeof window.matchAudio.playGoalLoop === "function") {
+                window.matchAudio.playGoalLoop();
+            }
 
             if (typeof window.showTournamentOverlayBanner === "function") {
                 gameState = "replayBanner";

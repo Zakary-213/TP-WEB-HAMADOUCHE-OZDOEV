@@ -96,6 +96,7 @@ const createScene = function () {
         window.matchAudio.init(scene, {
             whistleUrl: "./assets/Sifflet.mp3",
             kickUrl: "./assets/Kick.mp3",
+            goalUrl: "./assets/Goal.mp3",
             debug: true
         });
     }

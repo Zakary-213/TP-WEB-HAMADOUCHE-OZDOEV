@@ -12,14 +12,22 @@
         kickSound: null,
         kickHtmlAudio: null,
         kickBlobUrl: null,
+        goalData: null,
+        goalSound: null,
+        goalHtmlAudio: null,
+        goalBlobUrl: null,
         isLoaded: false,
         isLoading: false,
         pendingPlay: false,
         kickLoaded: false,
         kickLoading: false,
         pendingKickPlay: false,
+        goalLoaded: false,
+        goalLoading: false,
+        pendingGoalPlay: false,
         whistleUrl: "./assets/Sifflet.mp3",
         kickUrl: "./assets/Kick.mp3",
+        goalUrl: "./assets/Goal.mp3",
         debug: false,
         unlockHandlersInstalled: false,
         htmlAudioPrimed: false
@@ -75,6 +83,23 @@
         ]);
     }
 
+    function buildGoalCandidates(config) {
+        const preferred = (config && typeof config.goalUrl === "string")
+            ? config.goalUrl
+            : state.goalUrl;
+
+        return uniqueUrls([
+            preferred,
+            "./assets/Goal.mp3",
+            "assets/Goal.mp3",
+            "../assets/Goal.mp3",
+            "../../assets/Goal.mp3",
+            "/assets/Goal.mp3",
+            "/TP-WEB/GamesOnWeb/assets/Goal.mp3",
+            "/TP-WEB/assets/Goal.mp3"
+        ]);
+    }
+
     function log() {
         if (!state.debug) return;
         const args = Array.prototype.slice.call(arguments);
@@ -122,6 +147,24 @@
         }
     }
 
+    function disposeGoalSound() {
+        if (state.goalSound) {
+            state.goalSound.dispose();
+            state.goalSound = null;
+        }
+
+        if (state.goalHtmlAudio) {
+            state.goalHtmlAudio.pause();
+            state.goalHtmlAudio.src = "";
+            state.goalHtmlAudio = null;
+        }
+
+        if (state.goalBlobUrl) {
+            URL.revokeObjectURL(state.goalBlobUrl);
+            state.goalBlobUrl = null;
+        }
+    }
+
     function buildHtmlAudioFallback() {
         const src = state.whistleBlobUrl || state.whistleUrl;
         if (!src) return;
@@ -144,6 +187,19 @@
         audio.load();
         state.kickHtmlAudio = audio;
         log("Kick HTMLAudio fallback ready", { src });
+    }
+
+    function buildGoalHtmlAudioFallback() {
+        const src = state.goalBlobUrl || state.goalUrl;
+        if (!src) return;
+
+        const audio = new Audio(src);
+        audio.preload = "auto";
+        audio.volume = 0.8;
+        audio.loop = true;
+        audio.load();
+        state.goalHtmlAudio = audio;
+        log("Goal HTMLAudio fallback ready", { src });
     }
 
     function primeSingleHtmlAudio(audio, label) {
@@ -182,6 +238,7 @@
 
         primeSingleHtmlAudio(state.whistleHtmlAudio, "whistle");
         primeSingleHtmlAudio(state.kickHtmlAudio, "kick");
+        primeSingleHtmlAudio(state.goalHtmlAudio, "goal");
     }
 
     function buildWhistleSound() {
@@ -270,6 +327,50 @@
             }
         );
         buildKickHtmlAudioFallback();
+    }
+
+    function buildGoalSound() {
+        if (!state.scene || !state.goalData) return;
+
+        disposeGoalSound();
+
+        const goalBlob = new Blob([state.goalData], { type: "audio/mpeg" });
+        state.goalBlobUrl = URL.createObjectURL(goalBlob);
+        buildGoalHtmlAudioFallback();
+
+        try {
+            state.goalSound = new BABYLON.Sound(
+                "matchGoal",
+                state.goalBlobUrl,
+                state.scene,
+                function () {
+                    log("Goal sound ready from blob URL");
+                },
+                {
+                    autoplay: false,
+                    loop: true,
+                    volume: 0.8
+                }
+            );
+            return;
+        } catch (e) {
+            warn("Goal blob sound creation failed, fallback to direct URL", e);
+        }
+
+        state.goalSound = new BABYLON.Sound(
+            "matchGoal",
+            state.goalUrl,
+            state.scene,
+            function () {
+                log("Goal sound ready from direct URL");
+            },
+            {
+                autoplay: false,
+                loop: true,
+                volume: 0.8
+            }
+        );
+        buildGoalHtmlAudioFallback();
     }
 
     function resumeAudioContextIfNeeded() {
@@ -368,6 +469,50 @@
         return true;
     }
 
+    function playGoalWithHtmlAudio() {
+        if (!state.goalHtmlAudio) {
+            buildGoalHtmlAudioFallback();
+        }
+
+        if (!state.goalHtmlAudio) {
+            warn("Goal HTMLAudio fallback unavailable");
+            return false;
+        }
+
+        try {
+            state.goalHtmlAudio.pause();
+            state.goalHtmlAudio.currentTime = 0;
+            state.goalHtmlAudio.loop = true;
+        } catch (e) {
+            log("Goal HTMLAudio reset skipped", e);
+        }
+
+        const playPromise = state.goalHtmlAudio.play();
+        if (playPromise && typeof playPromise.then === "function") {
+            playPromise
+                .then(function () {
+                    log("Goal played with HTMLAudio fallback");
+                })
+                .catch(function (err) {
+                    warn("Goal HTMLAudio play failed", err);
+                });
+        } else {
+            log("Goal played with HTMLAudio fallback");
+        }
+
+        return true;
+    }
+
+    function stopGoalWithHtmlAudio() {
+        if (!state.goalHtmlAudio) return;
+        try {
+            state.goalHtmlAudio.pause();
+            state.goalHtmlAudio.currentTime = 0;
+        } catch (e) {
+            log("Goal HTMLAudio stop skipped", e);
+        }
+    }
+
     function installAudioUnlockHandlers() {
         if (state.unlockHandlersInstalled) return;
         state.unlockHandlersInstalled = true;
@@ -462,26 +607,81 @@
         return true;
     }
 
+    function playGoalLoop() {
+        if (!state.scene) return false;
+
+        log("playGoalLoop called", {
+            goalLoaded: state.goalLoaded,
+            goalLoading: state.goalLoading,
+            hasGoalSound: !!state.goalSound,
+            hasGoalHtmlAudio: !!state.goalHtmlAudio,
+            pendingGoalPlay: state.pendingGoalPlay
+        });
+
+        resumeAudioContextIfNeeded();
+
+        if (!state.goalLoaded) {
+            state.pendingGoalPlay = true;
+            log("Goal not loaded yet, pendingGoalPlay=true");
+            return false;
+        }
+
+        if (!state.goalSound) {
+            buildGoalSound();
+        }
+
+        const audioContext = BABYLON.Engine.audioEngine && BABYLON.Engine.audioEngine.audioContext;
+        const canUseBabylonSound = !!(audioContext && state.goalSound);
+
+        if (!canUseBabylonSound) {
+            log("Using Goal HTMLAudio fallback because Babylon AudioContext is unavailable");
+            return playGoalWithHtmlAudio();
+        }
+
+        if (state.goalSound.isPlaying) {
+            state.goalSound.stop();
+        }
+
+        state.goalSound.play();
+        log("Goal loop play requested");
+        return true;
+    }
+
+    function stopGoal() {
+        if (state.goalSound && state.goalSound.isPlaying) {
+            state.goalSound.stop();
+        }
+        stopGoalWithHtmlAudio();
+        log("Goal loop stopped");
+    }
+
     function init(scene, options) {
         if (!scene || state.isLoading || state.isLoaded) return;
 
         const config = options || {};
         const whistleCandidates = buildWhistleCandidates(config);
         const kickCandidates = buildKickCandidates(config);
+        const goalCandidates = buildGoalCandidates(config);
         if (whistleCandidates.length > 0) {
             state.whistleUrl = whistleCandidates[0];
         }
         if (kickCandidates.length > 0) {
             state.kickUrl = kickCandidates[0];
         }
+        if (goalCandidates.length > 0) {
+            state.goalUrl = goalCandidates[0];
+        }
         state.debug = !!config.debug;
         state.kickLoading = true;
+        state.goalLoading = true;
 
         log("init called", {
             whistleUrl: state.whistleUrl,
             whistleCandidates,
             kickUrl: state.kickUrl,
             kickCandidates,
+            goalUrl: state.goalUrl,
+            goalCandidates,
             debug: state.debug
         });
 
@@ -596,15 +796,72 @@
             kickAssetsManager.load();
         }
 
+        function tryLoadGoalCandidate(index) {
+            if (index >= goalCandidates.length) {
+                state.goalLoading = false;
+                warn("Impossible de charger le son de goal: aucun chemin valide", goalCandidates);
+                return;
+            }
+
+            const candidateUrl = goalCandidates[index];
+            state.goalUrl = candidateUrl;
+            const goalAssetsManager = new BABYLON.AssetsManager(scene);
+
+            const goalTask = goalAssetsManager.addBinaryFileTask("goalSoundTask", candidateUrl);
+            log("Goal task created", { candidateUrl, attempt: index + 1 });
+
+            goalTask.onSuccess = function (task) {
+                state.goalData = task.data;
+                state.goalLoaded = true;
+                state.goalLoading = false;
+                log("Goal binary loaded", {
+                    candidateUrl,
+                    bytes: state.goalData ? state.goalData.byteLength : 0
+                });
+                buildGoalSound();
+
+                if (state.pendingGoalPlay) {
+                    state.pendingGoalPlay = false;
+                    log("Running deferred goal play");
+                    playGoalLoop();
+                }
+            };
+
+            goalTask.onError = function (task, message, exception) {
+                warn("Chargement goal échoué", {
+                    candidateUrl,
+                    message,
+                    exception,
+                    task
+                });
+                tryLoadGoalCandidate(index + 1);
+            };
+
+            goalAssetsManager.onFinish = function () {
+                log("Goal assets load finished", { candidateUrl });
+            };
+
+            goalAssetsManager.onTaskErrorObservable.add(function (task) {
+                warn("Goal task error", task && task.name, candidateUrl);
+            });
+
+            log("Goal assets load start", { candidateUrl });
+            goalAssetsManager.load();
+        }
+
         tryLoadCandidate(0);
         tryLoadKickCandidate(0);
+        tryLoadGoalCandidate(0);
     }
 
     window.matchAudio = {
         init,
         playWhistle,
         playKick,
+        playGoalLoop,
+        stopGoal,
         debugPlayWhistle: playWhistle,
-        debugPlayKick: playKick
+        debugPlayKick: playKick,
+        debugPlayGoal: playGoalLoop
     };
 })();
