@@ -164,6 +164,10 @@ function kick(scene, ball, player, lastDirection, force, team) {
             ball.position.z += dirNorm.z * 1.2;
 
             ball.velocity = dirNorm.scale(speed);
+
+            if (window.matchAudio && typeof window.matchAudio.playKick === "function") {
+                window.matchAudio.playKick();
+            }
         }, 200);
 
     } else {
@@ -179,6 +183,10 @@ function kick(scene, ball, player, lastDirection, force, team) {
         ball.position.z += dirNorm.z * 1.2;
 
         ball.velocity = dirNorm.scale(speed);
+
+        if (window.matchAudio && typeof window.matchAudio.playKick === "function") {
+            window.matchAudio.playKick();
+        }
     }
 }
 

@@ -456,6 +456,10 @@ function takeRestartKick(ball, direction, gaugeForce) {
 
     ball.velocity = cleanDir.scale(force);
 
+    if (window.matchAudio && typeof window.matchAudio.playKick === "function") {
+        window.matchAudio.playKick();
+    }
+
     endRestart(ball);
 }
 

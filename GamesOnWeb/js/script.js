@@ -92,6 +92,14 @@ const createScene = function () {
 
     const scene = new BABYLON.Scene(engine);
 
+    if (window.matchAudio && typeof window.matchAudio.init === "function") {
+        window.matchAudio.init(scene, {
+            whistleUrl: "./assets/Sifflet.mp3",
+            kickUrl: "./assets/Kick.mp3",
+            debug: true
+        });
+    }
+
     scene.collisionsEnabled = true;
 
     // Light (ambiance plus douce)
@@ -189,8 +197,8 @@ const createScene = function () {
 
     // Mi-temps / fin de match (piloté par js/ui/matchFlow.js)
     // Mi-temps réglée à 30 secondes.
-    const HALF_TIME_SECONDS = 30;
-    const HALF_TIME_PAUSE_SECONDS = 10;
+    const HALF_TIME_SECONDS = 10;
+    const HALF_TIME_PAUSE_SECONDS = 2;
 
 
     let gameplayPaused = false;
@@ -242,6 +250,10 @@ const createScene = function () {
 
             resetTeamStamina(myTeam);
             resetTeamStamina(opponentTeam);
+
+            if (window.matchAudio && typeof window.matchAudio.playWhistle === "function") {
+                window.matchAudio.playWhistle();
+            }
         }
     });
 
@@ -791,11 +803,17 @@ const createScene = function () {
                 }
 
                 preMatchIntroPlaying = false;
+                if (window.matchAudio && typeof window.matchAudio.playWhistle === "function") {
+                    window.matchAudio.playWhistle();
+                }
                 window.gameScoreboard.startTimer();
             }
         });
     } else {
         preMatchIntroPlaying = false;
+        if (window.matchAudio && typeof window.matchAudio.playWhistle === "function") {
+            window.matchAudio.playWhistle();
+        }
         window.gameScoreboard.startTimer();
     }
 

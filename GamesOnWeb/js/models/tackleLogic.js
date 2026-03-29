@@ -147,6 +147,10 @@ class TackleController {
                 ball.position.z = this.tacklePlayer.position.z + carryDir.z * 1.4;
                 ball.velocity.x = carryDir.x * 10.5;
                 ball.velocity.z = carryDir.z * 10.5;
+
+                if (window.matchAudio && typeof window.matchAudio.playKick === "function") {
+                    window.matchAudio.playKick();
+                }
             }
         }
     }

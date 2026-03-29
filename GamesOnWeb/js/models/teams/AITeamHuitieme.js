@@ -74,6 +74,9 @@ class AITeamHuitieme extends AITeam {
                     const clearForce = 14 + Math.random() * 6;
                     ball.velocity.x  = side * clearForce * 0.5;
                     ball.velocity.z  = clearZ * clearForce * 0.85;
+                    if (window.matchAudio && typeof window.matchAudio.playKick === "function") {
+                        window.matchAudio.playKick();
+                    }
                     player._gkCooldown = 1.5;
                 }
                 return;
@@ -180,6 +183,10 @@ class AITeamHuitieme extends AITeam {
                     ball.velocity.x *= 2.5;
                     ball.velocity.z *= 1.8;
                     this._shootCooldown = this.shootInterval;
+                }
+
+                if (window.matchAudio && typeof window.matchAudio.playKick === "function") {
+                    window.matchAudio.playKick();
                 }
 
                 player._pushCooldown = 1.8; // Plus long = moins de pivots, mouvement plus fluide

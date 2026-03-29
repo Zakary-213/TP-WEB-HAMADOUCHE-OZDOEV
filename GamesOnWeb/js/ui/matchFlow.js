@@ -145,6 +145,10 @@
             stage = 1;
             setGameplayPaused(true);
 
+            if (window.matchAudio && typeof window.matchAudio.playWhistle === "function") {
+                window.matchAudio.playWhistle();
+            }
+
             stopTimerAt(halfSeconds);
             hideHalftimeOverlay();
 
@@ -173,6 +177,10 @@
                 resetTeamStamina(myTeam);
                 resetTeamStamina(opponentTeam);
 
+                if (window.matchAudio && typeof window.matchAudio.playWhistle === "function") {
+                    window.matchAudio.playWhistle();
+                }
+
                 setGameplayPaused(false);
                 startTimerIfPossible();
                 hideHalftimeOverlay();
@@ -184,6 +192,10 @@
             if (stage !== 2) return;
             stage = 3;
             setGameplayPaused(true);
+
+            if (window.matchAudio && typeof window.matchAudio.playWhistle === "function") {
+                window.matchAudio.playWhistle();
+            }
 
             stopTimerAt(halfSeconds * 2);
             hideHalftimeOverlay();
