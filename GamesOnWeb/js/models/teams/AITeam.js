@@ -6,7 +6,6 @@ class AITeam extends Team {
 
         this.ballChaser = null;
 
-        this.switchTolerance = 1.0;
         this.pressRadius = 30;
     }
 
@@ -15,6 +14,6 @@ class AITeam extends Team {
     }
 
     aiBehavior(ball) {
-        // override
+        // override dans les sous-classes
     }
 }

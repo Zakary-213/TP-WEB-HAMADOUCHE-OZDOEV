@@ -534,7 +534,7 @@ const createScene = function () {
         }
 
         // COLLISION JOUEUR HUMAIN → BALLE
-        checkBallCollision(controlledPlayer, ball, playerFacing, myTeam, playerMoveVelocity);
+        checkBallCollision(controlledPlayer, ball, playerFacing, myTeam, playerMoveVelocity, input.sprint);
 
         // Si la balle sort du terrain, on lance l'animation de chute
         if (

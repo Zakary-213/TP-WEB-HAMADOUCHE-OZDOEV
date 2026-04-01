@@ -318,7 +318,6 @@ class Team {
             return;
         }
     }
-
     
     movePlayerTowards(player, target){
 
