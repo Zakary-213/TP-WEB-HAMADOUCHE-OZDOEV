@@ -375,4 +375,77 @@ class TackleController {
             directionOpt: activePlayer.move(moveX, moveZ, normalSpeed)
         };
     }
+
+    tryAITackle(aiPlayer, ball, opponentTeam) {
+        if (Math.random() > 0.02) return;
+        const now = Date.now();
+
+        if (!aiPlayer || this.isTackling || now < this.tackleCooldownUntil) return;
+        if (!ball || !ball.position || ball.isOutAnimationPlaying || ball.isOutOfPlay) return;
+        if (!opponentTeam || !opponentTeam.players) return;
+
+        const distToBall = BABYLON.Vector3.Distance(aiPlayer.position, ball.position);
+
+        if (distToBall > this.tackleTriggerRange) return;
+
+        // trouver adversaire le + proche
+        let targetOpponent = null;
+        let bestDist = Infinity;
+
+        opponentTeam.players.forEach(op => {
+            if (!op || !op.position) return;
+
+            const d = BABYLON.Vector3.Distance(aiPlayer.position, op.position);
+            if (d < bestDist) {
+                bestDist = d;
+                targetOpponent = op;
+            }
+        });
+
+        if (!targetOpponent) return;
+        if (bestDist > this.tackleOpponentRange) return;
+
+        const opponentBallDist = BABYLON.Vector3.Distance(targetOpponent.position, ball.position);
+        if (opponentBallDist > this.playerHasBallRange) return;
+
+        // IMPORTANT → mêmes conditions que joueur
+        if (distToBall + 0.25 < opponentBallDist) return;
+
+        const toOpponent = targetOpponent.position.subtract(aiPlayer.position);
+        toOpponent.y = 0;
+
+        const opponentFacing = targetOpponent.facingDirection
+            ? targetOpponent.facingDirection.clone()
+            : null;
+
+        if (
+            opponentFacing &&
+            opponentFacing.lengthSquared() > 0.0001 &&
+            toOpponent.lengthSquared() > 0.0001
+        ) {
+            opponentFacing.y = 0;
+            opponentFacing.normalize();
+            toOpponent.normalize();
+
+            const behindDot = BABYLON.Vector3.Dot(opponentFacing, toOpponent);
+
+            if (behindDot > 0.35) return; // EXACT même règle
+        }
+
+        // direction tacle
+        const dashDir = targetOpponent.position.subtract(aiPlayer.position);
+        dashDir.y = 0;
+
+        if (dashDir.lengthSquared() < 0.0001) return;
+
+        dashDir.normalize();
+
+        this.isTackling = true;
+        this.tacklePlayer = aiPlayer;
+        this.tackleDirection.copyFrom(dashDir);
+        this.tackleEndTime = now + this.tackleDurationMs;
+        this.tackleCooldownUntil = now + this.tackleCooldownMs;
+
+        aiPlayer.isTackling = true;
+    }
 }

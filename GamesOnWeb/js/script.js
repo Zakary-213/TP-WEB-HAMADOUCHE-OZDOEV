@@ -395,6 +395,16 @@ const createScene = function () {
         // Met à jour l'IA uniquement si son comportement est implémenté pour ce stade
         if (opponentTeam && opponentTeam.aiImplemented) opponentTeam.update(ball);
 
+        opponentTeam.players.forEach(bot => {
+            if (!bot) return;
+
+            tackleController.tryAITackle(
+                bot,
+                ball,
+                myTeam // adversaire de l'IA
+            );
+        });
+
         // Applique l'etat "au sol" des joueurs tacles (stun temporaire)
         tackleController.updateStunnedPlayers(myTeam);
         tackleController.updateStunnedPlayers(opponentTeam);

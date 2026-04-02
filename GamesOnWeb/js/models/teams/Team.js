@@ -333,7 +333,7 @@ class Team {
 
         dir.normalize();
 
-        const speed = 0.1;
+        const speed = 0.07;
 
         player.move(dir.x, dir.z, speed);
     }
