@@ -535,7 +535,8 @@ const createScene = function () {
 
         // COLLISION JOUEUR HUMAIN → BALLE
         checkBallCollision(controlledPlayer, ball, playerFacing, myTeam, playerMoveVelocity, input.sprint);
-
+        tryStealBall(controlledPlayer, ball, myTeam);
+        
         // Si la balle sort du terrain, on lance l'animation de chute
         if (
             ball &&
@@ -555,10 +556,12 @@ const createScene = function () {
             opponentTeam.players.forEach(bot => {
                 if (!bot) return;
 
+                tryStealBall(bot, ball, opponentTeam);
+
                 const toBall = ball.position.subtract(bot.position);
                 if (toBall.lengthSquared() === 0) return;
 
-                const dir = toBall.normalize();
+                const dir = bot.facingDirection || ball.position.subtract(bot.position).normalize();
                 checkBallCollision(bot, ball, dir, opponentTeam);
             });
         }

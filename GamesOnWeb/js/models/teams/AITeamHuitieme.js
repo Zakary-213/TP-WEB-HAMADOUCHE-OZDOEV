@@ -118,7 +118,14 @@ class AITeamHuitieme extends AITeam {
         dir.normalize();
 
         // avancer avec la balle
-        ballCarrier.move(dir.x, dir.z, 0.1);
+        // direction normalisée
+        const moveDir = dir.normalize();
+
+        // stocke la direction pour la balle
+        ballCarrier.facingDirection = moveDir;
+
+        // mouvement
+        ballCarrier.move(moveDir.x, moveDir.z, 0.1);
 
         // -----------------------
         // SUPPORT DES AUTRES JOUEURS
