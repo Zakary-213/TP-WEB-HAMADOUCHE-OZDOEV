@@ -44,6 +44,7 @@ class Team {
         // side = 1 : équipe de gauche (regarde vers +X)
         // side = -1 : équipe de droite (regarde vers -X)
         newPlayer.side = side;
+        newPlayer.team = this;
 
         // Sauvegarde pour reset
         newPlayer.initialPosition = position.clone();
@@ -319,19 +320,21 @@ class Team {
         }
     }
     
-    movePlayerTowards(player, target){
-
+    movePlayerTowards(player, target) {
         const dir = target.subtract(player.position);
         const dist = dir.length();
 
-        if(dist < 0.15){
-            if(player.playAnimation){
+        if (dist < 0.15) {
+            if (player.playAnimation) {
                 player.playAnimation("idle");
             }
             return;
         }
 
         dir.normalize();
+
+        // IMPORTANT : on met à jour la direction de regard
+        player.facingDirection = dir.clone();
 
         const speed = 0.07;
 

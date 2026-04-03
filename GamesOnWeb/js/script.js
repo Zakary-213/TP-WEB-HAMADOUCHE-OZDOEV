@@ -570,9 +570,29 @@ const createScene = function () {
 
                 const toBall = ball.position.subtract(bot.position);
                 if (toBall.lengthSquared() === 0) return;
+                toBall.y = 0;
 
-                const dir = bot.facingDirection || ball.position.subtract(bot.position).normalize();
-                checkBallCollision(bot, ball, dir, opponentTeam);
+                let dir = null;
+
+            // Si le bot a déjà une direction de déplacement valide, on la garde en priorité
+            if (bot.facingDirection && bot.facingDirection.lengthSquared() > 0.0001) {
+                dir = bot.facingDirection.clone();
+                dir.y = 0;
+                dir.normalize();
+            } else {
+                const toBall = ball.position.subtract(bot.position);
+                toBall.y = 0;
+
+                if (toBall.lengthSquared() > 0.0001) {
+                    dir = toBall.normalize();
+                } else {
+                    dir = new BABYLON.Vector3(-1, 0, 0);
+                }
+            }
+
+            checkBallCollision(bot, ball, dir, opponentTeam);
+
+                
             });
         }
 

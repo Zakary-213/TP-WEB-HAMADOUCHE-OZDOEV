@@ -6,7 +6,7 @@ class AITeamHuitieme extends AITeam {
     aiBehavior(ball) {
         if (!ball || !ball.position) return;
 
-        const teamHasBall = this.teamHasBall(ball);
+        const teamHasBall = this.hasRealPossession(ball);
 
         if (teamHasBall) {
             this.attackBehavior(ball);
@@ -19,25 +19,92 @@ class AITeamHuitieme extends AITeam {
     // DEFENSE
     // -----------------------
     defenseBehavior(ball) {
-
         let bestPlayer = null;
         let bestScore = -Infinity;
 
-        const goalDirection = new BABYLON.Vector3(-1, 0, 0);
+        let enemyCarrier = null;
+        let targetPos = ball.position.clone();
+
+        // L'IA de droite défend le but situé vers +X
+        const defendGoalDir = new BABYLON.Vector3(1, 0, 0);
+
+        // Détecter un vrai porteur adverse
+        if (
+            ball.lastTouchTeam &&
+            ball.lastTouchTeam !== this &&
+            ball.lastKicker &&
+            ball.lastKicker.position
+        ) {
+            const carrierDistToBall = BABYLON.Vector3.Distance(
+                ball.lastKicker.position,
+                ball.position
+            );
+
+            if (carrierDistToBall < 2.2) {
+                enemyCarrier = ball.lastKicker;
+            }
+        }
+
+        // Si l'adversaire contrôle vraiment la balle,
+        // on vise un point d'interception légèrement devant lui vers notre but
+        if (enemyCarrier) {
+            targetPos = enemyCarrier.position.add(defendGoalDir.scale(1.8));
+            targetPos.y = 0;
+
+            // on garde le même couloir latéral que le porteur
+            targetPos.z = enemyCarrier.position.z;
+        }
 
         this.players.forEach(player => {
-
             if (!player || player.role === "GK") return;
 
-            const toBall = ball.position.subtract(player.position);
-            const dist = toBall.length();
+            const toTarget = targetPos.subtract(player.position);
+            const dist = toTarget.length();
 
             if (dist > this.pressRadius) return;
 
-            const dirToBall = toBall.normalize();
-            const frontScore = BABYLON.Vector3.Dot(dirToBall, goalDirection);
+            let score = 0;
 
-            const score = -dist + frontScore * 5;
+            // proximité générale
+            score -= dist * 1.0;
+
+            // alignement latéral avec le porteur / balle
+            score -= Math.abs(player.position.z - targetPos.z) * 0.9;
+
+            if (enemyCarrier) {
+                const fromCarrierToDef = player.position.subtract(enemyCarrier.position);
+                fromCarrierToDef.y = 0;
+
+                if (fromCarrierToDef.lengthSquared() > 0.0001) {
+                    fromCarrierToDef.normalize();
+
+                    // > 0 => défenseur entre porteur et but IA
+                    // < 0 => défenseur derrière le porteur
+                    const goalSideDot = BABYLON.Vector3.Dot(defendGoalDir, fromCarrierToDef);
+
+                    if (goalSideDot < -0.1) {
+                        // clairement derrière : quasi disqualifié
+                        score -= 1000;
+                    } else if (goalSideDot < 0.15) {
+                        // côté / pas idéal
+                        score -= 6;
+                    } else {
+                        // devant / entre porteur et but
+                        score += 12 + goalSideDot * 10;
+                    }
+                }
+
+                // CORRECTION IMPORTANTE :
+                // le joueur en face de toi a plutôt un X plus grand que le porteur
+                if (player.position.x > enemyCarrier.position.x) {
+                    score += 6;
+                } else {
+                    score -= 8;
+                }
+            } else {
+                // balle libre
+                score -= Math.abs(player.position.x - ball.position.x) * 0.35;
+            }
 
             if (score > bestScore) {
                 bestScore = score;
@@ -47,9 +114,8 @@ class AITeamHuitieme extends AITeam {
 
         this.ballChaser = bestPlayer;
 
-        // seul le chaser va sur la balle
         if (this.ballChaser) {
-            this.movePlayerTowards(this.ballChaser, ball.position);
+            this.movePlayerTowards(this.ballChaser, targetPos);
         }
     }
 
