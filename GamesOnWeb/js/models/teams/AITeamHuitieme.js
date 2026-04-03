@@ -27,6 +27,8 @@ class AITeamHuitieme extends AITeam {
 
         this.players.forEach(player => {
 
+            if (!player || player.role === "GK") return;
+
             const toBall = ball.position.subtract(player.position);
             const dist = toBall.length();
 
@@ -45,20 +47,10 @@ class AITeamHuitieme extends AITeam {
 
         this.ballChaser = bestPlayer;
 
-        this.players.forEach(player => {
-
-            if (player === this.ballChaser) {
-                this.movePlayerTowards(player, ball.position);
-            } else {
-                const target = player.homePosition.clone();
-
-                target.x += (ball.position.x - player.homePosition.x) * 0.3;
-                target.z += (ball.position.z - player.homePosition.z) * 0.3;
-
-                this.movePlayerTowards(player, target);
-            }
-
-        });
+        // seul le chaser va sur la balle
+        if (this.ballChaser) {
+            this.movePlayerTowards(this.ballChaser, ball.position);
+        }
     }
 
     // -----------------------
@@ -80,28 +72,14 @@ class AITeamHuitieme extends AITeam {
 
         if (!ballCarrier) return;
 
-        // direction vers le but (gauche)
         let dir = new BABYLON.Vector3(-50, 0, 0).subtract(ballCarrier.position);
 
-        // -----------------------
-        // ÉVITER LES BORDS
-        // -----------------------
         const margin = 5;
 
-        if (ballCarrier.position.z > 25 - margin) {
-            dir.z -= 2;
-        }
-        if (ballCarrier.position.z < -25 + margin) {
-            dir.z += 2;
-        }
+        if (ballCarrier.position.z > 25 - margin) dir.z -= 2;
+        if (ballCarrier.position.z < -25 + margin) dir.z += 2;
+        if (ballCarrier.position.x < -45 + margin) dir.x += 1.5;
 
-        if (ballCarrier.position.x < -45 + margin) {
-            dir.x += 1.5;
-        }
-
-        // -----------------------
-        // ÉVITER LES JOUEURS
-        // -----------------------
         this.opponents.forEach(opponent => {
 
             const toOpponent = opponent.position.subtract(ballCarrier.position);
@@ -110,26 +88,19 @@ class AITeamHuitieme extends AITeam {
             if (dist < 8) {
                 const avoid = ballCarrier.position.subtract(opponent.position);
                 avoid.normalize();
-
                 dir.addInPlace(avoid.scale(3));
             }
         });
 
         dir.normalize();
 
-        // avancer avec la balle
-        // direction normalisée
         const moveDir = dir.normalize();
 
-        // stocke la direction pour la balle
         ballCarrier.facingDirection = moveDir;
 
-        // mouvement
         ballCarrier.move(moveDir.x, moveDir.z, 0.1);
 
-        // -----------------------
         // SUPPORT DES AUTRES JOUEURS
-        // -----------------------
         this.players.forEach(player => {
 
             if (player === ballCarrier) return;
