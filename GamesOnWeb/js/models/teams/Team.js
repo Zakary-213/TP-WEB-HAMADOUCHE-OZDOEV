@@ -44,7 +44,6 @@ class Team {
         // side = 1 : équipe de gauche (regarde vers +X)
         // side = -1 : équipe de droite (regarde vers -X)
         newPlayer.side = side;
-        newPlayer.team = this;
 
         // Sauvegarde pour reset
         newPlayer.initialPosition = position.clone();
