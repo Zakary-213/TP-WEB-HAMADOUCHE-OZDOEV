@@ -320,6 +320,8 @@ class Team {
     }
     
     movePlayerTowards(player, target) {
+        if (player.isTackling) return;
+
         const dir = target.subtract(player.position);
         const dist = dir.length();
 
@@ -331,12 +333,9 @@ class Team {
         }
 
         dir.normalize();
-
-        // IMPORTANT : on met à jour la direction de regard
         player.facingDirection = dir.clone();
 
         const speed = 0.07;
-
         player.move(dir.x, dir.z, speed);
     }
 

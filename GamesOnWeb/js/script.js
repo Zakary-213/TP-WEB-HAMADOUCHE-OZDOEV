@@ -280,7 +280,8 @@ const createScene = function () {
             activePlayer,
             playerFacing,
             ball,
-            opponentTeam
+            opponentTeam,
+            team: myTeam
         });
         
     });
@@ -401,9 +402,12 @@ const createScene = function () {
             tackleController.tryAITackle(
                 bot,
                 ball,
-                myTeam // adversaire de l'IA
+                myTeam,
+                opponentTeam
             );
         });
+
+        tackleController.updateAITackle();
 
         // Applique l'etat "au sol" des joueurs tacles (stun temporaire)
         tackleController.updateStunnedPlayers(myTeam);
@@ -440,7 +444,8 @@ const createScene = function () {
         }
 
         tackleController.applyBallSteal(ball);
-
+        tackleController.maintainBallControl(ball);
+        
         const dt = scene.getEngine().getDeltaTime() / 1000;
 
         let moveX = 0;
