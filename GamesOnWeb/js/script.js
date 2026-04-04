@@ -85,7 +85,7 @@ const createScene = function () {
     createEnvironment(scene); // Defined in js/structure/environnement.js
 
     // --- TOURNAMENT STATE ---
-    let tournamentStage = "finale";
+    let tournamentStage = "quart";
 
     // --- Structure ---
 
@@ -197,8 +197,17 @@ const createScene = function () {
     // Cameras Setup (TPS et FPS gérées dans cameras.js)
     const cameras = setupCameras(scene, canvas, activePlayer);
     const cameraRuntime = (window.createCameraRuntimeController && typeof window.createCameraRuntimeController === "function")
-        ? window.createCameraRuntimeController({ scene, cameras, myTeam, selectionIndicator, ball })
+        ? window.createCameraRuntimeController({ scene, cameras, myTeam, selectionIndicator, ball, tournamentStage })
         : null;
+
+    // ── Exposition globale pour settings.js (pause + caméra) ──────
+    window.setGameplayPaused  = setGameplayPaused;
+    window.gameCameras        = cameras;
+    window.gameScene          = scene;
+    window.getActivePlayer    = () => activePlayer;
+    window.cameraRuntime      = cameraRuntime;
+    window.isIntroPlaying     = () => preMatchIntroPlaying;
+    window.isMatchEnded       = () => matchFlow && typeof matchFlow.getStage === "function" && matchFlow.getStage() === 3;
 
     const goalReplay = window.createGoalReplayController({
         scene,

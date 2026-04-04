@@ -237,7 +237,8 @@
                 } else if (stage === 2 && scoreboard.matchTime >= halfSeconds * 2) {
                     triggerEndMatch();
                 }
-            }
+            },
+            getStage: function () { return stage; }
         };
     }
 

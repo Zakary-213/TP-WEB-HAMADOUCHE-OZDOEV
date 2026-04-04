@@ -4,6 +4,24 @@
 (function () {
     let hideTextTimer = null;
     let removeTextTimer = null;
+    let introSkipBtn = null;
+
+    function ensureIntroSkipButton() {
+        if (introSkipBtn) return;
+        introSkipBtn = document.getElementById("intro-skip-btn");
+        if (!introSkipBtn) {
+            introSkipBtn = document.createElement("button");
+            introSkipBtn.id   = "intro-skip-btn";
+            introSkipBtn.type = "button";
+            introSkipBtn.textContent = "Passer l'intro";
+            document.body.appendChild(introSkipBtn);
+        }
+    }
+
+    function setIntroSkipVisible(visible) {
+        if (!introSkipBtn) return;
+        introSkipBtn.classList.toggle("replay-skip-btn--show", !!visible);
+    }
 
     function clearTournamentOverlayTimers() {
         if (hideTextTimer) {
@@ -192,13 +210,43 @@
         ];
 
         scene.beginDirectAnimation(introCamera, animations, 0, totalFrames, false, 1, function () {
+            // Normalise l'alpha à -π/2 pour éviter que cameraRuntime lerpe à travers un tour complet
+            introCamera.alpha  = -Math.PI / 2;
+            introCamera.beta   = toBeta;
+            introCamera.radius = toRadius;
             scene.activeCamera = finalCamera;
             clearTournamentOverlayTimers();
             hideTournamentOverlayImmediate();
+            setIntroSkipVisible(false);
             if (typeof config.onComplete === "function") {
                 config.onComplete();
             }
         });
+
+        // ─── Bouton SKIP INTRO (même style que skip replay) ─────────
+        ensureIntroSkipButton();
+
+        // Remplace le listener précédent (clone = nouveau élément sans listener parasite)
+        const fresh = introSkipBtn.cloneNode(true);
+        introSkipBtn.parentNode.replaceChild(fresh, introSkipBtn);
+        introSkipBtn = fresh;
+
+        introSkipBtn.addEventListener("click", function () {
+            scene.stopAnimation(introCamera);
+            // Normalise l'alpha à -π/2 (valeur de référence de cameraRuntime) — évite le tour parasite
+            introCamera.alpha  = -Math.PI / 2;
+            introCamera.beta   = toBeta;
+            introCamera.radius = toRadius;
+            scene.activeCamera = finalCamera;
+            clearTournamentOverlayTimers();
+            hideTournamentOverlayImmediate();
+            setIntroSkipVisible(false);
+            if (typeof config.onComplete === "function") {
+                config.onComplete();
+            }
+        });
+
+        setIntroSkipVisible(true);
     }
 
     window.startPreMatchIntro = startPreMatchIntro;

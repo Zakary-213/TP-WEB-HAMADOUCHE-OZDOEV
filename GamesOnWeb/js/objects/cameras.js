@@ -7,27 +7,45 @@ const setupCameras = (scene, canvas, playerNode) => {
     const tpsCamera = new BABYLON.ArcRotateCamera(
         "tpsCamera",
         Math.PI,
-        0.01,
-        60,
+        0.9,   // angle plus haut pour éviter de voir uniquement les tribunes
+        70,
         new BABYLON.Vector3(0, 0, 0),
         scene
     );
     // On centre la caméra globale sur le joueur
     tpsCamera.lockedTarget = cameraTargetNode;
-    tpsCamera.inputs.clear(); // Désactive la souris pour cette caméra
+    tpsCamera.inputs.clear();
+
+    // ─── Clamp du cameraTargetNode pour éviter que la caméra entre dans les tribunes ───
+    // Le pitch fait 100 × 60 (X: ±50, Z: ±30). Les tribunes commencent à innerX=55, innerZ=35.
+    // Avec radius=70 et beta=0.9, la caméra se place à ~55u du target en X.
+    // Si le target va à X=48, la caméra arrive à X=-7 → visible mais pas dans les tribunes.
+    // Si le target va à Z=27, la caméra pointe vers la tribune sud → on clamp Z à ±20.
+    const CAM_MAX_X = 25;  // La cam reste proche du centre même si le joueur va jusqu'à X=50
+    const CAM_MAX_Z = 15;  // idem en Z
+    scene.onAfterRenderObservable.add(() => {
+        const p = cameraTargetNode.position;
+        if (p.x >  CAM_MAX_X) p.x =  CAM_MAX_X;
+        if (p.x < -CAM_MAX_X) p.x = -CAM_MAX_X;
+        if (p.z >  CAM_MAX_Z) p.z =  CAM_MAX_Z;
+        if (p.z < -CAM_MAX_Z) p.z = -CAM_MAX_Z;
+    });
 
     // 1.b Caméra latérale type retransmission (style FIFA)
+    // Calcul de position (alpha=-π/2 = côté sud, beta=0.88, radius=105, target Y=12) :
+    //   cam = (0, 12 + 105*cos(0.88), -(105*sin(0.88))) = (0, 79, -81)
+    //   ligne de visée coupe Z=-35 à Y≈41 >> hauteur max tribunes (≈26u) → tribunes hors écran
     const broadcastCamera = new BABYLON.ArcRotateCamera(
         "broadcastCamera",
         -Math.PI / 2,
-        1.05,
-        90,
-        BABYLON.Vector3.Zero(),
+        0.88,      // was 1.05 : plus élevé = moins de tribune dans le bas d'écran
+        105,       // was 90  : plus de recul = plus de terrain visible
+        new BABYLON.Vector3(0, 12, 0),  // was 0 : target légèrement hauté pour viser le milieu de terrain
         scene
     );
     broadcastCamera.inputs.clear();
-    broadcastCamera.fov            = 0.65;  // Plus cinematique que 0.72
-    broadcastCamera.inertia        = 0.9;   // Douceur FIFA
+    broadcastCamera.fov            = 0.65;
+    broadcastCamera.inertia        = 0.9;
     broadcastCamera.panningInertia = 0.9;
 
     // 2. Caméra à la première personne (First Person View)
@@ -128,7 +146,7 @@ const setupCameras = (scene, canvas, playerNode) => {
             scene.activeCamera = cameraMode === "fpv" ? fpvCamera : broadcastCamera;
 
             if (cameraMode === "broadcast") {
-                animateArcCameraBlend(broadcastCamera, -Math.PI / 2, 1.05, 90, 30);
+                animateArcCameraBlend(broadcastCamera, -Math.PI / 2, 0.88, 105, 30);
             }
         }
 
@@ -137,9 +155,10 @@ const setupCameras = (scene, canvas, playerNode) => {
             scene.activeCamera = cameraMode === "broadcast" ? broadcastCamera : tpsCamera;
 
             if (cameraMode === "broadcast") {
-                animateArcCameraBlend(broadcastCamera, -Math.PI / 2, 1.05, 90, 32);
+                animateArcCameraBlend(broadcastCamera, -Math.PI / 2, 0.88, 105, 32);
             } else {
-                animateArcCameraBlend(tpsCamera, Math.PI, 0.01, 60, 24);
+                // TPS : angle plus plongeant et léger recul pour toujours garder les joueurs visibles
+                animateArcCameraBlend(tpsCamera, Math.PI, 0.9, 70, 24);
             }
         }
     });

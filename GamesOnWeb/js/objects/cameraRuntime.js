@@ -41,12 +41,15 @@
         var myTeam           = opts.myTeam;
         var selectionIndicator = opts.selectionIndicator;
         var ballRef          = opts.ball || null;
+        var tournamentStage  = opts.tournamentStage || "";
 
         // État interne minimal
         var state = {
-            cameraRig : null,
-            shake     : null,      // { power, time }  — null = pas de shake
-            time      : 0
+            cameraRig       : null,
+            shake           : null,
+            kickZoom        : null,
+            userZoomOffset  : 0,   // décalage ajouté par le slider réglages (en unités de radius)
+            time            : 0
         };
 
         // ── SETUP RIG ────────────────────────────────────────────────────────────
@@ -160,6 +163,25 @@
             }
         }
 
+        // ─── KICK ZOOM (effet FIFA : zoom sur tir fort) ────────────────────────────
+
+        /**
+         * @param {number} normalizedPower  0 (tir mou) → 1 (tiré à fond)
+         */
+        function triggerKickZoom(normalizedPower) {
+            var p = BABYLON.Scalar.Clamp(normalizedPower, 0, 1);
+            // Tir mou : petit zoom (0.60), tir max : grand zoom (0.36)
+            var targetFov    = BABYLON.Scalar.Lerp(0.62, 0.36, p);
+            // Durée de maintien du zoom : plus le tir est fort, plus on maintient
+            var holdDuration = BABYLON.Scalar.Lerp(0.15, 0.55, p);
+            state.kickZoom = {
+                targetFov    : targetFov,
+                holdTimer    : 0,
+                holdDuration : holdDuration,
+                phase        : "zoomIn"  // zoomIn | hold | zoomOut
+            };
+        }
+
         // Alias rétro-compatibilité (goalReplay, matchFlow appellent triggerGoalShake)
         function triggerGoalShake() {
             triggerShake(0.01);
@@ -206,9 +228,28 @@
             var framingOffset = dir.scale(dynamicForward);
             var lateralOffset = new BABYLON.Vector3(-dir.z, 0, dir.x).scale(dynamicSide);
 
+            // Quand l'action est très proche des lignes de touche, on réduit
+            // le décalage latéral pour recentrer davantage le terrain et éviter
+            // que la caméra se colle trop aux tribunes.
+            var edgeFactor = Math.min(
+                1,
+                Math.max(
+                    Math.abs(focus.x) / 48,
+                    Math.abs(focus.z) / 28
+                )
+            );
+            var lateralScale = 0.3 * (1 - 0.6 * edgeFactor); // → plus petit près des bords
+
             var target = focus
                 .add(framingOffset)
-                .add(lateralOffset.scale(0.3));
+                .add(lateralOffset.scale(lateralScale));
+
+            // Limite la zone où la caméra peut "suivre" l'action pour
+            // éviter de sortir trop du terrain (et de ne voir que les tribunes)
+            var MAX_X = 25;  // terrain ≈ [-50, 50] — réduit selon conseil prof
+            var MAX_Z = 15;  // terrain ≈ [-30, 30] — réduit selon conseil prof
+            target.x = BABYLON.Scalar.Clamp(target.x, -MAX_X, MAX_X);
+            target.z = BABYLON.Scalar.Clamp(target.z, -MAX_Z, MAX_Z);
 
             // FIX #1 : follow speed DYNAMIQUE (jeu lent → smooth / contre-attaque → colle)
             var ballSpeedFollow = cameraBrain.velocity.length();
@@ -230,22 +271,53 @@
             );
 
             // ── 5. ZOOM INTELLIGENT FIFA ─────────────────────────────────────────
-            // Longue passe → recul | Action/danger → rapprochement
+            // Zoom intelligent FIFA — demi : plus proche (on évite les structures du stade)
             var ballSpeed  = cameraBrain.velocity.length();
             var zoomOut    = BABYLON.Scalar.Clamp(ballSpeed / 20, 0, 1);
-            var radiusTarget = BABYLON.Scalar.Clamp(
-                100 + zoomOut * 15 - intensity * 10,
-                75, 115
-            );
+            var radiusTarget;
+            if (tournamentStage === "demi") {
+                // Stade demi : structures plus hautes → on reste plus proche du terrain
+                radiusTarget = BABYLON.Scalar.Clamp(
+                    55 + zoomOut * 10 - intensity * 8,
+                    45, 70
+                );
+            } else {
+                radiusTarget = BABYLON.Scalar.Clamp(
+                    100 + zoomOut * 15 - intensity * 10,
+                    75, 115
+                );
+            }
+            // Offset utilisateur (slider zoom dans les réglages) — plus élevé = plus proche
+            radiusTarget -= state.userZoomOffset;
             cam.radius = BABYLON.Scalar.Lerp(cam.radius, radiusTarget, t);
 
-            // ── 6. FOV DYNAMIQUE (effet broadcast TV) ────────────────────────────
-            var fovTarget = BABYLON.Scalar.Lerp(0.70, 0.58, intensity);
-            cam.fov = BABYLON.Scalar.Lerp(cam.fov, fovTarget, t);
+            // ── 6. FOV DYNAMIQUE avec KICK ZOOM (effet FIFA sur tir) ────────────
+            var baseFovTarget = BABYLON.Scalar.Lerp(0.70, 0.58, intensity);
+
+            if (state.kickZoom) {
+                var kz = state.kickZoom;
+                if (kz.phase === "zoomIn") {
+                    // Zoom avant rapide
+                    var zoomInT = 1 - Math.exp(-18 * dt);
+                    cam.fov = BABYLON.Scalar.Lerp(cam.fov, kz.targetFov, zoomInT);
+                    if (Math.abs(cam.fov - kz.targetFov) < 0.015) kz.phase = "hold";
+                } else if (kz.phase === "hold") {
+                    // Maintien bref du zoom
+                    kz.holdTimer += dt;
+                    if (kz.holdTimer >= kz.holdDuration) kz.phase = "zoomOut";
+                } else {
+                    // Retour doux au FOV normal
+                    var zoomOutT = 1 - Math.exp(-2.5 * dt);
+                    cam.fov = BABYLON.Scalar.Lerp(cam.fov, baseFovTarget, zoomOutT);
+                    if (Math.abs(cam.fov - baseFovTarget) < 0.008) state.kickZoom = null;
+                }
+            } else {
+                cam.fov = BABYLON.Scalar.Lerp(cam.fov, baseFovTarget, t);
+            }
 
             // ── 7. ROTATION avec micro-drift (caméra vivante) ────────────────────
             var alphaBase = -Math.PI / 2;
-            var betaBase  = 1.05;
+            var betaBase  = 0.88;  // was 1.05 : aligné avec le nouveau positionnement broadcast
             cam.alpha = BABYLON.Scalar.Lerp(cam.alpha, alphaBase, t);
             cam.beta  = BABYLON.Scalar.Lerp(cam.beta,  betaBase,  t);
 
@@ -414,9 +486,27 @@
         // Nouvel événement universel cam:event (architecture FIFA)
         function handleCamEvent(e) {
             var detail = (e && e.detail) ? e.detail : "";
-            if (detail === "goal") { triggerShake(0.01);  setActionIntensity("goal"); }
-            if (detail === "shot") { triggerShake(0.004); setActionIntensity("shot"); }
-            if (detail === "duel") { triggerShake(0.002); setActionIntensity("duel"); }
+            // Format objet : { type, force } — envoyé par gameLogic.kick()
+            var type  = (typeof detail === "object" && detail.type) ? detail.type : detail;
+            var force = (typeof detail === "object" && detail.force) ? detail.force : 0;
+
+            if (type === "goal") { triggerShake(0.01);  setActionIntensity("goal"); }
+            if (type === "shot") {
+                triggerShake(0.004);
+                setActionIntensity("shot");
+                // Zoom FIFA : normalise la force (forces usuelles : 8, 15, 25)
+                var normalizedPower = BABYLON.Scalar.Clamp(force / 25, 0, 1);
+                triggerKickZoom(normalizedPower);
+            }
+            if (type === "duel") { triggerShake(0.002); setActionIntensity("duel"); }
+        }
+
+        function setZoomOffset(offset) {
+            state.userZoomOffset = Math.max(0, Number(offset) || 0);
+        }
+
+        function getZoomOffset() {
+            return state.userZoomOffset;
         }
 
         setupBroadcastRig();
@@ -441,6 +531,8 @@
             updateSelectionIndicator,
             triggerGoalShake,
             setActionIntensity,
+            setZoomOffset,
+            getZoomOffset,
             cameraBrain: {
                 get intensity() { return cameraBrain.intensity; },
                 get target()    { return state.cameraRig ? state.cameraRig.position : null; }

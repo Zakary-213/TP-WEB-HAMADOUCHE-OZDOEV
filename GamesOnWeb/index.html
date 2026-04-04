@@ -61,6 +61,91 @@
 
     <canvas id="renderCanvas" touch-action="none"></canvas>
 
+    <!-- ══════════════════════════════════════════════
+         MENU PARAMÈTRES (Échap pour ouvrir / fermer)
+    ══════════════════════════════════════════════ -->
+    <div id="settings-overlay" class="settings-overlay" aria-hidden="true">
+        <div class="settings-panel" role="dialog" aria-label="Paramètres">
+
+            <!-- En-tête -->
+            <div class="settings-header">
+                <span class="settings-icon">⚙️</span>
+                <h2 class="settings-title">Paramètres</h2>
+                <button id="settings-close-btn" class="settings-close" title="Fermer (Échap)">✕</button>
+            </div>
+
+            <!-- Corps -->
+            <div class="settings-body">
+
+                <!-- Section Jeu -->
+                <div class="settings-section">
+                    <h3 class="settings-section-title">Jeu</h3>
+
+                    <div class="settings-row">
+                        <label class="settings-label" for="set-sound-vol">Volume des sons</label>
+                        <div class="settings-control">
+                            <input id="set-sound-vol" type="range" min="0" max="100" value="80" class="settings-slider">
+                            <span class="settings-value" id="set-sound-vol-val">80%</span>
+                        </div>
+                    </div>
+
+                    <div class="settings-row">
+                        <label class="settings-label" for="set-music-vol">Volume de la musique</label>
+                        <div class="settings-control">
+                            <input id="set-music-vol" type="range" min="0" max="100" value="50" class="settings-slider">
+                            <span class="settings-value" id="set-music-vol-val">50%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section Caméra -->
+                <div class="settings-section">
+                    <h3 class="settings-section-title">Caméra</h3>
+
+                    <div class="settings-row">
+                        <label class="settings-label">Vue par défaut</label>
+                        <div class="settings-control settings-btn-group">
+                            <button class="settings-option-btn active" data-cam="broadcast">Broadcast</button>
+                            <button class="settings-option-btn" data-cam="tps">TPS</button>
+                            <button class="settings-option-btn" data-cam="fpv">1ère personne</button>
+                        </div>
+                    </div>
+
+                    <div class="settings-row">
+                        <label class="settings-label" for="set-cam-zoom">Distance caméra</label>
+                        <div class="settings-control">
+                            <input id="set-cam-zoom" type="range" min="0" max="80" value="0" step="5" class="settings-slider">
+                            <span class="settings-value" id="set-cam-zoom-val">Base</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section Touches -->
+                <div class="settings-section">
+                    <h3 class="settings-section-title">Contrôles</h3>
+                    <div class="settings-keybinds">
+                        <div class="settings-key-row"><kbd>Z / W</kbd><span>Avancer</span></div>
+                        <div class="settings-key-row"><kbd>S</kbd><span>Reculer</span></div>
+                        <div class="settings-key-row"><kbd>Q / A</kbd><span>Gauche</span></div>
+                        <div class="settings-key-row"><kbd>D</kbd><span>Droite</span></div>
+                        <div class="settings-key-row"><kbd>Maj</kbd><span>Sprint</span></div>
+                        <div class="settings-key-row"><kbd>Espace</kbd><span>Tir (tenir = puissance)</span></div>
+                        <div class="settings-key-row"><kbd>T</kbd><span>Tacle glissé</span></div>
+                        <div class="settings-key-row"><kbd>Tab</kbd><span>Changer de joueur</span></div>
+                        <div class="settings-key-row"><kbd>C</kbd><span>Caméra FPV</span></div>
+                        <div class="settings-key-row"><kbd>R</kbd><span>Caméra TPS</span></div>
+                        <div class="settings-key-row"><kbd>Échap</kbd><span>Paramètres</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pied de page -->
+            <div class="settings-footer">
+                <button id="settings-resume-btn" class="settings-resume-btn">Reprendre la partie</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Utility functions -->
     <script src="js/utils/collisionUtils.js"></script>
     <script src="js/utils/audioManager.js"></script>
@@ -100,6 +185,7 @@
     <script src="js/models/restartLogic.js"></script>
     <script src="js/models/tackleLogic.js"></script>
     <script src="js/script.js"></script>
+    <script src="js/ui/settings.js"></script>
 </body>
 
 </html>

@@ -192,26 +192,19 @@ function createScoreboard3D(scene) {
         return tex;
     }
 
-    // ─── Créer les deux panneaux ───────────────────────────────
-    // Côté positif Z (bord gauche en vue de dessus)
-    const texFront = buildBoard("front",
-        new BABYLON.Vector3(0, 0, -38),
-        0
-    );
+    // ─── Panneau unique côté nord (Z=+38), face aux tribunes ──
     const texBack = buildBoard("back",
         new BABYLON.Vector3(0, 0, 38),
         Math.PI
     );
 
-    // Dessins initiaux
-    drawScreen(texFront, 0, 0, true);
-    drawScreen(texBack,  0, 0, true);
+    // Dessin initial
+    drawScreen(texBack, 0, 0, true);
 
     // ─── API publique ──────────────────────────────────────────
     window.scoreBoard3D = {
         updateScore: function(playerScore, aiScore) {
-            drawScreen(texFront, playerScore, aiScore, true);
-            drawScreen(texBack,  playerScore, aiScore, true);
+            drawScreen(texBack, playerScore, aiScore, true);
         }
     };
 

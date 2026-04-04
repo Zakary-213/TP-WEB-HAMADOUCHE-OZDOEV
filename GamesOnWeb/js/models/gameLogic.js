@@ -98,9 +98,18 @@ function kick(scene, ball, player, lastDirection, force, team) {
     }
     const dirNorm = dir.normalize();
 
+    // 🔊 Son de tir
+    if (window.kickSound) window.kickSound.play();
+
+    // 📷 Zoom caméra FIFA — plus le tir est fort, plus ça zoome
+    window.dispatchEvent(new CustomEvent("cam:event", {
+        detail: { type: "shot", force: force }
+    }));
+
     // On utilise une physique simple : vitesse initiale proportionnelle à la force
     // L'unité correspond à des unités de terrain / seconde (le dt est géré dans script.js)
-    const speed = force; // 8, 15 ou 25 selon la jauge
+    // Réduction un peu plus forte pour des tirs moins longs
+    const speed = force * 0.8; // légèrement moins de portée
 
     if (!ball.velocity) {
         ball.velocity = new BABYLON.Vector3(0, 0, 0);
