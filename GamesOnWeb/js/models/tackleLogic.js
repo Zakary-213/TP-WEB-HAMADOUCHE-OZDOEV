@@ -31,6 +31,7 @@ class TackleController {
 
         const { activePlayer, playerFacing, ball, opponentTeam } = context;
         const now = Date.now();
+        if (!this.canTackleInOwnHalf(activePlayer)) return;
 
         if (!activePlayer || this.isTackling || now < this.tackleCooldownUntil) return;
         if (!ball || !ball.position || ball.isOutAnimationPlaying || ball.isOutOfPlay) return;
@@ -428,6 +429,7 @@ class TackleController {
         if (!aiPlayer || this.isTackling || now < this.tackleCooldownUntil) return;
         if (!ball || !ball.position || ball.isOutAnimationPlaying || ball.isOutOfPlay) return;
         if (!opponentTeam || !opponentTeam.players) return;
+        if (!this.canTackleInOwnHalf(aiPlayer)) return;
 
         const distToBall = BABYLON.Vector3.Distance(aiPlayer.position, ball.position);
 
@@ -574,5 +576,21 @@ class TackleController {
 
         ball.position.y = 0.75;
         ball.velocity.set(0, 0, 0);
+    }
+
+    canTackleInOwnHalf(player) {
+        if (!player || !player.position) return false;
+
+        // Equipe gauche (side = 1) -> moitié gauche seulement
+        if (player.side === 1) {
+            return player.position.x <= 0;
+        }
+
+        // Equipe droite (side = -1) -> moitié droite seulement
+        if (player.side === -1) {
+            return player.position.x >= 0;
+        }
+
+        return false;
     }
 }
