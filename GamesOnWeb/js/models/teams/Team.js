@@ -57,8 +57,10 @@ class Team {
 
         const startX = -20 * side;
 
+        const gkX = side === 1 ? -47 : 47;
+
         const formation = [
-            { role: "GK",  pos: new BABYLON.Vector3(startX - (15 * side), 0, 0) },
+            { role: "GK",  pos: new BABYLON.Vector3(gkX, 0, 0) },
             { role: "DEF", pos: new BABYLON.Vector3(startX - (5 * side), 0, -10) },
             { role: "DEF", pos: new BABYLON.Vector3(startX - (5 * side), 0, 10) },
             { role: "ATT", pos: new BABYLON.Vector3(startX + (5 * side), 0, -8) },

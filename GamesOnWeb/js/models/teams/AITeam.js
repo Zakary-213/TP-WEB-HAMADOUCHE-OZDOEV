@@ -4,30 +4,39 @@ class AITeam extends Team {
 
         this.aiImplemented = true;
         this.ballChaser = null;
-
         this.pressRadius = 30;
+
+        this.aiControlledPlayer = null;
+        this.goalkeeperLocked = false;
+        this.goalkeeperClaiming = false;
+
+        this.goalkeeperKickCooldownUntil = 0;
+        this.goalkeeperIsClearing = false;
+        this.goalkeeperReleaseUntil = 0;
+
+        this.goalkeeperPossessionStartTime = 0;
+        this.goalkeeperMinHoldDuration = 1200;
+        this.goalkeeperMaxHoldDuration = 2800;
+
+        this.goalkeeperCurrentRoamTarget = null;
+        this.goalkeeperNextRoamDecisionTime = 0;
     }
 
     update(ball) {
         if (!ball || !ball.position) return;
 
-        // D'abord on choisit la stratégie / le chaser
-        this.aiBehavior(ball);
+        this.aiControlledPlayer = null;
+        this.goalkeeperLocked = false;
+        this.goalkeeperClaiming = false;
 
-        // Ensuite les autres reviennent se replacer
+        this.aiBehavior(ball);
         this.updateBasePositioning(ball);
     }
 
     aiBehavior(ball) {
-        // override dans AITeamHuitieme / Quart / Demi / Finale
+        // override
     }
 
-    /**
-     * Possession réelle :
-     * - lock temporaire après passe/tir
-     * - OU la balle a bien été touchée par cette équipe
-     * - ET un joueur est vraiment assez proche pour la contrôler
-     */
     hasRealPossession(ball) {
         if (!ball || !ball.position) return false;
 
@@ -43,8 +52,6 @@ class AITeam extends Team {
             if (!player || !player.position) continue;
 
             const dist = BABYLON.Vector3.Distance(player.position, ball.position);
-
-            // zone de vrai contrôle, plus stricte que teamHasBall()
             if (dist < 2.0) {
                 return true;
             }
@@ -57,34 +64,31 @@ class AITeam extends Team {
         this.players.forEach(player => {
             if (!player) return;
 
+            if (player === this.ballChaser) return;
+            if (player === this.aiControlledPlayer) return;
+            if (player.role === "GK" && this.goalkeeperLocked) return;
+
             let target = player.homePosition.clone();
 
-            // GK : reste dans sa cage
             if (player.role === "GK") {
                 target.x = player.homePosition.x;
                 target.z += (ball.position.z - player.homePosition.z) * 0.2;
             }
 
-            // DEF : suit un peu la balle
             if (player.role === "DEF") {
                 target.x += (ball.position.x - player.homePosition.x) * 0.3;
                 target.z += (ball.position.z - player.homePosition.z) * 0.3;
             }
 
-            // ATT : suit plus offensif
             if (player.role === "ATT") {
                 target.x += (ball.position.x - player.homePosition.x) * 0.5;
                 target.z += (ball.position.z - player.homePosition.z) * 0.4;
             }
 
-            // clamp terrain
             target.x = Math.max(player.minX, Math.min(player.maxX, target.x));
             target.z = Math.max(player.minZ, Math.min(player.maxZ, target.z));
 
-            // On ne bouge pas le chaser ici
-            if (player !== this.ballChaser) {
-                this.movePlayerTowards(player, target);
-            }
+            this.movePlayerTowards(player, target);
         });
     }
 }

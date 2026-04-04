@@ -568,38 +568,52 @@ const createScene = function () {
 
         // COLLISION JOUEURS IA → BALLE (uniquement si le comportement IA est implémenté)
         if (opponentTeam && opponentTeam.aiImplemented) {
-            opponentTeam.players.forEach(bot => {
-                if (!bot) return;
+    const aiGK = opponentTeam.players.find(p => p && p.role === "GK");
 
-                tryStealBall(bot, ball, opponentTeam);
+    const reserveBallForGK =
+        !!aiGK &&
+        opponentTeam.goalkeeperClaiming &&
+        opponentTeam.isInOwnBox &&
+        opponentTeam.isInOwnBox(ball.position) &&
+        BABYLON.Vector3.Distance(aiGK.position, ball.position) < 10;
 
-                const toBall = ball.position.subtract(bot.position);
-                if (toBall.lengthSquared() === 0) return;
-                toBall.y = 0;
+        opponentTeam.players.forEach(bot => {
+            if (!bot) return;
 
-                let dir = null;
+            // IMPORTANT :
+            // si la balle est réservée au GK dans sa surface,
+            // les autres joueurs n'ont plus le droit d'interagir avec elle
+            if (reserveBallForGK && bot.role !== "GK") {
+                return;
+            }
 
-            // Si le bot a déjà une direction de déplacement valide, on la garde en priorité
+            tryStealBall(bot, ball, opponentTeam);
+
+            const toBall = ball.position.subtract(bot.position);
+            if (toBall.lengthSquared() === 0) return;
+            toBall.y = 0;
+
+            let dir = null;
+
             if (bot.facingDirection && bot.facingDirection.lengthSquared() > 0.0001) {
                 dir = bot.facingDirection.clone();
                 dir.y = 0;
                 dir.normalize();
             } else {
-                const toBall = ball.position.subtract(bot.position);
-                toBall.y = 0;
+                const fallback = ball.position.subtract(bot.position);
+                fallback.y = 0;
 
-                if (toBall.lengthSquared() > 0.0001) {
-                    dir = toBall.normalize();
+                if (fallback.lengthSquared() > 0.0001) {
+                    fallback.normalize();
+                    dir = fallback;
                 } else {
                     dir = new BABYLON.Vector3(-1, 0, 0);
                 }
             }
 
             checkBallCollision(bot, ball, dir, opponentTeam);
-
-                
-            });
-        }
+        });
+    }
 
         // UPDATE JAUGE
         if (isCharging) {
