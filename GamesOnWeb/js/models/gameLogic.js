@@ -1,8 +1,6 @@
-function checkBallCollision(player, ball, playerFacing, team, playerMoveVelocity = null) {
+function checkBallCollision(player, ball, playerFacing, team, playerMoveVelocity = null, isSprinting = false) {
     if (ball.isOutAnimationPlaying || ball.isOutOfPlay) return;
 
-    // Pendant une remise en jeu, la balle est verrouillée :
-    // personne ne peut la pousser / récupérer tant que la passe n'est pas partie
     if (ball.restartLocked) {
         ball.position.y = 0.75;
         return;
@@ -20,12 +18,12 @@ function checkBallCollision(player, ball, playerFacing, team, playerMoveVelocity
     }
 
     if (distance < 2) {
-        // Equipe joueur : seul le joueur actif pousse
+
+        // joueur actif uniquement
         if (team && team.isPlayerControlled && player !== team.activePlayer) {
             return;
         }
 
-        // mémorise le dernier joueur / la dernière équipe qui a touché la balle
         ball.lastKicker = player;
         ball.lastTouchTeam = team;
 
@@ -34,41 +32,113 @@ function checkBallCollision(player, ball, playerFacing, team, playerMoveVelocity
         if (pushDir.lengthSquared() > 0) {
             pushDir.normalize();
 
-            // vitesse du joueur mesurée sur la frame
-            let moveBoost = 0;
-            if (playerMoveVelocity) {
-                const horizontalMove = new BABYLON.Vector3(
-                    playerMoveVelocity.x,
-                    0,
-                    playerMoveVelocity.z
-                );
-                moveBoost = horizontalMove.length() * 55;
+            // MODE 1 : DRIBBLE (balle collée)
+            if (!isSprinting) {
+
+                // Position idéale juste devant le joueur
+                const desiredPos = player.position.add(pushDir.scale(1.2));
+
+                // interpolation douce → effet FIFA clean
+                ball.position.x = BABYLON.Scalar.Lerp(ball.position.x, desiredPos.x, 0.5);
+                ball.position.z = BABYLON.Scalar.Lerp(ball.position.z, desiredPos.z, 0.5);
+
+                // IMPORTANT → on stop la vitesse sinon ça glisse
+                ball.velocity.set(0, 0, 0);
             }
 
-            // vitesse cible de la balle
-            const basePushSpeed = 7;
-            const targetSpeed = Math.min(basePushSpeed + moveBoost, 13);
+            //MODE 2 : SPRINT (poussée)
+            else {
 
-            // lissage plus réactif qu'avant, sans coller la balle
-            const smoothing = 0.35;
+                let moveBoost = 0;
 
-            const desiredVelocity = pushDir.scale(targetSpeed);
+                if (playerMoveVelocity) {
+                    const horizontalMove = new BABYLON.Vector3(
+                        playerMoveVelocity.x,
+                        0,
+                        playerMoveVelocity.z
+                    );
 
-            ball.velocity.x = BABYLON.Scalar.Lerp(
-                ball.velocity.x,
-                desiredVelocity.x,
-                smoothing
-            );
+                    moveBoost = horizontalMove.length() * 18;
+                }
 
-            ball.velocity.z = BABYLON.Scalar.Lerp(
-                ball.velocity.z,
-                desiredVelocity.z,
-                smoothing
-            );
+                const basePushSpeed = 6;
+                const targetSpeed = Math.min(basePushSpeed + moveBoost, 10);
+
+                const desiredVelocity = pushDir.scale(targetSpeed);
+
+                const smoothing = 0.25;
+
+                ball.velocity.x = BABYLON.Scalar.Lerp(
+                    ball.velocity.x,
+                    desiredVelocity.x,
+                    smoothing
+                );
+
+                ball.velocity.z = BABYLON.Scalar.Lerp(
+                    ball.velocity.z,
+                    desiredVelocity.z,
+                    smoothing
+                );
+            }
         }
     }
 
     ball.position.y = 0.75;
+}
+
+function tryStealBall(defender, ball, team) {
+
+    if (!ball || !ball.position) return;
+
+    const carrier = ball.lastKicker;
+    if (!carrier || carrier === defender) return;
+
+    const dist = BABYLON.Vector3.Distance(defender.position, ball.position);
+
+    if (dist > 2.2) return;
+
+    // direction défenseur → balle
+    const toBall = ball.position.subtract(defender.position);
+    if (toBall.lengthSquared() === 0) return;
+
+    const dirToBall = toBall.normalize();
+
+    // direction du porteur
+    const carrierDir = carrier.facingDirection || new BABYLON.Vector3(1, 0, 0);
+
+    // angle entre défenseur et direction du porteur
+    const dot = BABYLON.Vector3.Dot(dirToBall, carrierDir);
+
+    // vitesse du défenseur (approx)
+    let speedFactor = 0;
+    if (defender._lastPosition) {
+        const velocity = defender.position.subtract(defender._lastPosition);
+        speedFactor = velocity.length();
+    }
+
+    defender._lastPosition = defender.position.clone();
+
+    // conditions réalistes
+    const isBehind = dot > 0.5;
+    const isSideOrFront = dot < 0.3;
+
+    if (isBehind) return;
+
+    if (isSideOrFront || speedFactor > 0.05) {
+
+        // transfert de possession
+        ball.lastKicker = defender;
+        ball.lastTouchTeam = team;
+
+        // direction de vol de balle
+        const stealDir = dirToBall.scale(6);
+
+        ball.velocity.x = stealDir.x;
+        ball.velocity.z = stealDir.z;
+
+        // petit délai pour éviter re-collision immédiate
+        ball.pushLockUntil = performance.now() + 150;
+    }
 }
 
 function kick(scene, ball, player, lastDirection, force, team) {
@@ -330,12 +400,12 @@ function computeKickPower(gauge){
     const value = gauge.currentValue;
 
     if(value < 0.33)
-        return 30; // vert
+        return 25; // vert
 
     if(value < 0.66)
         return 45; // orange
 
-    return 60; // rouge
+    return 55; // rouge
 }
 
 function hideKickGauge(gauge){

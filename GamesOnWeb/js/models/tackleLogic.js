@@ -19,6 +19,7 @@ class TackleController {
 
         this._tackledOpponent = null;
         this._tackledOpponentDist = Infinity;
+        this.tackleTeam = null;
     }
 
     handleKeyDown(event, context) {
@@ -26,8 +27,11 @@ class TackleController {
         if (event.repeat) return;
         if (event.key !== "x" && event.key !== "X") return;
 
+        this.tackleTeam = context.team || null;
+
         const { activePlayer, playerFacing, ball, opponentTeam } = context;
         const now = Date.now();
+        if (!this.canTackleInOwnHalf(activePlayer)) return;
 
         if (!activePlayer || this.isTackling || now < this.tackleCooldownUntil) return;
         if (!ball || !ball.position || ball.isOutAnimationPlaying || ball.isOutOfPlay) return;
@@ -137,20 +141,40 @@ class TackleController {
         const myBallDist = BABYLON.Vector3.Distance(this.tacklePlayer.position, ball.position);
 
         if (oppBallDist < 3.0 || myBallDist < 3.0) {
-            if (!ball.velocity) ball.velocity = new BABYLON.Vector3(0, 0, 0);
+            if (!ball.velocity) {
+                ball.velocity = new BABYLON.Vector3(0, 0, 0);
+            }
 
             const carryDir = this.tackleDirection.clone();
             carryDir.y = 0;
+
             if (carryDir.lengthSquared() > 0.0001) {
                 carryDir.normalize();
-                ball.position.x = this.tacklePlayer.position.x + carryDir.x * 1.4;
-                ball.position.z = this.tacklePlayer.position.z + carryDir.z * 1.4;
-                ball.velocity.x = carryDir.x * 10.5;
-                ball.velocity.z = carryDir.z * 10.5;
 
-                if (window.matchAudio && typeof window.matchAudio.playKick === "function") {
-                    window.matchAudio.playKick();
+                // orientation du joueur
+                this.tacklePlayer.facingDirection = carryDir.clone();
+
+                // transfert de possession logique
+                ball.lastKicker = this.tacklePlayer;
+                ball.lastTouchTeam = this.tackleTeam;
+
+                if (this.tackleTeam?.lockTeamPossession) {
+                    this.tackleTeam.lockTeamPossession(500);
                 }
+
+                // IMPORTANT :
+                // on garde la balle proche du joueur au lieu de l'éjecter
+                const holdOffset = 1.05;
+                ball.position.x = this.tacklePlayer.position.x + carryDir.x * holdOffset;
+                ball.position.z = this.tacklePlayer.position.z + carryDir.z * holdOffset;
+                ball.position.y = 0.75;
+
+                // on ne propulse plus la balle
+                ball.velocity.set(0, 0, 0);
+
+                // évite les collisions parasites juste après récupération
+                ball.pushLockUntil = performance.now() + 120;
+                ball.ignorePlayerCollisionUntil = performance.now() + 120;
             }
         }
     }
@@ -344,21 +368,38 @@ class TackleController {
     }
 
     updateAndMove(activePlayer, moveX, moveZ, normalSpeed) {
-        if (this.isTackling && Date.now() >= this.tackleEndTime) {
-            if (this.tacklePlayer) {
-                this.tacklePlayer.isTackling = false;
-            }
+        if (
+            this.isTackling &&
+            this.tacklePlayer &&
+            this.tackleTeam &&
+            this.tackleTeam.isPlayerControlled &&
+            Date.now() >= this.tackleEndTime
+        ) {
+            this.tacklePlayer.isTackling = false;
             this.isTackling = false;
             this.tacklePlayer = null;
+            this.tackleTeam = null;
         }
 
-        if (this.isTackling && this.tacklePlayer) {
+        if (
+            this.isTackling &&
+            this.tacklePlayer &&
+            this.tackleTeam &&
+            this.tackleTeam.isPlayerControlled
+        ) {
             const controlledPlayer = this.tacklePlayer;
+
+            controlledPlayer.facingDirection = this.tackleDirection.clone();
+
             const directionOpt = controlledPlayer.move(
                 this.tackleDirection.x,
                 this.tackleDirection.z,
                 this.tackleSpeed
             );
+
+            if (directionOpt && directionOpt.lengthSquared() > 0.0001) {
+                controlledPlayer.facingDirection = directionOpt.clone();
+            }
 
             if (controlledPlayer.model) {
                 controlledPlayer.model.rotation.x = BABYLON.Scalar.Lerp(
@@ -378,5 +419,178 @@ class TackleController {
             controlledPlayer: activePlayer,
             directionOpt: activePlayer.move(moveX, moveZ, normalSpeed)
         };
+    }
+
+    tryAITackle(aiPlayer, ball, opponentTeam, aiTeam) {
+        this.tackleTeam = aiTeam || null;
+        if (Math.random() > 0.02) return;
+        const now = Date.now();
+
+        if (!aiPlayer || this.isTackling || now < this.tackleCooldownUntil) return;
+        if (!ball || !ball.position || ball.isOutAnimationPlaying || ball.isOutOfPlay) return;
+        if (!opponentTeam || !opponentTeam.players) return;
+        if (!this.canTackleInOwnHalf(aiPlayer)) return;
+
+        const distToBall = BABYLON.Vector3.Distance(aiPlayer.position, ball.position);
+
+        if (distToBall > this.tackleTriggerRange) return;
+
+        // trouver adversaire le + proche
+        let targetOpponent = null;
+        let bestDist = Infinity;
+
+        opponentTeam.players.forEach(op => {
+            if (!op || !op.position) return;
+
+            const d = BABYLON.Vector3.Distance(aiPlayer.position, op.position);
+            if (d < bestDist) {
+                bestDist = d;
+                targetOpponent = op;
+            }
+        });
+
+        if (!targetOpponent) return;
+        if (bestDist > this.tackleOpponentRange) return;
+
+        const opponentBallDist = BABYLON.Vector3.Distance(targetOpponent.position, ball.position);
+        if (opponentBallDist > this.playerHasBallRange) return;
+
+        // IMPORTANT → mêmes conditions que joueur
+        if (distToBall + 0.25 < opponentBallDist) return;
+
+        const toOpponent = targetOpponent.position.subtract(aiPlayer.position);
+        toOpponent.y = 0;
+
+        const opponentFacing = targetOpponent.facingDirection
+            ? targetOpponent.facingDirection.clone()
+            : null;
+
+        if (
+            opponentFacing &&
+            opponentFacing.lengthSquared() > 0.0001 &&
+            toOpponent.lengthSquared() > 0.0001
+        ) {
+            opponentFacing.y = 0;
+            opponentFacing.normalize();
+            toOpponent.normalize();
+
+            const behindDot = BABYLON.Vector3.Dot(opponentFacing, toOpponent);
+
+            if (behindDot > 0.35) return; // EXACT même règle
+        }
+
+        // direction tacle
+        const dashDir = targetOpponent.position.subtract(aiPlayer.position);
+        dashDir.y = 0;
+
+        if (dashDir.lengthSquared() < 0.0001) return;
+
+        dashDir.normalize();
+
+        this.isTackling = true;
+        this.tacklePlayer = aiPlayer;
+        this.tackleDirection.copyFrom(dashDir);
+        this.tackleEndTime = now + this.tackleDurationMs;
+        this.tackleCooldownUntil = now + this.tackleCooldownMs;
+
+        aiPlayer.isTackling = true;
+    }
+
+    updateAITackle() {
+        if (
+            this.isTackling &&
+            this.tacklePlayer &&
+            this.tackleTeam &&
+            !this.tackleTeam.isPlayerControlled &&
+            Date.now() >= this.tackleEndTime
+        ) {
+            this.tacklePlayer.isTackling = false;
+            this.isTackling = false;
+            this.tacklePlayer = null;
+            this.tackleTeam = null;
+            return;
+        }
+
+        if (
+            this.isTackling &&
+            this.tacklePlayer &&
+            this.tackleTeam &&
+            !this.tackleTeam.isPlayerControlled
+        ) {
+            const aiPlayer = this.tacklePlayer;
+
+            aiPlayer.facingDirection = this.tackleDirection.clone();
+
+            const directionOpt = aiPlayer.move(
+                this.tackleDirection.x,
+                this.tackleDirection.z,
+                this.tackleSpeed
+            );
+
+            if (directionOpt && directionOpt.lengthSquared() > 0.0001) {
+                aiPlayer.facingDirection = directionOpt.clone();
+            }
+
+            if (aiPlayer.model) {
+                aiPlayer.model.rotation.x = BABYLON.Scalar.Lerp(
+                    aiPlayer.model.rotation.x,
+                    -Math.PI / 2 + 0.42,
+                    0.7
+                );
+            }
+        }
+    }
+
+    maintainBallControl(ball) {
+        if (!this.isTackling || !this.tacklePlayer || !this.tackleTeam) return;
+        if (!ball || !ball.position) return;
+
+        // seulement si le tackleur est bien le porteur logique
+        if (ball.lastKicker !== this.tacklePlayer || ball.lastTouchTeam !== this.tackleTeam) {
+            return;
+        }
+
+        const dir = this.tacklePlayer.facingDirection
+            ? this.tacklePlayer.facingDirection.clone()
+            : this.tackleDirection.clone();
+
+        dir.y = 0;
+
+        if (dir.lengthSquared() < 0.0001) return;
+
+        dir.normalize();
+
+        const holdOffset = 1.05;
+
+        ball.position.x = BABYLON.Scalar.Lerp(
+            ball.position.x,
+            this.tacklePlayer.position.x + dir.x * holdOffset,
+            0.55
+        );
+
+        ball.position.z = BABYLON.Scalar.Lerp(
+            ball.position.z,
+            this.tacklePlayer.position.z + dir.z * holdOffset,
+            0.55
+        );
+
+        ball.position.y = 0.75;
+        ball.velocity.set(0, 0, 0);
+    }
+
+    canTackleInOwnHalf(player) {
+        if (!player || !player.position) return false;
+
+        // Equipe gauche (side = 1) -> moitié gauche seulement
+        if (player.side === 1) {
+            return player.position.x <= 0;
+        }
+
+        // Equipe droite (side = -1) -> moitié droite seulement
+        if (player.side === -1) {
+            return player.position.x >= 0;
+        }
+
+        return false;
     }
 }

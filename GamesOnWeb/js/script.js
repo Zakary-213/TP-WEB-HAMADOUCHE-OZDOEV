@@ -85,7 +85,7 @@ const createScene = function () {
     createEnvironment(scene); // Defined in js/structure/environnement.js
 
     // --- TOURNAMENT STATE ---
-    let tournamentStage = "quart";
+    let tournamentStage = "huitieme";
 
     // --- Structure ---
 
@@ -172,9 +172,8 @@ const createScene = function () {
 
     // Mi-temps / fin de match (piloté par js/ui/matchFlow.js)
     // Mi-temps réglée à 30 secondes.
-    const HALF_TIME_SECONDS = 30;
-    const HALF_TIME_PAUSE_SECONDS = 2;
-
+    const HALF_TIME_SECONDS = 11111111111111111111130;
+    const HALF_TIME_PAUSE_SECONDS = 10;
 
     let gameplayPaused = false;
     let preMatchIntroPlaying = true;
@@ -324,7 +323,8 @@ const createScene = function () {
             activePlayer,
             playerFacing,
             ball,
-            opponentTeam
+            opponentTeam,
+            team: myTeam
         });
         
     });
@@ -438,6 +438,19 @@ const createScene = function () {
         // Met à jour l'IA uniquement si son comportement est implémenté pour ce stade
         if (opponentTeam && opponentTeam.aiImplemented) opponentTeam.update(ball);
 
+        opponentTeam.players.forEach(bot => {
+            if (!bot) return;
+
+            tackleController.tryAITackle(
+                bot,
+                ball,
+                myTeam,
+                opponentTeam
+            );
+        });
+
+        tackleController.updateAITackle();
+
         // Applique l'etat "au sol" des joueurs tacles (stun temporaire)
         tackleController.updateStunnedPlayers(myTeam);
         tackleController.updateStunnedPlayers(opponentTeam);
@@ -473,7 +486,8 @@ const createScene = function () {
         }
 
         tackleController.applyBallSteal(ball);
-
+        tackleController.maintainBallControl(ball);
+        
         const dt = scene.getEngine().getDeltaTime() / 1000;
 
         let moveX = 0;
@@ -550,8 +564,9 @@ const createScene = function () {
         }
 
         // COLLISION JOUEUR HUMAIN → BALLE
-        checkBallCollision(controlledPlayer, ball, playerFacing, myTeam, playerMoveVelocity);
-
+        checkBallCollision(controlledPlayer, ball, playerFacing, myTeam, playerMoveVelocity, input.sprint);
+        tryStealBall(controlledPlayer, ball, myTeam);
+        
         // Si la balle sort du terrain, on lance l'animation de chute
         if (
             ball &&
@@ -568,16 +583,52 @@ const createScene = function () {
 
         // COLLISION JOUEURS IA → BALLE (uniquement si le comportement IA est implémenté)
         if (opponentTeam && opponentTeam.aiImplemented) {
-            opponentTeam.players.forEach(bot => {
-                if (!bot) return;
+    const aiGK = opponentTeam.players.find(p => p && p.role === "GK");
 
-                const toBall = ball.position.subtract(bot.position);
-                if (toBall.lengthSquared() === 0) return;
+    const reserveBallForGK =
+        !!aiGK &&
+        opponentTeam.goalkeeperClaiming &&
+        opponentTeam.isInOwnBox &&
+        opponentTeam.isInOwnBox(ball.position) &&
+        BABYLON.Vector3.Distance(aiGK.position, ball.position) < 10;
 
-                const dir = toBall.normalize();
-                checkBallCollision(bot, ball, dir, opponentTeam);
-            });
-        }
+        opponentTeam.players.forEach(bot => {
+            if (!bot) return;
+
+            // IMPORTANT :
+            // si la balle est réservée au GK dans sa surface,
+            // les autres joueurs n'ont plus le droit d'interagir avec elle
+            if (reserveBallForGK && bot.role !== "GK") {
+                return;
+            }
+
+            tryStealBall(bot, ball, opponentTeam);
+
+            const toBall = ball.position.subtract(bot.position);
+            if (toBall.lengthSquared() === 0) return;
+            toBall.y = 0;
+
+            let dir = null;
+
+            if (bot.facingDirection && bot.facingDirection.lengthSquared() > 0.0001) {
+                dir = bot.facingDirection.clone();
+                dir.y = 0;
+                dir.normalize();
+            } else {
+                const fallback = ball.position.subtract(bot.position);
+                fallback.y = 0;
+
+                if (fallback.lengthSquared() > 0.0001) {
+                    fallback.normalize();
+                    dir = fallback;
+                } else {
+                    dir = new BABYLON.Vector3(-1, 0, 0);
+                }
+            }
+
+            checkBallCollision(bot, ball, dir, opponentTeam);
+        });
+    }
 
         // UPDATE JAUGE
         if (isCharging) {
@@ -728,7 +779,7 @@ const createScene = function () {
 
 
     // --- UI Update (Chronomètre) ---
-    const ENABLE_PRE_MATCH_INTRO = true;
+    const ENABLE_PRE_MATCH_INTRO = false;
     const PRE_MATCH_INTRO_DURATION_MS = 10000;
     const PRE_MATCH_INTRO_TURNS = 1; // 0.5 tour = 180°
     const TOURNAMENT_INTRO_LABEL_BY_STAGE = {

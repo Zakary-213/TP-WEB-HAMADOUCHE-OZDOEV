@@ -57,8 +57,10 @@ class Team {
 
         const startX = -20 * side;
 
+        const gkX = side === 1 ? -47 : 47;
+
         const formation = [
-            { role: "GK",  pos: new BABYLON.Vector3(startX - (15 * side), 0, 0) },
+            { role: "GK",  pos: new BABYLON.Vector3(gkX, 0, 0) },
             { role: "DEF", pos: new BABYLON.Vector3(startX - (5 * side), 0, -10) },
             { role: "DEF", pos: new BABYLON.Vector3(startX - (5 * side), 0, 10) },
             { role: "ATT", pos: new BABYLON.Vector3(startX + (5 * side), 0, -8) },
@@ -318,24 +320,24 @@ class Team {
             return;
         }
     }
-
     
-    movePlayerTowards(player, target){
+    movePlayerTowards(player, target) {
+        if (player.isTackling) return;
 
         const dir = target.subtract(player.position);
         const dist = dir.length();
 
-        if(dist < 0.15){
-            if(player.playAnimation){
+        if (dist < 0.15) {
+            if (player.playAnimation) {
                 player.playAnimation("idle");
             }
             return;
         }
 
         dir.normalize();
+        player.facingDirection = dir.clone();
 
-        const speed = 0.1;
-
+        const speed = 0.07;
         player.move(dir.x, dir.z, speed);
     }
 

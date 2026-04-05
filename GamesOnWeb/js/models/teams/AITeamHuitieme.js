@@ -1,209 +1,627 @@
 class AITeamHuitieme extends AITeam {
     constructor(scene, name, color) {
         super(scene, name, color, 2);
-
-        // ─── Paramètres tactiques : "Bloc médian conservateur" ───────────────
-        this.speed          = 0.1;
-        this.chaseSpeed     = 0.085;  // Légèrement plus lent que le joueur
-        this.reactionDelay  = 2.0;    // Prise de décision lente (2s)
-        this._reactionTimer = 0;
-        this._frozenBall    = null;
-        this._shootCooldown = 0;
-        this.shootInterval  = 8.0;    // Tirs peu fréquents
-        this.pressRadius    = 10;     // Pressing faible : ne s'active qu'à 10u max
-        this.aiImplemented  = true;
-    }
-
-    update(ball) {
-        if (ball) this.aiBehavior(ball);
     }
 
     aiBehavior(ball) {
         if (!ball || !ball.position) return;
 
-        const scene = this.scene;
-        const dt    = scene ? scene.getEngine().getDeltaTime() / 1000 : 0.016;
+        const now = performance.now();
+        const gk = this.getGoalkeeper();
 
-        // ─── Réaction différée ────────────────────────────────────────────────
-        this._reactionTimer += dt;
-        if (this._reactionTimer >= this.reactionDelay) {
-            this._reactionTimer = 0;
-            this._frozenBall    = ball.position.clone();
+        // fenêtre de release après une relance
+        if (gk && this.goalkeeperIsClearing && now < this.goalkeeperReleaseUntil) {
+            this.goalkeeperLocked = true;
+            this.aiControlledPlayer = gk;
+            this.ballChaser = null;
+            this.repositionForGoalkeeperDistribution(gk);
+            return;
         }
-        const frozenBall = this._frozenBall || ball.position.clone();
-        this._shootCooldown -= dt;
 
-        // ─── Désignation du chasseur (jamais le GK) ──────────────────────────
-        let chaser = null, chaserDist = Infinity;
-        this.players.forEach(p => {
-            if (!p || !p.position || p.role === "GK") return;
-            const d = BABYLON.Vector3.Distance(p.position, ball.position);
-            if (d < chaserDist) { chaserDist = d; chaser = p; }
+        if (gk && this.goalkeeperIsClearing && now >= this.goalkeeperReleaseUntil) {
+            const distGKBall = BABYLON.Vector3.Distance(gk.position, ball.position);
+            const ballMoving = ball.velocity && ball.velocity.lengthSquared() > 0.05;
+
+            if (distGKBall > 3.2 || ballMoving || ball.lastKicker !== gk || ball.lastTouchTeam !== this) {
+                this.goalkeeperIsClearing = false;
+                this.goalkeeperReleaseUntil = 0;
+                this.goalkeeperCurrentRoamTarget = null;
+                this.goalkeeperNextRoamDecisionTime = 0;
+            }
+        }
+
+        if (gk && this.isGoalkeeperHandlingBall(ball)) {
+            this.goalkeeperLocked = true;
+            this.aiControlledPlayer = gk;
+            this.ballChaser = null;
+
+            this.handleGoalkeeperPossession(gk, ball);
+            this.repositionForGoalkeeperDistribution(gk);
+            return;
+        }
+
+        const teamHasBall = this.hasRealPossession(ball);
+
+        if (teamHasBall) {
+            this.attackBehavior(ball);
+        } else {
+            this.defenseBehavior(ball);
+        }
+    }
+
+    // -----------------------
+    // HELPERS
+    // -----------------------
+    getGoalkeeper() {
+        return this.players.find(p => p && p.role === "GK") || null;
+    }
+
+    setFacing(player, dir) {
+        if (!player || !dir || dir.lengthSquared() < 0.0001) return;
+
+        const d = dir.clone();
+        d.y = 0;
+
+        if (d.lengthSquared() < 0.0001) return;
+        d.normalize();
+
+        player.facingDirection = d.clone();
+
+        if (player.model) {
+            player.model.rotation.y = Math.atan2(d.x, d.z);
+        }
+    }
+
+    isInOwnBox(pos) {
+        if (!pos) return false;
+        return pos.x > 38 && Math.abs(pos.z) < 14;
+    }
+
+    isGoalkeeperHandlingBall(ball) {
+        const gk = this.getGoalkeeper();
+        if (!gk || !ball || !ball.position) return false;
+
+        if (this.goalkeeperIsClearing && performance.now() < this.goalkeeperReleaseUntil) {
+            return false;
+        }
+
+        return (
+            ball.lastTouchTeam === this &&
+            ball.lastKicker === gk &&
+            BABYLON.Vector3.Distance(gk.position, ball.position) < 2.0
+        );
+    }
+
+    shouldGoalkeeperClaim(ball, enemyCarrier) {
+        const gk = this.getGoalkeeper();
+        if (!gk || !ball || !ball.position) return false;
+        if (!this.isInOwnBox(ball.position)) return false;
+
+        const gkDist = BABYLON.Vector3.Distance(gk.position, ball.position);
+        if (gkDist > 9.5) return false;
+
+        const ballSpeed = ball.velocity ? ball.velocity.length() : 0;
+
+        const enemyHasTightControl =
+            enemyCarrier &&
+            BABYLON.Vector3.Distance(enemyCarrier.position, ball.position) < 1.7 &&
+            BABYLON.Vector3.Distance(enemyCarrier.position, gk.position) > 2.2;
+
+        if (gkDist < 2.8) return true;
+        if (ballSpeed > 2.2) return true;
+        if (!enemyHasTightControl) return true;
+
+        return false;
+    }
+
+    // -----------------------
+    // DEFENSE
+    // -----------------------
+    defenseBehavior(ball) {
+        let bestPlayer = null;
+        let bestScore = -Infinity;
+
+        let enemyCarrier = null;
+        let targetPos = ball.position.clone();
+
+        const defendGoalDir = new BABYLON.Vector3(1, 0, 0);
+
+        if (
+            ball.lastTouchTeam &&
+            ball.lastTouchTeam !== this &&
+            ball.lastKicker &&
+            ball.lastKicker.position
+        ) {
+            const carrierDistToBall = BABYLON.Vector3.Distance(
+                ball.lastKicker.position,
+                ball.position
+            );
+
+            if (carrierDistToBall < 2.2) {
+                enemyCarrier = ball.lastKicker;
+            }
+        }
+
+        const gk = this.getGoalkeeper();
+        if (gk) {
+            this.updateGoalkeeper(gk, ball, enemyCarrier);
+        }
+
+        // si le GK claim la balle, les autres restent hors de sa surface
+        if (this.goalkeeperClaiming) {
+            this.ballChaser = null;
+
+            this.players.forEach(player => {
+                if (!player || player.role === "GK") return;
+
+                const target = player.homePosition.clone();
+
+                if (target.x > 34) target.x = 34;
+                if (Math.abs(target.z) < 8) {
+                    target.z = target.z >= 0 ? 10 : -10;
+                }
+
+                target.x = Math.max(player.minX, Math.min(player.maxX, target.x));
+                target.z = Math.max(player.minZ, Math.min(player.maxZ, target.z));
+
+                this.movePlayerTowards(player, target);
+            });
+
+            return;
+        }
+
+        if (enemyCarrier) {
+            targetPos = enemyCarrier.position.add(defendGoalDir.scale(1.8));
+            targetPos.y = 0;
+            targetPos.z = enemyCarrier.position.z;
+        }
+
+        this.players.forEach(player => {
+            if (!player || player.role === "GK") return;
+            if (player._tackleStunUntil && Date.now() < player._tackleStunUntil) return;
+
+            const toTarget = targetPos.subtract(player.position);
+            const dist = toTarget.length();
+
+            if (dist > this.pressRadius) return;
+
+            let score = 0;
+
+            score -= dist * 1.0;
+            score -= Math.abs(player.position.z - targetPos.z) * 0.9;
+
+            if (enemyCarrier) {
+                const fromCarrierToDef = player.position.subtract(enemyCarrier.position);
+                fromCarrierToDef.y = 0;
+
+                if (fromCarrierToDef.lengthSquared() > 0.0001) {
+                    fromCarrierToDef.normalize();
+
+                    const goalSideDot = BABYLON.Vector3.Dot(defendGoalDir, fromCarrierToDef);
+
+                    if (goalSideDot < -0.1) {
+                        score -= 1000;
+                    } else if (goalSideDot < 0.15) {
+                        score -= 6;
+                    } else {
+                        score += 12 + goalSideDot * 10;
+                    }
+                }
+
+                if (player.position.x > enemyCarrier.position.x) {
+                    score += 6;
+                } else {
+                    score -= 8;
+                }
+            } else {
+                score -= Math.abs(player.position.x - ball.position.x) * 0.35;
+            }
+
+            if (score > bestScore) {
+                bestScore = score;
+                bestPlayer = player;
+            }
         });
 
-        this.players.forEach((player) => {
-            if (!player || !player.position || !player.homePosition) return;
+        this.ballChaser = bestPlayer;
 
-            const role     = player.role;
-            const homePos  = player.homePosition;
-            const side     = player.side;
-            const distBall = BABYLON.Vector3.Distance(player.position, ball.position);
-            const isChaser = (player === chaser);
+        if (this.ballChaser) {
+            this.movePlayerTowards(this.ballChaser, targetPos);
+        }
+    }
 
-            // ─── GARDIEN (logique gardée car fonctionnelle) ───────────────────
-            if (role === "GK") {
-                // Cible Z : suit la balle à 70% pour couvrir les angles
-                const gkTargetZ = homePos.z + (ball.position.z - homePos.z) * 0.70;
-                const clampedZ  = Math.max(-7.5, Math.min(7.5, gkTargetZ));
+    // -----------------------
+    // ATTACK
+    // -----------------------
+    attackBehavior(ball) {
+        let ballCarrier = null;
+        let bestDist = Infinity;
 
-                // Interpole directement en Z (pas de dist < 0.25 qui bloquerait le mouvement)
-                const dz = clampedZ - player.position.z;
-                if (Math.abs(dz) > 0.05) {
-                    player.position.z += Math.sign(dz) * Math.min(Math.abs(dz), this.speed);
-                }
+        this.players.forEach(player => {
+            if (!player || player.role === "GK") return;
 
-                // X TOUJOURS fixe sur la ligne de but
-                player.position.x = homePos.x;
+            const dist = BABYLON.Vector3.Distance(player.position, ball.position);
 
-                // Dégagement actif si balle à portée
-                if (player._gkCooldown === undefined) player._gkCooldown = 0;
-                player._gkCooldown -= dt;
-                if (distBall < 2.5 && player._gkCooldown <= 0) {
-                    if (!ball.velocity) ball.velocity = new BABYLON.Vector3(0, 0, 0);
-                    const clearZ     = ball.position.z >= 0 ? 1 : -1;
-                    const clearForce = 14 + Math.random() * 6;
-                    ball.velocity.x  = side * clearForce * 0.5;
-                    ball.velocity.z  = clearZ * clearForce * 0.85;
-                    if (window.matchAudio && typeof window.matchAudio.playKick === "function") {
-                        window.matchAudio.playKick();
-                    }
-                    player._gkCooldown = 1.5;
-                }
-                return;
+            if (dist < bestDist) {
+                bestDist = dist;
+                ballCarrier = player;
             }
+        });
 
-            // ─── DÉFENSEURS ────────────────────────────────────────────────────
-            let target = null;
+        if (!ballCarrier) return;
 
-            if (role === "DEF") {
-                if (isChaser) {
-                    if (distBall <= this.pressRadius) {
-                        // Pressing actif : balle à portée → va dessus
-                        target = ball.position.clone();
-                    } else {
-                        // Pressing faible : balle loin → rampe lentement vers elle
-                        // Reste à 70% sur homePos (bloc), 30% vers la balle
-                        target = homePos.clone();
-                        target.x += (ball.position.x - homePos.x) * 0.3;
-                        target.z += (ball.position.z - homePos.z) * 0.3;
-                        target.x = Math.max(homePos.x - 4, Math.min(homePos.x + 6, target.x));
-                    }
-                } else {
-                    // Mode bloc + léger support run (discret, priorité à la forme)
-                    let supportX = homePos.x;
-                    if (chaser && chaser.position && chaser.homePosition) {
-                        const chaserAdv = (side === -1)
-                            ? chaser.homePosition.x - chaser.position.x
-                            : chaser.position.x - chaser.homePosition.x;
-                        if (chaserAdv > 5) {
-                            // DEF avance très prudemment (15% seulement)
-                            supportX = homePos.x + chaserAdv * 0.15 * (side === -1 ? -1 : 1);
-                        }
-                    }
-                    target = homePos.clone();
-                    target.x = supportX;
-                    target.z += (ball.position.z - homePos.z) * 0.2; // Bloc serré
-                    target.x = Math.max(homePos.x - 4, Math.min(homePos.x + 4, target.x));
-                }
+        let dir = new BABYLON.Vector3(-50, 0, 0).subtract(ballCarrier.position);
+
+        const margin = 5;
+
+        if (ballCarrier.position.z > 25 - margin) dir.z -= 2;
+        if (ballCarrier.position.z < -25 + margin) dir.z += 2;
+        if (ballCarrier.position.x < -45 + margin) dir.x += 1.5;
+
+        this.opponents.forEach(opponent => {
+            const toOpponent = opponent.position.subtract(ballCarrier.position);
+            const dist = toOpponent.length();
+
+            if (dist < 8) {
+                const avoid = ballCarrier.position.subtract(opponent.position);
+                avoid.normalize();
+                dir.addInPlace(avoid.scale(3));
             }
+        });
 
-            // ─── ATTAQUANTS ────────────────────────────────────────────────────
-            else if (role === "ATT") {
-                if (isChaser) {
-                    if (distBall <= this.pressRadius) {
-                        // Pressing actif : va sur la balle
-                        target = ball.position.clone();
-                    } else {
-                        // Pressing faible : balle loin → position d'attente à mi-chemin
-                        target = homePos.clone();
-                        target.x += (ball.position.x - homePos.x) * 0.35;
-                        target.z += (ball.position.z - homePos.z) * 0.35;
-                        // Ne pas traverser le centre
-                        if (side === -1) target.x = Math.max(0, target.x);
-                        else             target.x = Math.min(0, target.x);
-                    }
-                } else {
-                    // Support run modéré : forme de l'équipe prioritaire
-                    let supportX = homePos.x;
-                    if (chaser && chaser.position && chaser.homePosition) {
-                        const chaserAdv = (side === -1)
-                            ? chaser.homePosition.x - chaser.position.x
-                            : chaser.position.x - chaser.homePosition.x;
-                        if (chaserAdv > 3) {
-                            // Suit à 55% de l'avance (moins agressif qu'avant, forme prioritaire)
-                            supportX = homePos.x + chaserAdv * 0.55 * (side === -1 ? -1 : 1);
-                        }
-                    }
-                    target = homePos.clone();
-                    target.x = supportX;
-                    target.z += (ball.position.z - homePos.z) * 0.15;
-                    if (side === -1) target.x = Math.max(-40, Math.min(homePos.x + 6, target.x));
-                    else             target.x = Math.min(40, Math.max(homePos.x - 6, target.x));
-                }
-            }
+        if (dir.lengthSquared() === 0) return;
 
-            if (!target) return;
+        dir.normalize();
+        const moveDir = dir.clone();
 
-            // Borner dans le terrain
-            target.x = Math.max(-48, Math.min(48, target.x));
-            target.z = Math.max(-27, Math.min(27, target.z));
+        this.aiControlledPlayer = ballCarrier;
+        this.ballChaser = ballCarrier;
 
-            // ─── POUSSÉE BALLE (DEF + ATT seulement) ─────────────────────────
-            if (player._pushCooldown === undefined) player._pushCooldown = 0;
-            player._pushCooldown -= dt;
+        this.setFacing(ballCarrier, moveDir);
+        ballCarrier.move(moveDir.x, moveDir.z, 0.1);
 
-            if (isChaser && distBall < 2.2 && player._pushCooldown <= 0) {
-                const attackDir = new BABYLON.Vector3(side, 0, 0);
-                const aimZ      = (0 - ball.position.z) * 0.2;
-                const aimVec    = new BABYLON.Vector3(attackDir.x, 0, aimZ);
-                aimVec.normalize();
+        this.players.forEach(player => {
+            if (player === ballCarrier) return;
 
-                if (!ball.velocity) ball.velocity = new BABYLON.Vector3(0, 0, 0);
+            const support = player.homePosition.clone();
+            support.x += (ballCarrier.position.x - player.homePosition.x) * 0.5;
+            support.z += (ballCarrier.position.z - player.homePosition.z) * 0.5;
 
-                const pushForce = 7 + Math.random() * 3;
-                ball.velocity = new BABYLON.Vector3(
-                    aimVec.x * pushForce,
-                    0,
-                    aimVec.z * pushForce
-                );
-
-                const goalX    = side === -1 ? -50 : 50;
-                const distGoal = Math.abs(ball.position.x - goalX);
-                if (distGoal < 10 && this._shootCooldown <= 0) { // Peu de tirs lointains : max 10u
-                    ball.velocity.x *= 2.5;
-                    ball.velocity.z *= 1.8;
-                    this._shootCooldown = this.shootInterval;
-                }
-
-                if (window.matchAudio && typeof window.matchAudio.playKick === "function") {
-                    window.matchAudio.playKick();
-                }
-
-                player._pushCooldown = 1.8; // Plus long = moins de pivots, mouvement plus fluide
-                return;
-            }
-
-            const spd = isChaser ? this.chaseSpeed : this.speed;
-            this._moveTowards(player, target, spd);
+            this.movePlayerTowards(player, support);
         });
     }
 
-    _moveTowards(player, target, speed) {
-        const dir  = target.subtract(player.position);
-        dir.y      = 0;
+    // -----------------------
+    // GK MAIN
+    // -----------------------
+    updateGoalkeeper(gk, ball, enemyCarrier) {
+        if (!gk || !ball || !ball.position) return;
+
+        const threatPos = enemyCarrier ? enemyCarrier.position.clone() : ball.position.clone();
+        const enemyInBox = this.isInOwnBox(threatPos);
+
+        const gkHasBall =
+            ball.lastTouchTeam === this &&
+            ball.lastKicker === gk &&
+            BABYLON.Vector3.Distance(gk.position, ball.position) < 2.0;
+
+        if (gkHasBall) {
+            this.goalkeeperLocked = true;
+            this.aiControlledPlayer = gk;
+            this.handleGoalkeeperPossession(gk, ball);
+            return;
+        }
+
+        // priorité GK sur toute balle dangereuse dans sa surface
+        if (this.shouldGoalkeeperClaim(ball, enemyCarrier)) {
+            this.goalkeeperLocked = true;
+            this.goalkeeperClaiming = true;
+            this.aiControlledPlayer = gk;
+            this.ballChaser = null;
+
+            const target = ball.position.clone();
+            target.x = BABYLON.Scalar.Clamp(target.x, 43.2, 47.0);
+            target.z = BABYLON.Scalar.Clamp(target.z, -6.2, 6.2);
+            target.y = 0;
+
+            this.moveGoalkeeperTowards(gk, target, false, 0.082);
+            return;
+        }
+
+        if (!enemyInBox) {
+            const target = gk.homePosition.clone();
+            target.x = gk.homePosition.x;
+
+            const desiredZ = BABYLON.Scalar.Clamp(ball.position.z * 0.10, -4.0, 4.0);
+            target.z = BABYLON.Scalar.Lerp(gk.position.z, desiredZ, 0.06);
+
+            this.moveGoalkeeperTowards(gk, target, true, 0.05);
+            return;
+        }
+
+        this.goalkeeperLocked = true;
+
+        const target = gk.homePosition.clone();
+        target.x = gk.homePosition.x;
+
+        const trackZ = enemyCarrier ? enemyCarrier.position.z : ball.position.z;
+        const desiredZ = BABYLON.Scalar.Clamp(trackZ * 0.45, -4.8, 4.8);
+        target.z = BABYLON.Scalar.Lerp(gk.position.z, desiredZ, 0.07);
+
+        this.moveGoalkeeperTowards(gk, target, true, 0.058);
+        this.tryGoalkeeperIntercept(gk, ball);
+    }
+
+    moveGoalkeeperTowards(gk, target, keepFacingForward = true, speedOverride = null) {
+        if (!gk || !target) return;
+        if (gk.isTackling) return;
+        if (gk._tackleStunUntil && Date.now() < gk._tackleStunUntil) return;
+
+        const dir = target.subtract(gk.position);
         const dist = dir.length();
-        if (dist < 0.25) return;
+
+        if (dist < 0.05) {
+            if (gk.playAnimation) gk.playAnimation("idle");
+            return;
+        }
+
         dir.normalize();
-        player.move(dir.x, dir.z, speed);
+
+        const speed = speedOverride ?? (dist > 1.5 ? 0.08 : 0.06);
+        gk.move(dir.x, dir.z, speed);
+
+        if (keepFacingForward) {
+            this.setFacing(gk, new BABYLON.Vector3(-1, 0, 0));
+        } else {
+            this.setFacing(gk, dir);
+        }
+    }
+
+    tryGoalkeeperIntercept(gk, ball) {
+        if (!gk || !ball || !ball.position) return;
+
+        const distToBall = BABYLON.Vector3.Distance(gk.position, ball.position);
+        if (distToBall > 1.8) return;
+
+        if (!ball.velocity) {
+            ball.velocity = new BABYLON.Vector3(0, 0, 0);
+        }
+
+        ball.lastKicker = gk;
+        ball.lastTouchTeam = this;
+        ball.velocity.set(0, 0, 0);
+
+        this.goalkeeperIsClearing = false;
+        this.goalkeeperReleaseUntil = 0;
+        this.goalkeeperPossessionStartTime = performance.now();
+        this.goalkeeperCurrentRoamTarget = null;
+        this.goalkeeperNextRoamDecisionTime = 0;
+
+        const holdDir = new BABYLON.Vector3(-1, 0, 0);
+        this.setFacing(gk, holdDir);
+
+        ball.position.x = gk.position.x + holdDir.x * 0.95;
+        ball.position.z = gk.position.z + holdDir.z * 0.95;
+        ball.position.y = 0.75;
+
+        ball.pushLockUntil = performance.now() + 180;
+        ball.ignorePlayerCollisionUntil = performance.now() + 180;
+
+        this.lockTeamPossession(950);
+    }
+
+    // -----------------------
+    // GK POSSESSION
+    // -----------------------
+    handleGoalkeeperPossession(gk, ball) {
+        if (!gk || !ball || !ball.position) return;
+
+        const now = performance.now();
+
+        if (!this.goalkeeperPossessionStartTime) {
+            this.goalkeeperPossessionStartTime = now;
+        }
+
+        const heldFor = now - this.goalkeeperPossessionStartTime;
+
+        let nearestOpponent = null;
+        let nearestDist = Infinity;
+
+        this.opponents.forEach(op => {
+            if (!op || !op.position) return;
+
+            const d = BABYLON.Vector3.Distance(op.position, gk.position);
+            if (d < nearestDist) {
+                nearestDist = d;
+                nearestOpponent = op;
+            }
+        });
+
+        const passTarget = this.findBestGoalkeeperPassTarget(gk);
+
+        const underPressure = nearestDist < 3.8;
+        const canPassNow = passTarget && heldFor > this.goalkeeperMinHoldDuration;
+        const mustReleaseNow =
+            heldFor > this.goalkeeperMaxHoldDuration ||
+            canPassNow ||
+            (underPressure && heldFor > 700);
+
+        if (!mustReleaseNow) {
+            const roamTarget = this.computeGoalkeeperRoamTarget(gk, nearestOpponent);
+            this.moveGoalkeeperWithBall(gk, ball, roamTarget);
+            return;
+        }
+
+        this.goalkeeperDistribute(gk, ball, passTarget);
+    }
+
+    moveGoalkeeperWithBall(gk, ball, target) {
+        if (!gk || !ball || !target) return;
+
+        const dir = target.subtract(gk.position);
+        dir.y = 0;
+
+        if (dir.lengthSquared() > 0.0001) {
+            dir.normalize();
+            gk.move(dir.x, dir.z, 0.042);
+        }
+
+        const holdDir = new BABYLON.Vector3(-1, 0, 0);
+        this.setFacing(gk, holdDir);
+
+        ball.lastKicker = gk;
+        ball.lastTouchTeam = this;
+        ball.velocity.set(0, 0, 0);
+
+        ball.position.x = gk.position.x + holdDir.x * 0.95;
+        ball.position.z = gk.position.z + holdDir.z * 0.95;
+        ball.position.y = 0.75;
+    }
+
+    computeGoalkeeperRoamTarget(gk, nearestOpponent) {
+        const now = performance.now();
+
+        if (
+            this.goalkeeperCurrentRoamTarget &&
+            now < this.goalkeeperNextRoamDecisionTime
+        ) {
+            return this.goalkeeperCurrentRoamTarget.clone();
+        }
+
+        const target = gk.position.clone();
+
+        const minX = 43.5;
+        const maxX = 46.7;
+        const minZ = -4.8;
+        const maxZ = 4.8;
+
+        target.x = 45.4;
+        target.z = BABYLON.Scalar.Lerp(gk.position.z, 0, 0.18);
+
+        if (nearestOpponent && nearestOpponent.position) {
+            const away = gk.position.subtract(nearestOpponent.position);
+            away.y = 0;
+
+            if (away.lengthSquared() > 0.0001) {
+                away.normalize();
+
+                target.x += away.x * 0.9;
+                target.z += away.z * 1.2;
+            }
+        }
+
+        target.x = BABYLON.Scalar.Clamp(target.x, minX, maxX);
+        target.z = BABYLON.Scalar.Clamp(target.z, minZ, maxZ);
+
+        this.goalkeeperCurrentRoamTarget = target.clone();
+        this.goalkeeperNextRoamDecisionTime = now + 420;
+
+        return target;
+    }
+
+    goalkeeperDistribute(gk, ball, passTarget = null) {
+        if (!gk || !ball || !ball.position) return;
+        if (this.goalkeeperIsClearing) return;
+
+        if (!passTarget) {
+            passTarget = this.findBestGoalkeeperPassTarget(gk);
+        }
+
+        let kickDir;
+        let kickForce;
+
+        if (passTarget) {
+            kickDir = passTarget.position.subtract(gk.position);
+            kickDir.y = 0;
+
+            if (kickDir.lengthSquared() > 0.0001) {
+                kickDir.normalize();
+            } else {
+                kickDir = new BABYLON.Vector3(-1, 0, 0);
+            }
+
+            kickForce = 38;
+        } else {
+            kickDir = new BABYLON.Vector3(-1, 0, 0);
+            kickDir.z = (Math.random() - 0.5) * 0.45;
+            kickDir.normalize();
+
+            kickForce = 52;
+        }
+
+        this.setFacing(gk, kickDir);
+
+        this.goalkeeperIsClearing = true;
+        this.goalkeeperReleaseUntil = performance.now() + 380;
+        this.goalkeeperKickCooldownUntil = performance.now() + 900;
+
+        this.aiControlledPlayer = gk;
+        this.goalkeeperLocked = true;
+        this.ballChaser = null;
+        this.goalkeeperCurrentRoamTarget = null;
+        this.goalkeeperNextRoamDecisionTime = 0;
+
+        kick(this.scene, ball, gk, kickDir, kickForce, this);
+    }
+
+    findBestGoalkeeperPassTarget(gk) {
+        if (!gk) return null;
+
+        let bestMate = null;
+        let bestScore = -Infinity;
+
+        this.players.forEach(player => {
+            if (!player || player === gk) return;
+            if (player.role === "GK") return;
+
+            const toMate = player.position.subtract(gk.position);
+            const dist = toMate.length();
+
+            if (dist < 7 || dist > 32) return;
+
+            let score = 0;
+
+            score += (gk.position.x - player.position.x) * 2.2;
+            score -= Math.abs(player.position.z) * 0.18;
+
+            this.opponents.forEach(op => {
+                if (!op || !op.position) return;
+
+                const d = BABYLON.Vector3.Distance(op.position, player.position);
+                if (d < 9) {
+                    score -= (9 - d) * 2.5;
+                }
+            });
+
+            if (score > bestScore) {
+                bestScore = score;
+                bestMate = player;
+            }
+        });
+
+        return bestScore > 0 ? bestMate : null;
+    }
+
+    repositionForGoalkeeperDistribution(gk) {
+        if (!gk) return;
+
+        this.players.forEach(player => {
+            if (!player || player === gk) return;
+
+            const target = player.homePosition.clone();
+
+            if (target.x > 34) {
+                target.x = 34;
+            }
+
+            if (Math.abs(target.z) < 8) {
+                target.z = target.z >= 0 ? 10 : -10;
+            }
+
+            target.x = Math.max(player.minX, Math.min(player.maxX, target.x));
+            target.z = Math.max(player.minZ, Math.min(player.maxZ, target.z));
+
+            this.movePlayerTowards(player, target);
+        });
     }
 }
