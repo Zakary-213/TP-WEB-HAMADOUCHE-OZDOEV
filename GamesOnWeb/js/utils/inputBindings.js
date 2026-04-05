@@ -5,6 +5,7 @@
     "use strict";
 
     const STORAGE_KEY = "gow.keybinds.v1";
+    const GAMEPAD_STORAGE_KEY = "gow.gamepadbinds.v1";
     const DEFAULTS = {
         forward: "z",
         backward: "s",
@@ -16,8 +17,17 @@
         switchLeft: "a",
         switchRight: "e"
     };
+    const DEFAULT_GAMEPAD = {
+        shoot: 0,
+        sprint: 7,
+        tackle: 2,
+        switchLeft: 4,
+        switchRight: 5,
+        options: 9
+    };
 
     let bindings = loadBindings();
+    let gamepadBindings = loadGamepadBindings();
 
     function loadBindings() {
         try {
@@ -33,6 +43,25 @@
     function saveBindings() {
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(bindings));
+        } catch (err) {
+            // ignore storage failures
+        }
+    }
+
+    function loadGamepadBindings() {
+        try {
+            const raw = localStorage.getItem(GAMEPAD_STORAGE_KEY);
+            if (!raw) return { ...DEFAULT_GAMEPAD };
+            const parsed = JSON.parse(raw);
+            return { ...DEFAULT_GAMEPAD, ...(parsed || {}) };
+        } catch (err) {
+            return { ...DEFAULT_GAMEPAD };
+        }
+    }
+
+    function saveGamepadBindings() {
+        try {
+            localStorage.setItem(GAMEPAD_STORAGE_KEY, JSON.stringify(gamepadBindings));
         } catch (err) {
             // ignore storage failures
         }
@@ -82,6 +111,44 @@
     function setBindings(next) {
         bindings = { ...DEFAULTS, ...(next || {}) };
         saveBindings();
+    }
+
+    function isValidGamepadButton(value) {
+        return Number.isInteger(value) && value >= 0 && value <= 17;
+    }
+
+    function findGamepadConflict(action, value) {
+        const keys = Object.keys(gamepadBindings);
+        for (let i = 0; i < keys.length; i += 1) {
+            const act = keys[i];
+            if (act === action) continue;
+            if (gamepadBindings[act] === value) return act;
+        }
+        return null;
+    }
+
+    function setGamepadBinding(action, value) {
+        if (!isValidGamepadButton(value)) {
+            return { ok: false, reason: "invalid" };
+        }
+
+        const conflictAction = findGamepadConflict(action, value);
+        if (conflictAction) {
+            return { ok: false, reason: "duplicate", conflictAction };
+        }
+
+        gamepadBindings = { ...gamepadBindings, [action]: value };
+        saveGamepadBindings();
+        return { ok: true };
+    }
+
+    function setGamepadBindings(next) {
+        gamepadBindings = { ...DEFAULT_GAMEPAD, ...(next || {}) };
+        saveGamepadBindings();
+    }
+
+    function getGamepadBindings() {
+        return { ...gamepadBindings };
     }
 
     function getBindings() {
@@ -151,7 +218,11 @@
         getBindings,
         setBindings,
         setBinding,
-        isActionKey
+        isActionKey,
+        DEFAULT_GAMEPAD,
+        getGamepadBindings,
+        setGamepadBindings,
+        setGamepadBinding
     };
 
     window.createInputController = createInputController;

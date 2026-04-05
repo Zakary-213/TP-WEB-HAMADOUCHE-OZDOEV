@@ -1,6 +1,27 @@
 const canvas = document.getElementById("renderCanvas");
 const engine = new BABYLON.Engine(canvas, true);
 
+const gamepadState = {
+    index: null,
+    lastShootPressed: false,
+    lastTacklePressed: false,
+    lastL1Pressed: false,
+    lastR1Pressed: false,
+    lastOptionsPressed: false,
+    lastSkipPressed: false
+};
+
+function getActiveGamepad() {
+    const pads = (navigator.getGamepads && navigator.getGamepads()) || [];
+    if (gamepadState.index !== null && pads[gamepadState.index]) {
+        return pads[gamepadState.index];
+    }
+    for (let i = 0; i < pads.length; i += 1) {
+        if (pads[i]) return pads[i];
+    }
+    return null;
+}
+
 function setupGamepadNotifications() {
     const notif = document.getElementById("gamepad-notif");
     const notifName = document.getElementById("gamepad-name");
@@ -28,11 +49,17 @@ function setupGamepadNotifications() {
 
     function handleConnect(gamepad) {
         if (!gamepad) return;
+        if (typeof gamepad.index === "number") {
+            gamepadState.index = gamepad.index;
+        }
         showNotif(shortName(gamepad.id) + " connectee !");
     }
 
     function handleDisconnect(gamepad) {
         if (!gamepad) return;
+        if (typeof gamepad.index === "number" && gamepadState.index === gamepad.index) {
+            gamepadState.index = null;
+        }
         showNotif(shortName(gamepad.id) + " deconnectee !");
     }
 
@@ -318,6 +345,7 @@ const createScene = function () {
             }
         }
     });
+    window.goalReplayController = goalReplay;
 
     // Branche la gestion mi-temps / fin du match (affichage + pause/reprise)
     if (window.createMatchFlow) {
@@ -558,7 +586,105 @@ const createScene = function () {
         let moveX = 0;
         let moveZ = 0;
 
-        if (cameraRuntime && typeof cameraRuntime.computeMoveAxes === "function") {
+        const gp = getActiveGamepad();
+        if (gp && gp.axes && gp.axes.length >= 2) {
+            const gamepadBinds = window.inputBindings && typeof window.inputBindings.getGamepadBindings === "function"
+                ? window.inputBindings.getGamepadBindings()
+                : { shoot: 0, sprint: 7, tackle: 2, switchLeft: 4, switchRight: 5, options: 9 };
+            const rawX = gp.axes[0] || 0;
+            const rawY = gp.axes[1] || 0;
+            const deadzone = 0.15;
+            const stickX = Math.abs(rawX) > deadzone ? rawX : 0;
+            const stickY = Math.abs(rawY) > deadzone ? rawY : 0;
+
+            // Stick Y -> avant/arriere (moveX), Stick X -> gauche/droite (moveZ)
+            moveX = -stickY;
+            moveZ = -stickX;
+
+            const sprintBtn = gp.buttons && gp.buttons[gamepadBinds.sprint];
+            input.sprint = !!(sprintBtn && sprintBtn.pressed);
+
+            const shootBtn = gp.buttons && gp.buttons[gamepadBinds.shoot];
+            const shootPressed = !!(shootBtn && shootBtn.pressed);
+            const replayActive = goalReplay && typeof goalReplay.isReplayActive === "function"
+                ? goalReplay.isReplayActive()
+                : false;
+
+            if (preMatchIntroPlaying || replayActive) {
+                if (shootPressed && !gamepadState.lastSkipPressed) {
+                    if (replayActive && goalReplay && typeof goalReplay.skipReplay === "function") {
+                        goalReplay.skipReplay();
+                    } else if (preMatchIntroPlaying && typeof window.skipPreMatchIntro === "function") {
+                        window.skipPreMatchIntro();
+                    }
+                }
+                gamepadState.lastSkipPressed = shootPressed;
+            } else {
+                if (shootPressed && !gamepadState.lastShootPressed && !isCharging) {
+                    chargeStart = Date.now();
+                    isCharging = true;
+                }
+                if (!shootPressed && gamepadState.lastShootPressed && isCharging) {
+                    const force = computeKickPower(kickGauge);
+                    hideKickGauge(kickGauge);
+                    if (isRestartWaitingKick()) {
+                        takeRestartKick(ball, lastDirection, force);
+                    } else {
+                        kick(scene, ball, activePlayer, lastDirection, force, myTeam);
+                    }
+                    isCharging = false;
+                }
+                gamepadState.lastShootPressed = shootPressed;
+                gamepadState.lastSkipPressed = false;
+            }
+
+            const tackleBtn = gp.buttons && gp.buttons[gamepadBinds.tackle];
+            const tacklePressed = !!(tackleBtn && tackleBtn.pressed);
+            if (tacklePressed && !gamepadState.lastTacklePressed) {
+                tackleController.handleKeyDown({ key: "gamepad", repeat: false }, {
+                    activePlayer,
+                    playerFacing,
+                    ball,
+                    opponentTeam,
+                    team: myTeam,
+                    tackleKey: "gamepad"
+                });
+            }
+            gamepadState.lastTacklePressed = tacklePressed;
+
+            const l1Btn = gp.buttons && gp.buttons[gamepadBinds.switchLeft];
+            const l1Pressed = !!(l1Btn && l1Btn.pressed);
+            if (l1Pressed && !gamepadState.lastL1Pressed) {
+                const p = myTeam.getPlayerOnSide("left");
+                myTeam.switchPlayerSmooth(p, cameras, scene, 180);
+                activePlayer = myTeam.activePlayer;
+                if (selectionIndicator && activePlayer) {
+                    selectionIndicator.parent = activePlayer;
+                }
+            }
+            gamepadState.lastL1Pressed = l1Pressed;
+
+            const r1Btn = gp.buttons && gp.buttons[gamepadBinds.switchRight];
+            const r1Pressed = !!(r1Btn && r1Btn.pressed);
+            if (r1Pressed && !gamepadState.lastR1Pressed) {
+                const p = myTeam.getPlayerOnSide("right");
+                myTeam.switchPlayerSmooth(p, cameras, scene, 180);
+                activePlayer = myTeam.activePlayer;
+                if (selectionIndicator && activePlayer) {
+                    selectionIndicator.parent = activePlayer;
+                }
+            }
+            gamepadState.lastR1Pressed = r1Pressed;
+
+            const optionsBtn = gp.buttons && gp.buttons[gamepadBinds.options];
+            const optionsPressed = !!(optionsBtn && optionsBtn.pressed);
+            if (optionsPressed && !gamepadState.lastOptionsPressed) {
+                if (window.settingsMenu && typeof window.settingsMenu.open === "function") {
+                    window.settingsMenu.open();
+                }
+            }
+            gamepadState.lastOptionsPressed = optionsPressed;
+        } else if (cameraRuntime && typeof cameraRuntime.computeMoveAxes === "function") {
             const move = cameraRuntime.computeMoveAxes(input);
             moveX = move.moveX;
             moveZ = move.moveZ;

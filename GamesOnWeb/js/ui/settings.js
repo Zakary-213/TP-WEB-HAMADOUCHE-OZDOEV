@@ -16,10 +16,15 @@
     const musicVal     = document.getElementById("set-music-vol-val");
     const camBtns    = document.querySelectorAll(".settings-option-btn[data-cam]");
     const keybindBtns = document.querySelectorAll(".settings-keybind-btn[data-action]");
+    const gamepadBtns = document.querySelectorAll(".settings-gamepad-btn[data-gamepad-action]");
     const TPS_BASE_RADIUS = 70;  // radius de base de la caméra TPS
     const THIRD_BASE_RADIUS = 60;  // radius de base de la caméra 3e personne
     let keybinds = {};
+    let gamepadBinds = {};
     let listeningAction = null;
+    let listeningGamepadAction = null;
+    let lastNavAt = 0;
+    let lastSubmitPressed = false;
 
 
     // ── Helpers caméra ─────────────────────────────────────────────
@@ -58,10 +63,49 @@
         });
     }
 
+    function formatGamepadLabel(value) {
+        var map = {
+            0: "X",
+            1: "O",
+            2: "Carre",
+            3: "Triangle",
+            4: "L1",
+            5: "R1",
+            6: "L2",
+            7: "R2",
+            8: "Share",
+            9: "Options",
+            10: "L3",
+            11: "R3",
+            12: "Haut",
+            13: "Bas",
+            14: "Gauche",
+            15: "Droite"
+        };
+        if (!Number.isInteger(value)) return "-";
+        return map[value] || ("Btn" + value);
+    }
+
+    function syncGamepadButtons() {
+        gamepadBtns.forEach(function (btn) {
+            const action = btn.dataset.gamepadAction;
+            btn.textContent = formatGamepadLabel(gamepadBinds[action]);
+        });
+    }
+
     function setListeningButton(nextAction) {
         keybindBtns.forEach(function (btn) {
             btn.classList.toggle("is-listening", btn.dataset.action === nextAction);
             if (btn.dataset.action === nextAction) {
+                btn.textContent = "Appuie...";
+            }
+        });
+    }
+
+    function setListeningGamepadButton(nextAction) {
+        gamepadBtns.forEach(function (btn) {
+            btn.classList.toggle("is-listening", btn.dataset.gamepadAction === nextAction);
+            if (btn.dataset.gamepadAction === nextAction) {
                 btn.textContent = "Appuie...";
             }
         });
@@ -122,6 +166,52 @@
         syncKeybindButtons();
     }
 
+    function captureGamepadBinding() {
+        if (!listeningGamepadAction) return;
+        var pads = (navigator.getGamepads && navigator.getGamepads()) || [];
+        var pad = pads.find(function (p) { return p && p.connected; }) || null;
+        if (!pad || !pad.buttons) return;
+
+        var pressedIndex = -1;
+        for (var i = 0; i < pad.buttons.length; i += 1) {
+            if (pad.buttons[i] && pad.buttons[i].pressed) {
+                pressedIndex = i;
+                break;
+            }
+        }
+        if (pressedIndex < 0) return;
+
+        var inputBindings = window.inputBindings;
+        if (!inputBindings || typeof inputBindings.setGamepadBinding !== "function") return;
+
+        var result = inputBindings.setGamepadBinding(listeningGamepadAction, pressedIndex);
+        if (!result.ok) {
+            var currentAction = listeningGamepadAction;
+            setListeningGamepadButton(null);
+            listeningGamepadAction = null;
+            if (currentAction) {
+                var btn = document.querySelector(
+                    '.settings-gamepad-btn[data-gamepad-action="' + currentAction + '"]'
+                );
+                if (btn) {
+                    btn.textContent = "Deja pris";
+                    window.setTimeout(function () {
+                        syncGamepadButtons();
+                    }, 800);
+                }
+            }
+            return;
+        }
+
+        if (typeof inputBindings.getGamepadBindings === "function") {
+            gamepadBinds = inputBindings.getGamepadBindings();
+        }
+
+        listeningGamepadAction = null;
+        setListeningGamepadButton(null);
+        syncGamepadButtons();
+    }
+
     // ── Appliquer le zoom actuel à la caméra active ────────────────
     function applyCurrentZoom() {
         var slider = document.getElementById("set-cam-zoom");
@@ -171,6 +261,7 @@
         if (typeof window.isIntroPlaying === "function" && window.isIntroPlaying()) return;
         isOpen = true;
         syncKeybindButtons();
+        syncGamepadButtons();
         syncCamButtons();
         overlay.classList.add("settings-overlay--open");
         overlay.setAttribute("aria-hidden", "false");
@@ -195,6 +286,109 @@
 
     function toggle() { isOpen ? close() : open(); }
 
+    function isSettingsOpen() {
+        return isOpen && overlay && overlay.getAttribute("aria-hidden") !== "true";
+    }
+
+    function getFocusableElements() {
+        if (!overlay) return [];
+        return Array.prototype.slice.call(
+            overlay.querySelectorAll(
+                "button.settings-option-btn, button.settings-keybind-btn, button.settings-gamepad-btn, #settings-close-btn, #settings-resume-btn"
+            )
+        );
+    }
+
+    function getFocusIndex(list) {
+        var active = document.activeElement;
+        var idx = list.indexOf(active);
+        return idx >= 0 ? idx : 0;
+    }
+
+    function focusAt(list, index) {
+        if (!list.length) return;
+        var i = index % list.length;
+        if (i < 0) i += list.length;
+        list[i].focus();
+    }
+
+    function moveFocus(list, delta) {
+        focusAt(list, getFocusIndex(list) + delta);
+    }
+
+    function handleSettingsNavKey(e) {
+        if (!isSettingsOpen() || listeningAction || listeningGamepadAction) return;
+        var list = getFocusableElements();
+        if (!list.length) return;
+
+        if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+            e.preventDefault();
+            moveFocus(list, -1);
+        } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+            e.preventDefault();
+            moveFocus(list, 1);
+        } else if (e.key === "Enter" || e.key === " ") {
+            var active = document.activeElement;
+            if (active && typeof active.click === "function") {
+                e.preventDefault();
+                active.click();
+            }
+        }
+    }
+
+    function getNavInputFromGamepad(pad) {
+        if (!pad) return null;
+        var axes = pad.axes || [];
+        var deadzone = 0.4;
+        var axX = axes.length > 0 ? axes[0] : 0;
+        var axY = axes.length > 1 ? axes[1] : 0;
+
+        if (Math.abs(axY) > Math.abs(axX)) {
+            if (axY > deadzone) return "down";
+            if (axY < -deadzone) return "up";
+        } else {
+            if (axX > deadzone) return "right";
+            if (axX < -deadzone) return "left";
+        }
+
+        var btns = pad.buttons || [];
+        if (btns[12] && btns[12].pressed) return "up";
+        if (btns[13] && btns[13].pressed) return "down";
+        if (btns[14] && btns[14].pressed) return "left";
+        if (btns[15] && btns[15].pressed) return "right";
+
+        return null;
+    }
+
+    function pollSettingsGamepad() {
+        if (isSettingsOpen() && !listeningAction) {
+            var list = getFocusableElements();
+            if (list.length) {
+                var pads = (navigator.getGamepads && navigator.getGamepads()) || [];
+                var pad = pads.find(function (p) { return p && p.connected; }) || null;
+                var nav = getNavInputFromGamepad(pad);
+                var now = performance.now();
+                if (nav && now - lastNavAt > 180) {
+                    lastNavAt = now;
+                    if (nav === "left" || nav === "up") moveFocus(list, -1);
+                    if (nav === "right" || nav === "down") moveFocus(list, 1);
+                }
+                var submit = pad && pad.buttons && pad.buttons[0] && pad.buttons[0].pressed;
+                if (submit && !lastSubmitPressed) {
+                    var active = document.activeElement;
+                    if (active && typeof active.click === "function") {
+                        active.click();
+                    }
+                }
+                lastSubmitPressed = !!submit;
+            }
+        }
+        if (isSettingsOpen()) {
+            captureGamepadBinding();
+        }
+        window.requestAnimationFrame(pollSettingsGamepad);
+    }
+
     // ── Touche Échap ───────────────────────────────────────────────
     window.addEventListener("keydown", function (e) {
         if (e.key === "Escape") {
@@ -202,6 +396,8 @@
             toggle();
         }
     });
+
+    window.addEventListener("keydown", handleSettingsNavKey, true);
 
     // ── Boutons ────────────────────────────────────────────────────
     if (closeBtn)  closeBtn.addEventListener("click", close);
@@ -221,10 +417,22 @@
         btn.addEventListener("click", function () {
             listeningAction = btn.dataset.action;
             setListeningButton(listeningAction);
+            listeningGamepadAction = null;
+            setListeningGamepadButton(null);
+        });
+    });
+
+    gamepadBtns.forEach(function (btn) {
+        btn.addEventListener("click", function () {
+            listeningGamepadAction = btn.dataset.gamepadAction;
+            setListeningGamepadButton(listeningGamepadAction);
+            listeningAction = null;
+            setListeningButton(null);
         });
     });
 
     window.addEventListener("keydown", captureKey, true);
+    pollSettingsGamepad();
 
     // ── Sliders volume ─────────────────────────────────────────────
     function syncSlider(slider, display, audioMethod) {
@@ -269,7 +477,11 @@
     if (window.inputBindings && typeof window.inputBindings.getBindings === "function") {
         keybinds = window.inputBindings.getBindings();
     }
+    if (window.inputBindings && typeof window.inputBindings.getGamepadBindings === "function") {
+        gamepadBinds = window.inputBindings.getGamepadBindings();
+    }
     syncKeybindButtons();
+    syncGamepadButtons();
 
     // ── API publique ───────────────────────────────────────────────
     window.settingsMenu = { open: open, close: close, toggle: toggle };

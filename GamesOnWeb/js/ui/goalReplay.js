@@ -532,6 +532,18 @@
             return gameState === "playing";
         }
 
+        function isReplayActive() {
+            return gameState === "replay" || gameState === "replayBanner";
+        }
+
+        function skipReplay() {
+            if (gameState === "replay" || gameState === "replayBanner") {
+                finalizeGoal();
+                return true;
+            }
+            return false;
+        }
+
         function getState() {
             return gameState;
         }
@@ -549,7 +561,9 @@
             update,
             triggerGoal,
             isPlaying,
-            getState
+            getState,
+            isReplayActive,
+            skipReplay
         };
     }
 

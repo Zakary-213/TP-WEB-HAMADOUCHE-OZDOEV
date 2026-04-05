@@ -411,8 +411,7 @@
 
             if (
                 scene.activeCamera === cameras.tpsCamera ||
-                scene.activeCamera === cameras.thirdPersonCamera ||
-                scene.activeCamera === cameras.broadcastCamera
+                scene.activeCamera === cameras.thirdPersonCamera
             ) {
                 if (input.forward)  moveX += 1;
                 if (input.backward) moveX -= 1;
@@ -420,6 +419,42 @@
                 if (input.right)    moveZ -= 1;
                 return { moveX: moveX, moveZ: moveZ };
             }
+
+           if (scene.activeCamera === cameras.broadcastCamera) {
+    var cam = cameras.broadcastCamera;
+
+    // La broadcast camera est fixe (alpha = -PI/2, beta ~0.88)
+    // On calcule les axes directement depuis l'angle alpha de la caméra
+    var alpha = cam.alpha; // rotation horizontale
+
+    // Axe "avant" sur le terrain (vers le but adverse)
+    var forward = new BABYLON.Vector3(
+        Math.cos(alpha + Math.PI / 2),
+        0,
+        Math.sin(alpha + Math.PI / 2)
+    );
+
+    // Axe "droite" perpendiculaire
+    var right = new BABYLON.Vector3(
+        Math.cos(alpha),
+        0,
+        Math.sin(alpha)
+    );
+
+    var moveVector = BABYLON.Vector3.Zero();
+    if (input.forward)  moveVector.addInPlace(forward);
+    if (input.backward) moveVector.subtractInPlace(forward);
+    if (input.right)    moveVector.addInPlace(right);
+    if (input.left)     moveVector.subtractInPlace(right);
+
+    if (moveVector.lengthSquared() > 0) {
+        moveVector.normalize();
+        moveX = moveVector.x;
+        moveZ = moveVector.z;
+    }
+
+    return { moveX: moveX, moveZ: moveZ };
+}
 
             if (scene.activeCamera === cameras.fpvCamera) {
                 var forward = cameras.fpvCamera.getForwardRay().direction.clone();

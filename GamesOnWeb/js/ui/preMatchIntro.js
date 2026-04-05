@@ -5,6 +5,7 @@
     let hideTextTimer = null;
     let removeTextTimer = null;
     let introSkipBtn = null;
+    let introState = null;
 
     function ensureIntroSkipButton() {
         if (introSkipBtn) return;
@@ -151,6 +152,7 @@
             scene.activeCamera = finalCamera;
             clearTournamentOverlayTimers();
             hideTournamentOverlayImmediate();
+            introState = null;
             if (typeof config.onComplete === "function") config.onComplete();
             return;
         }
@@ -218,6 +220,7 @@
             clearTournamentOverlayTimers();
             hideTournamentOverlayImmediate();
             setIntroSkipVisible(false);
+            introState = null;
             if (typeof config.onComplete === "function") {
                 config.onComplete();
             }
@@ -232,24 +235,41 @@
         introSkipBtn = fresh;
 
         introSkipBtn.addEventListener("click", function () {
-            scene.stopAnimation(introCamera);
-            // Normalise l'alpha à -π/2 (valeur de référence de cameraRuntime) — évite le tour parasite
-            introCamera.alpha  = -Math.PI / 2;
-            introCamera.beta   = toBeta;
-            introCamera.radius = toRadius;
-            scene.activeCamera = finalCamera;
-            clearTournamentOverlayTimers();
-            hideTournamentOverlayImmediate();
-            setIntroSkipVisible(false);
-            if (typeof config.onComplete === "function") {
-                config.onComplete();
+            if (introState && typeof introState.skip === "function") {
+                introState.skip();
             }
         });
 
         setIntroSkipVisible(true);
+
+        introState = {
+            skip: function () {
+                if (!scene || !introCamera) return;
+                scene.stopAnimation(introCamera);
+                // Normalise l'alpha à -π/2 (valeur de référence de cameraRuntime) — évite le tour parasite
+                introCamera.alpha  = -Math.PI / 2;
+                introCamera.beta   = toBeta;
+                introCamera.radius = toRadius;
+                scene.activeCamera = finalCamera;
+                clearTournamentOverlayTimers();
+                hideTournamentOverlayImmediate();
+                setIntroSkipVisible(false);
+                introState = null;
+                if (typeof config.onComplete === "function") {
+                    config.onComplete();
+                }
+            }
+        };
     }
 
     window.startPreMatchIntro = startPreMatchIntro;
     window.showTournamentOverlayBanner = showTournamentOverlayBanner;
     window.hideTournamentOverlayBanner = hideTournamentOverlayImmediate;
+    window.skipPreMatchIntro = function () {
+        if (introState && typeof introState.skip === "function") {
+            introState.skip();
+            return true;
+        }
+        return false;
+    };
 })();

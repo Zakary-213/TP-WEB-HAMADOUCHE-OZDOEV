@@ -35,12 +35,17 @@ const setupCameras = (scene, canvas, playerNode) => {
     // Si le target va à Z=27, la caméra pointe vers la tribune sud → on clamp Z à ±20.
     const CAM_MAX_X = 25;  // La cam reste proche du centre même si le joueur va jusqu'à X=50
     const CAM_MAX_Z = 15;  // idem en Z
+    const SKY_MAX_X = 48;  // SkyCam peut suivre plus loin en attaque
+    const SKY_MAX_Z = 28;  // idem en Z pour voir le fond du terrain
     scene.onAfterRenderObservable.add(() => {
         const p = cameraTargetNode.position;
-        if (p.x >  CAM_MAX_X) p.x =  CAM_MAX_X;
-        if (p.x < -CAM_MAX_X) p.x = -CAM_MAX_X;
-        if (p.z >  CAM_MAX_Z) p.z =  CAM_MAX_Z;
-        if (p.z < -CAM_MAX_Z) p.z = -CAM_MAX_Z;
+        const useSkyBounds = scene.activeCamera === thirdPersonCamera;
+        const maxX = useSkyBounds ? SKY_MAX_X : CAM_MAX_X;
+        const maxZ = useSkyBounds ? SKY_MAX_Z : CAM_MAX_Z;
+        if (p.x >  maxX) p.x =  maxX;
+        if (p.x < -maxX) p.x = -maxX;
+        if (p.z >  maxZ) p.z =  maxZ;
+        if (p.z < -maxZ) p.z = -maxZ;
     });
 
     // 1.b Caméra latérale type retransmission (style FIFA)

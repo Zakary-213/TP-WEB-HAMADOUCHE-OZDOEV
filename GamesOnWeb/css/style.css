@@ -977,6 +977,21 @@ body {
     transition: all 0.15s ease;
 }
 
+.settings-gamepad-btn {
+    min-width: 80px;
+    padding: 6px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+    font-weight: 700;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+.settings-gamepad-btn.is-listening {
+    background: rgba(62, 198, 255, 0.2);
+    border-color: rgba(62, 198, 255, 0.8);
+}
 .settings-option-btn:hover {
     background: rgba(77,143,255,0.15);
     color: #c0d0ff;
