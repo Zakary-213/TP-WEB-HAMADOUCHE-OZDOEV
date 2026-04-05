@@ -22,6 +22,21 @@ function getActiveGamepad() {
     return null;
 }
 
+function getPrimaryStick(axes) {
+    const list = Array.isArray(axes) ? axes : [];
+    if (list.length < 2) return { x: 0, y: 0 };
+
+    if (list.length >= 4) {
+        const mag01 = Math.abs(list[0]) + Math.abs(list[1]);
+        const mag23 = Math.abs(list[2]) + Math.abs(list[3]);
+        if (mag23 > mag01 * 1.2) {
+            return { x: list[2], y: list[3] };
+        }
+    }
+
+    return { x: list[0], y: list[1] };
+}
+
 function setupGamepadNotifications() {
     const notif = document.getElementById("gamepad-notif");
     const notifName = document.getElementById("gamepad-name");
@@ -591,8 +606,9 @@ const createScene = function () {
             const gamepadBinds = window.inputBindings && typeof window.inputBindings.getGamepadBindings === "function"
                 ? window.inputBindings.getGamepadBindings()
                 : { shoot: 0, sprint: 7, tackle: 2, switchLeft: 4, switchRight: 5, options: 9 };
-            const rawX = gp.axes[0] || 0;
-            const rawY = gp.axes[1] || 0;
+            const stick = getPrimaryStick(gp.axes);
+            const rawX = stick.x || 0;
+            const rawY = stick.y || 0;
             const deadzone = 0.15;
             const stickX = Math.abs(rawX) > deadzone ? rawX : 0;
             const stickY = Math.abs(rawY) > deadzone ? rawY : 0;
@@ -600,6 +616,13 @@ const createScene = function () {
             // Stick Y -> avant/arriere (moveX), Stick X -> gauche/droite (moveZ)
             moveX = -stickY;
             moveZ = -stickX;
+
+            if (moveX === 0 && moveZ === 0 && gp.buttons) {
+                if (gp.buttons[12] && gp.buttons[12].pressed) moveX += 1;
+                if (gp.buttons[13] && gp.buttons[13].pressed) moveX -= 1;
+                if (gp.buttons[14] && gp.buttons[14].pressed) moveZ += 1;
+                if (gp.buttons[15] && gp.buttons[15].pressed) moveZ -= 1;
+            }
 
             const sprintBtn = gp.buttons && gp.buttons[gamepadBinds.sprint];
             input.sprint = !!(sprintBtn && sprintBtn.pressed);
