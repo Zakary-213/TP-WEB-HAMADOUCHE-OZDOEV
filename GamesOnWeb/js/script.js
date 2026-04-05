@@ -779,7 +779,7 @@ const createScene = function () {
 
 
     // --- UI Update (Chronomètre) ---
-    const ENABLE_PRE_MATCH_INTRO = false;
+    const ENABLE_PRE_MATCH_INTRO = true;
     const PRE_MATCH_INTRO_DURATION_MS = 10000;
     const PRE_MATCH_INTRO_TURNS = 1; // 0.5 tour = 180°
     const TOURNAMENT_INTRO_LABEL_BY_STAGE = {
