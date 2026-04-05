@@ -1,6 +1,6 @@
 // js/objects/cameraRuntime.js
 // Architecture FIFA 3 couches : Brain → Rig → Camera (broadcastCamera uniquement)
-// TPS (touche R) et FPV (touche C) sont inchangées.
+// TPS / 3e personne / FPV sont gérées côté settings + runtime.
 (function () {
 
     // ─────────────────────────────────────────────────────────────────────────────
@@ -346,14 +346,14 @@
         }
 
         // ═════════════════════════════════════════════════════════════════════════
-        // TPS CAMERA — INCHANGÉE (vue du haut, touche R)
+        // TPS + 3e personne — vue du haut
         // ═════════════════════════════════════════════════════════════════════════
 
         function updateCameraFollow(activePlayer) {
             if (!scene || !cameras || !activePlayer || !cameras.cameraTargetNode) return;
 
-            // Suivi joueur fluide classique pour la caméra TPS. NE PAS MODIFIER.
-            if (scene.activeCamera === cameras.tpsCamera) {
+            // Suivi joueur fluide classique pour la caméra TPS / 3e personne.
+            if (scene.activeCamera === cameras.tpsCamera || scene.activeCamera === cameras.thirdPersonCamera) {
                 var lerped = BABYLON.Vector3.Lerp(
                     cameras.cameraTargetNode.position,
                     activePlayer.position,
@@ -409,7 +409,11 @@
 
             if (!scene || !cameras || !input) return { moveX: moveX, moveZ: moveZ };
 
-            if (scene.activeCamera === cameras.tpsCamera || scene.activeCamera === cameras.broadcastCamera) {
+            if (
+                scene.activeCamera === cameras.tpsCamera ||
+                scene.activeCamera === cameras.thirdPersonCamera ||
+                scene.activeCamera === cameras.broadcastCamera
+            ) {
                 if (input.forward)  moveX += 1;
                 if (input.backward) moveX -= 1;
                 if (input.left)     moveZ += 1;

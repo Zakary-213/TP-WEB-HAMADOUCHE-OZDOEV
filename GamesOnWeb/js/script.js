@@ -1,6 +1,81 @@
 const canvas = document.getElementById("renderCanvas");
 const engine = new BABYLON.Engine(canvas, true);
 
+function setupGamepadNotifications() {
+    const notif = document.getElementById("gamepad-notif");
+    const notifName = document.getElementById("gamepad-name");
+    const menu = document.getElementById("main-menu");
+    if (!notif || !notifName) return;
+
+    let hideTimeout = null;
+
+    function showNotif(message, durationMs) {
+        if (menu && (menu.classList.contains("is-hidden") || menu.getAttribute("aria-hidden") === "true")) {
+            return;
+        }
+        notifName.textContent = message;
+        notif.style.display = "flex";
+        if (hideTimeout) window.clearTimeout(hideTimeout);
+        hideTimeout = window.setTimeout(function () {
+            notif.style.display = "none";
+        }, durationMs || 3000);
+    }
+
+    function shortName(id) {
+        if (!id) return "Manette";
+        return id.length > 30 ? id.substring(0, 30) + "..." : id;
+    }
+
+    function handleConnect(gamepad) {
+        if (!gamepad) return;
+        showNotif(shortName(gamepad.id) + " connectee !");
+    }
+
+    function handleDisconnect(gamepad) {
+        if (!gamepad) return;
+        showNotif(shortName(gamepad.id) + " deconnectee !");
+    }
+
+    if (window.BABYLON && BABYLON.GamepadManager) {
+        const gamepadManager = new BABYLON.GamepadManager();
+        gamepadManager.onGamepadConnectedObservable.add(handleConnect);
+        gamepadManager.onGamepadDisconnectedObservable.add(handleDisconnect);
+    }
+
+    window.addEventListener("gamepadconnected", function (event) {
+        handleConnect(event.gamepad);
+    });
+
+    window.addEventListener("gamepaddisconnected", function (event) {
+        handleDisconnect(event.gamepad);
+    });
+
+    // Check already-connected gamepads at page load
+    function scanExistingGamepads() {
+        const pads = (navigator.getGamepads && navigator.getGamepads()) || [];
+        for (let i = 0; i < pads.length; i += 1) {
+            if (pads[i] && pads[i].connected) {
+                showNotif(shortName(pads[i].id) + " connectee !", 4000);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    scanExistingGamepads();
+
+    // Some browsers only expose gamepads after a user gesture.
+    let scanCount = 0;
+    const scanTimer = window.setInterval(function () {
+        scanCount += 1;
+        if (scanExistingGamepads() || scanCount >= 10) {
+            window.clearInterval(scanTimer);
+        }
+    }, 500);
+}
+
+setupGamepadNotifications();
+
 // Crée un indicateur visuel (petite flèche) au-dessus d'un joueur sélectionné
 function createSelectionIndicator(scene, playerNode) {
         const root = new BABYLON.TransformNode("selectionIndicatorRoot", scene);
@@ -65,6 +140,7 @@ const createScene = function () {
     const maxForce = 25;
 
     const scene = new BABYLON.Scene(engine);
+
 
     if (window.matchAudio && typeof window.matchAudio.init === "function") {
         window.matchAudio.init(scene, {
@@ -275,81 +351,70 @@ const createScene = function () {
         sprint:false
     };
 
-    window.addEventListener("keydown",(e)=>{
-        if (preMatchIntroPlaying) return;
+    const inputController = window.createInputController({
+        isBlocked: function () { return preMatchIntroPlaying; },
+        onPress: function (action, event) {
+            if (action === "forward") input.forward = true;
+            if (action === "backward") input.backward = true;
+            if (action === "left") input.left = true;
+            if (action === "right") input.right = true;
+            if (action === "sprint") input.sprint = true;
 
-        if(e.key==="z"||e.key==="Z") input.forward=true;
-        if(e.key==="s"||e.key==="S") input.backward=true;
-        if(e.key==="q"||e.key==="Q") input.left=true;
-        if(e.key==="d"||e.key==="D") input.right=true;
-        if(e.key==="Shift") input.sprint = true;
-
-        if (e.code === "Space" && !isCharging) {
-            chargeStart = Date.now();
-            isCharging = true;
-        }
-
-        if(e.key==="a" || e.key==="A"){
-            const p = myTeam.getPlayerOnSide("left");
-            myTeam.switchPlayerSmooth(p, cameras, scene, 180);
-            activePlayer = myTeam.activePlayer;
-            if (selectionIndicator && activePlayer) {
-                selectionIndicator.parent = activePlayer;
-            }
-        }
-
-        if(e.key==="e" || e.key==="E"){
-            const p = myTeam.getPlayerOnSide("right");
-            myTeam.switchPlayerSmooth(p, cameras, scene, 180);
-            activePlayer = myTeam.activePlayer;
-            if (selectionIndicator && activePlayer) {
-                selectionIndicator.parent = activePlayer;
-            }
-        }
-
-        if(e.key==="c" || e.key==="C"){
-            // Laisse cameras.js faire le switch TPS / FPV,
-            // puis aligne une seule fois la caméra sur la direction du joueur
-            if (cameraRuntime && typeof cameraRuntime.handleCameraToggle === "function") {
-                cameraRuntime.handleCameraToggle(activePlayer);
-            } else {
-                setTimeout(() => {
-                    cameras.alignFpvToDirection(activePlayer.facingDirection);
-                }, 0);
-            }
-        }
-
-        tackleController.handleKeyDown(e, {
-            activePlayer,
-            playerFacing,
-            ball,
-            opponentTeam,
-            team: myTeam
-        });
-        
-    });
-
-    window.addEventListener("keyup",(e)=>{
-        if (preMatchIntroPlaying) return;
-
-        if(e.key==="z"||e.key==="Z") input.forward=false;
-        if(e.key==="s"||e.key==="S") input.backward=false;
-        if(e.key==="q"||e.key==="Q") input.left=false;
-        if(e.key==="d"||e.key==="D") input.right=false;
-        if(e.key==="Shift") input.sprint = false;
-
-       if (e.code === "Space" && isCharging) {
-            const force = computeKickPower(kickGauge);
-
-            hideKickGauge(kickGauge);
-
-            if (isRestartWaitingKick()) {
-                takeRestartKick(ball, lastDirection, force);
-            } else {
-                kick(scene, ball, activePlayer, lastDirection, force, myTeam);
+            if (action === "shoot" && !isCharging) {
+                chargeStart = Date.now();
+                isCharging = true;
             }
 
-            isCharging = false;
+            if (action === "switchLeft") {
+                const p = myTeam.getPlayerOnSide("left");
+                myTeam.switchPlayerSmooth(p, cameras, scene, 180);
+                activePlayer = myTeam.activePlayer;
+                if (selectionIndicator && activePlayer) {
+                    selectionIndicator.parent = activePlayer;
+                }
+            }
+
+            if (action === "switchRight") {
+                const p = myTeam.getPlayerOnSide("right");
+                myTeam.switchPlayerSmooth(p, cameras, scene, 180);
+                activePlayer = myTeam.activePlayer;
+                if (selectionIndicator && activePlayer) {
+                    selectionIndicator.parent = activePlayer;
+                }
+            }
+
+            if (action === "tackle") {
+                const binds = window.inputBindings ? window.inputBindings.getBindings() : {};
+                tackleController.handleKeyDown(event, {
+                    activePlayer,
+                    playerFacing,
+                    ball,
+                    opponentTeam,
+                    team: myTeam,
+                    tackleKey: binds.tackle
+                });
+            }
+        },
+        onRelease: function (action, event) {
+            if (action === "forward") input.forward = false;
+            if (action === "backward") input.backward = false;
+            if (action === "left") input.left = false;
+            if (action === "right") input.right = false;
+            if (action === "sprint") input.sprint = false;
+
+            if (action === "shoot" && isCharging) {
+                const force = computeKickPower(kickGauge);
+
+                hideKickGauge(kickGauge);
+
+                if (isRestartWaitingKick()) {
+                    takeRestartKick(ball, lastDirection, force);
+                } else {
+                    kick(scene, ball, activePlayer, lastDirection, force, myTeam);
+                }
+
+                isCharging = false;
+            }
         }
     });
 
@@ -846,12 +911,21 @@ const createScene = function () {
     return scene;
 };
 
-const scene = createScene();
+let gameStarted = false;
+let activeScene = null;
 
-engine.runRenderLoop(function(){
-    scene.render();
-});
+function startGame() {
+    if (gameStarted) return;
+    gameStarted = true;
+    activeScene = createScene();
 
-window.addEventListener("resize",function(){
+    engine.runRenderLoop(function () {
+        if (activeScene) activeScene.render();
+    });
+}
+
+window.startTournamentMatch = startGame;
+
+window.addEventListener("resize", function () {
     engine.resize();
 });

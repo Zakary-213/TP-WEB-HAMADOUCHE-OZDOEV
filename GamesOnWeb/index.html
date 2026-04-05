@@ -13,6 +13,61 @@
 
 <body>
 
+    <!-- Menu principal (avant-match) -->
+    <div id="main-menu" class="main-menu" aria-hidden="false">
+        <div class="main-menu-backdrop"></div>
+        <div class="main-menu-content">
+            <div class="main-menu-top">
+                <div class="main-menu-brand">
+                    <span class="main-menu-brand-title">Games On Web</span>
+                    <span class="main-menu-brand-sub">Choisis ton mode</span>
+                </div>
+                <div class="main-menu-user">
+                    <span class="main-menu-user-tag">Profil</span>
+                    <span class="main-menu-user-name">Joueur 1</span>
+                </div>
+            </div>
+
+            <div class="main-menu-layout">
+                <div class="menu-grid">
+                    <button class="menu-tile" data-preview="tournament" type="button">
+                        <span class="menu-tile-kicker">Competition</span>
+                        <span class="menu-tile-title">Mode Tournoi</span>
+                        <span class="menu-tile-sub">Parcours a elimination directe</span>
+                    </button>
+                    <button class="menu-tile" data-preview="versus" type="button">
+                        <span class="menu-tile-kicker">Local</span>
+                        <span class="menu-tile-title">Mode 1vs1</span>
+                        <span class="menu-tile-sub">Affronte un ami en match rapide</span>
+                    </button>
+                    <button class="menu-tile menu-tile--settings" type="button">
+                        <span class="menu-tile-kicker">Options</span>
+                        <span class="menu-tile-title">Parametres</span>
+                        <span class="menu-tile-sub">Audio, camera, controles</span>
+                    </button>
+                </div>
+
+                <div class="menu-preview" aria-hidden="true">
+                    <div class="menu-preview-frame" data-preview="tournament">
+                        <div class="menu-preview-label">Apercu tournoi</div>
+                        <video class="menu-preview-video" data-src="" muted loop playsinline></video>
+                    </div>
+                    <div class="menu-preview-frame" data-preview="versus">
+                        <div class="menu-preview-label">Apercu 1vs1</div>
+                        <video class="menu-preview-video" data-src="" muted loop playsinline></video>
+                    </div>
+                    <div class="menu-preview-frame menu-preview-frame--idle is-active" data-preview="idle">
+                        <div class="menu-preview-label">Survole un mode pour afficher la video</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="main-menu-footer">
+                <span>Survole un mode pour voir la presentation</span>
+            </div>
+        </div>
+    </div>
+
     <!-- HUD Global (Tableau des scores + Chrono) -->
     <div id="match-hud">
         <!-- Tableau des scores façon FIFA -->
@@ -57,6 +112,12 @@
                 <span id="pre-match-tournament-tail-text">DE FINALE</span>
             </div>
         </div>
+    </div>
+
+    <!-- Notification manette -->
+    <div id="gamepad-notif" aria-live="polite" aria-atomic="true" style="display:none;">
+        <span class="gamepad-notif-icon">🎮</span>
+        <span id="gamepad-name"></span>
     </div>
 
     <canvas id="renderCanvas" touch-action="none"></canvas>
@@ -107,7 +168,8 @@
                         <div class="settings-control settings-btn-group">
                             <button class="settings-option-btn active" data-cam="broadcast">Broadcast</button>
                             <button class="settings-option-btn" data-cam="tps">TPS</button>
-                            <button class="settings-option-btn" data-cam="fpv">1ère personne</button>
+                            <button class="settings-option-btn" data-cam="third">SkyCam</button>
+                            <button class="settings-option-btn" data-cam="fpv">POV</button>
                         </div>
                     </div>
 
@@ -124,16 +186,42 @@
                 <div class="settings-section">
                     <h3 class="settings-section-title">Contrôles</h3>
                     <div class="settings-keybinds">
-                        <div class="settings-key-row"><kbd>Z / W</kbd><span>Avancer</span></div>
-                        <div class="settings-key-row"><kbd>S</kbd><span>Reculer</span></div>
-                        <div class="settings-key-row"><kbd>Q / A</kbd><span>Gauche</span></div>
-                        <div class="settings-key-row"><kbd>D</kbd><span>Droite</span></div>
-                        <div class="settings-key-row"><kbd>Maj</kbd><span>Sprint</span></div>
-                        <div class="settings-key-row"><kbd>Espace</kbd><span>Tir (tenir = puissance)</span></div>
-                        <div class="settings-key-row"><kbd>T</kbd><span>Tacle glissé</span></div>
-                        <div class="settings-key-row"><kbd>Tab</kbd><span>Changer de joueur</span></div>
-                        <div class="settings-key-row"><kbd>C</kbd><span>Caméra FPV</span></div>
-                        <div class="settings-key-row"><kbd>R</kbd><span>Caméra TPS</span></div>
+                        <div class="settings-key-row">
+                            <span>Avancer</span>
+                            <button class="settings-keybind-btn" data-action="forward" type="button">Z</button>
+                        </div>
+                        <div class="settings-key-row">
+                            <span>Reculer</span>
+                            <button class="settings-keybind-btn" data-action="backward" type="button">S</button>
+                        </div>
+                        <div class="settings-key-row">
+                            <span>Gauche</span>
+                            <button class="settings-keybind-btn" data-action="left" type="button">Q</button>
+                        </div>
+                        <div class="settings-key-row">
+                            <span>Droite</span>
+                            <button class="settings-keybind-btn" data-action="right" type="button">D</button>
+                        </div>
+                        <div class="settings-key-row">
+                            <span>Sprint</span>
+                            <button class="settings-keybind-btn" data-action="sprint" type="button">Shift</button>
+                        </div>
+                        <div class="settings-key-row">
+                            <span>Tir (tenir = puissance)</span>
+                            <button class="settings-keybind-btn" data-action="shoot" type="button">Space</button>
+                        </div>
+                        <div class="settings-key-row">
+                            <span>Tacle glisse</span>
+                            <button class="settings-keybind-btn" data-action="tackle" type="button">T</button>
+                        </div>
+                        <div class="settings-key-row">
+                            <span>Joueur gauche</span>
+                            <button class="settings-keybind-btn" data-action="switchLeft" type="button">A</button>
+                        </div>
+                        <div class="settings-key-row">
+                            <span>Joueur droite</span>
+                            <button class="settings-keybind-btn" data-action="switchRight" type="button">E</button>
+                        </div>
                         <div class="settings-key-row"><kbd>Échap</kbd><span>Paramètres</span></div>
                     </div>
                 </div>
@@ -149,6 +237,7 @@
     <!-- Utility functions -->
     <script src="js/utils/collisionUtils.js"></script>
     <script src="js/utils/audioManager.js"></script>
+    <script src="js/utils/inputBindings.js"></script>
 
     <!-- Project Structure Scripts -->
     <script src="js/structure/environnement.js"></script>
@@ -179,6 +268,7 @@
     <script src="js/ui/matchFlow.js"></script>
     <script src="js/ui/preMatchIntro.js"></script>
     <script src="js/ui/goalReplay.js"></script>
+    <script src="js/ui/mainMenu.js"></script>
 
     <!-- Main Script -->
     <script src="js/models/gameLogic.js"></script>

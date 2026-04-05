@@ -30,8 +30,40 @@
         goalUrl: "./assets/Goal.mp3",
         debug: false,
         unlockHandlersInstalled: false,
-        htmlAudioPrimed: false
+        htmlAudioPrimed: false,
+        soundVolume: 1,
+        musicVolume: 1
     };
+
+    const BASE_VOLUMES = {
+        whistle: 0.9,
+        kick: 0.85,
+        goal: 0.8
+    };
+
+    function clamp01(value) {
+        const num = Number(value);
+        if (Number.isNaN(num)) return 1;
+        return Math.min(1, Math.max(0, num));
+    }
+
+    function getSoundVolume(base) {
+        return clamp01(base) * clamp01(state.soundVolume);
+    }
+
+    function applySoundVolumes() {
+        const whistleVol = getSoundVolume(BASE_VOLUMES.whistle);
+        const kickVol = getSoundVolume(BASE_VOLUMES.kick);
+        const goalVol = getSoundVolume(BASE_VOLUMES.goal);
+
+        if (state.whistleSound) state.whistleSound.setVolume(whistleVol);
+        if (state.kickSound) state.kickSound.setVolume(kickVol);
+        if (state.goalSound) state.goalSound.setVolume(goalVol);
+
+        if (state.whistleHtmlAudio) state.whistleHtmlAudio.volume = whistleVol;
+        if (state.kickHtmlAudio) state.kickHtmlAudio.volume = kickVol;
+        if (state.goalHtmlAudio) state.goalHtmlAudio.volume = goalVol;
+    }
 
     function uniqueUrls(urls) {
         const seen = new Set();
@@ -171,7 +203,7 @@
 
         const audio = new Audio(src);
         audio.preload = "auto";
-        audio.volume = 0.9;
+        audio.volume = getSoundVolume(BASE_VOLUMES.whistle);
         audio.load();
         state.whistleHtmlAudio = audio;
         log("HTMLAudio fallback ready", { src });
@@ -183,7 +215,7 @@
 
         const audio = new Audio(src);
         audio.preload = "auto";
-        audio.volume = 0.85;
+        audio.volume = getSoundVolume(BASE_VOLUMES.kick);
         audio.load();
         state.kickHtmlAudio = audio;
         log("Kick HTMLAudio fallback ready", { src });
@@ -195,7 +227,7 @@
 
         const audio = new Audio(src);
         audio.preload = "auto";
-        audio.volume = 0.8;
+        audio.volume = getSoundVolume(BASE_VOLUMES.goal);
         audio.loop = true;
         audio.load();
         state.goalHtmlAudio = audio;
@@ -261,7 +293,7 @@
                 {
                     autoplay: false,
                     loop: false,
-                    volume: 0.9
+                    volume: getSoundVolume(BASE_VOLUMES.whistle)
                 }
             );
             return;
@@ -279,7 +311,7 @@
             {
                 autoplay: false,
                 loop: false,
-                volume: 0.9
+                volume: getSoundVolume(BASE_VOLUMES.whistle)
             }
         );
         buildHtmlAudioFallback();
@@ -305,7 +337,7 @@
                 {
                     autoplay: false,
                     loop: false,
-                    volume: 0.85
+                    volume: getSoundVolume(BASE_VOLUMES.kick)
                 }
             );
             return;
@@ -323,7 +355,7 @@
             {
                 autoplay: false,
                 loop: false,
-                volume: 0.85
+                volume: getSoundVolume(BASE_VOLUMES.kick)
             }
         );
         buildKickHtmlAudioFallback();
@@ -349,7 +381,7 @@
                 {
                     autoplay: false,
                     loop: true,
-                    volume: 0.8
+                    volume: getSoundVolume(BASE_VOLUMES.goal)
                 }
             );
             return;
@@ -367,7 +399,7 @@
             {
                 autoplay: false,
                 loop: true,
-                volume: 0.8
+                volume: getSoundVolume(BASE_VOLUMES.goal)
             }
         );
         buildGoalHtmlAudioFallback();
@@ -419,7 +451,7 @@
                 .catch(function (err) {
                     warn("HTMLAudio play failed", err);
                     const fallback = new Audio(state.whistleBlobUrl || state.whistleUrl);
-                    fallback.volume = 0.9;
+                    fallback.volume = getSoundVolume(BASE_VOLUMES.whistle);
                     fallback.play().catch(function (e) {
                         warn("HTMLAudio one-shot fallback failed", e);
                     });
@@ -457,7 +489,7 @@
                 .catch(function (err) {
                     warn("Kick HTMLAudio play failed", err);
                     const fallback = new Audio(state.kickBlobUrl || state.kickUrl);
-                    fallback.volume = 0.85;
+                    fallback.volume = getSoundVolume(BASE_VOLUMES.kick);
                     fallback.play().catch(function (e) {
                         warn("Kick HTMLAudio one-shot fallback failed", e);
                     });
@@ -653,6 +685,15 @@
         }
         stopGoalWithHtmlAudio();
         log("Goal loop stopped");
+    }
+
+    function setVolume(value) {
+        state.soundVolume = clamp01(value);
+        applySoundVolumes();
+    }
+
+    function setMusicVolume(value) {
+        state.musicVolume = clamp01(value);
     }
 
     function init(scene, options) {
@@ -860,6 +901,8 @@
         playKick,
         playGoalLoop,
         stopGoal,
+        setVolume,
+        setMusicVolume,
         debugPlayWhistle: playWhistle,
         debugPlayKick: playKick,
         debugPlayGoal: playGoalLoop

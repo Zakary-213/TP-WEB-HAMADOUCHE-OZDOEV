@@ -3,7 +3,7 @@ const setupCameras = (scene, canvas, playerNode) => {
     const cameraTargetNode = new BABYLON.TransformNode("cameraTargetNode", scene);
     cameraTargetNode.position.copyFrom(playerNode.position);
 
-    // 1. Caméra de dessus (Third Person Shooter / Globale)
+    // 1. Caméra de dessus (TPS / vue haute)
     const tpsCamera = new BABYLON.ArcRotateCamera(
         "tpsCamera",
         Math.PI,
@@ -15,6 +15,18 @@ const setupCameras = (scene, canvas, playerNode) => {
     // On centre la caméra globale sur le joueur
     tpsCamera.lockedTarget = cameraTargetNode;
     tpsCamera.inputs.clear();
+
+    // 1.b Caméra "troisième personne" — vue top-down stricte
+    const thirdPersonCamera = new BABYLON.ArcRotateCamera(
+        "thirdPersonCamera",
+        Math.PI,
+        0.01,  // vue du dessus quasi verticale
+        60,
+        new BABYLON.Vector3(0, 0, 0),
+        scene
+    );
+    thirdPersonCamera.lockedTarget = cameraTargetNode;
+    thirdPersonCamera.inputs.clear();
 
     // ─── Clamp du cameraTargetNode pour éviter que la caméra entre dans les tribunes ───
     // Le pitch fait 100 × 60 (X: ±50, Z: ±30). Les tribunes commencent à innerX=55, innerZ=35.
@@ -90,78 +102,16 @@ const setupCameras = (scene, canvas, playerNode) => {
         fpvCamera.rotation.y = Math.atan2(direction.x, direction.z);
     }
 
-    // Petit système pour écouter des touches et changer de caméra
-    let cameraMode = "broadcast"; // tps | fpv | broadcast
-
     // Objet renvoyé, qu'on déclare ici pour pouvoir exploiter son flag allowManualSwitch
     const camerasRef = { 
         tpsCamera, 
+        thirdPersonCamera,
         broadcastCamera, 
         fpvCamera, 
         cameraTargetNode, 
         alignFpvToDirection, 
         allowManualSwitch: false 
     };
-
-    function animateArcCameraBlend(camera, targetAlpha, targetBeta, targetRadius, durationFrames = 28) {
-        BABYLON.Animation.CreateAndStartAnimation(
-            "camBlendAlpha",
-            camera,
-            "alpha",
-            60,
-            durationFrames,
-            camera.alpha,
-            targetAlpha,
-            BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT
-        );
-
-        BABYLON.Animation.CreateAndStartAnimation(
-            "camBlendBeta",
-            camera,
-            "beta",
-            60,
-            durationFrames,
-            camera.beta,
-            targetBeta,
-            BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT
-        );
-
-        BABYLON.Animation.CreateAndStartAnimation(
-            "camBlendRadius",
-            camera,
-            "radius",
-            60,
-            durationFrames,
-            camera.radius,
-            targetRadius,
-            BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT
-        );
-    }
-
-    window.addEventListener("keydown", (e) => {
-        if (!camerasRef.allowManualSwitch) return; // Bloque le switch (pendant l'intro par ex)
-
-        if (e.key === "c" || e.key === "C") {
-            cameraMode = cameraMode === "fpv" ? "broadcast" : "fpv";
-            scene.activeCamera = cameraMode === "fpv" ? fpvCamera : broadcastCamera;
-
-            if (cameraMode === "broadcast") {
-                animateArcCameraBlend(broadcastCamera, -Math.PI / 2, 0.88, 105, 30);
-            }
-        }
-
-        if (e.key === "r" || e.key === "R") {
-            cameraMode = cameraMode === "broadcast" ? "tps" : "broadcast";
-            scene.activeCamera = cameraMode === "broadcast" ? broadcastCamera : tpsCamera;
-
-            if (cameraMode === "broadcast") {
-                animateArcCameraBlend(broadcastCamera, -Math.PI / 2, 0.88, 105, 32);
-            } else {
-                // TPS : angle plus plongeant et léger recul pour toujours garder les joueurs visibles
-                animateArcCameraBlend(tpsCamera, Math.PI, 0.9, 70, 24);
-            }
-        }
-    });
 
     return camerasRef;
 

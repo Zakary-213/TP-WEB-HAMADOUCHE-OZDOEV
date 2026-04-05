@@ -15,7 +15,11 @@
     const musicSlider  = document.getElementById("set-music-vol");
     const musicVal     = document.getElementById("set-music-vol-val");
     const camBtns    = document.querySelectorAll(".settings-option-btn[data-cam]");
+    const keybindBtns = document.querySelectorAll(".settings-keybind-btn[data-action]");
     const TPS_BASE_RADIUS = 70;  // radius de base de la caméra TPS
+    const THIRD_BASE_RADIUS = 60;  // radius de base de la caméra 3e personne
+    let keybinds = {};
+    let listeningAction = null;
 
 
     // ── Helpers caméra ─────────────────────────────────────────────
@@ -23,9 +27,10 @@
         var cams = window.gameCameras;
         var scene = window.gameScene;
         if (!cams || !scene) return null;
-        if (scene.activeCamera === cams.tpsCamera)       return "tps";
-        if (scene.activeCamera === cams.broadcastCamera) return "broadcast";
-        if (scene.activeCamera === cams.fpvCamera)       return "fpv";
+        if (scene.activeCamera === cams.tpsCamera)          return "tps";
+        if (scene.activeCamera === cams.thirdPersonCamera) return "third";
+        if (scene.activeCamera === cams.broadcastCamera)    return "broadcast";
+        if (scene.activeCamera === cams.fpvCamera)          return "fpv";
         return null;
     }
 
@@ -36,6 +41,85 @@
                          (current === null && btn.dataset.cam === "broadcast");
             btn.classList.toggle("active", active);
         });
+    }
+
+    function formatKeyLabel(value) {
+        if (!value) return "-";
+        if (value === "Space") return "Space";
+        if (value === "Shift") return "Shift";
+        if (value.length === 1) return value.toUpperCase();
+        return value;
+    }
+
+    function syncKeybindButtons() {
+        keybindBtns.forEach(function (btn) {
+            const action = btn.dataset.action;
+            btn.textContent = formatKeyLabel(keybinds[action]);
+        });
+    }
+
+    function setListeningButton(nextAction) {
+        keybindBtns.forEach(function (btn) {
+            btn.classList.toggle("is-listening", btn.dataset.action === nextAction);
+            if (btn.dataset.action === nextAction) {
+                btn.textContent = "Appuie...";
+            }
+        });
+    }
+
+    function captureKey(event) {
+        if (!listeningAction) return;
+        event.preventDefault();
+
+        if (event.key === "Escape") {
+            listeningAction = null;
+            setListeningButton(null);
+            syncKeybindButtons();
+            return;
+        }
+
+        let value = null;
+        if (event.key === "Shift") {
+            value = "Shift";
+        } else if (event.code === "Space") {
+            value = "Space";
+        } else if (event.key && event.key.length === 1) {
+            value = event.key.toLowerCase();
+        } else if (event.key) {
+            value = event.key;
+        }
+
+        if (!value) return;
+
+        var inputBindings = window.inputBindings;
+        if (!inputBindings || typeof inputBindings.setBinding !== "function") return;
+
+        var result = inputBindings.setBinding(listeningAction, value);
+        if (!result.ok) {
+            var currentAction = listeningAction;
+            setListeningButton(null);
+            listeningAction = null;
+            if (currentAction) {
+                var btn = document.querySelector(
+                    '.settings-keybind-btn[data-action="' + currentAction + '"]'
+                );
+                if (btn) {
+                    btn.textContent = "Deja pris";
+                    window.setTimeout(function () {
+                        syncKeybindButtons();
+                    }, 800);
+                }
+            }
+            return;
+        }
+
+        if (typeof inputBindings.getBindings === "function") {
+            keybinds = inputBindings.getBindings();
+        }
+
+        listeningAction = null;
+        setListeningButton(null);
+        syncKeybindButtons();
     }
 
     // ── Appliquer le zoom actuel à la caméra active ────────────────
@@ -50,6 +134,9 @@
         if (cams && cams.tpsCamera) {
             cams.tpsCamera.radius = TPS_BASE_RADIUS - offset;
         }
+        if (cams && cams.thirdPersonCamera) {
+            cams.thirdPersonCamera.radius = THIRD_BASE_RADIUS - offset;
+        }
     }
 
     function switchCamera(camLabel) {
@@ -61,6 +148,8 @@
             scene.activeCamera = cams.broadcastCamera;
         } else if (camLabel === "tps" && cams.tpsCamera) {
             scene.activeCamera = cams.tpsCamera;
+        } else if (camLabel === "third" && cams.thirdPersonCamera) {
+            scene.activeCamera = cams.thirdPersonCamera;
         } else if (camLabel === "fpv" && cams.fpvCamera) {
             scene.activeCamera = cams.fpvCamera;
             var ap = typeof window.getActivePlayer === "function" ? window.getActivePlayer() : null;
@@ -81,6 +170,7 @@
         // Bloqué pendant l'intro d'avant-match
         if (typeof window.isIntroPlaying === "function" && window.isIntroPlaying()) return;
         isOpen = true;
+        syncKeybindButtons();
         syncCamButtons();
         overlay.classList.add("settings-overlay--open");
         overlay.setAttribute("aria-hidden", "false");
@@ -127,6 +217,15 @@
         });
     });
 
+    keybindBtns.forEach(function (btn) {
+        btn.addEventListener("click", function () {
+            listeningAction = btn.dataset.action;
+            setListeningButton(listeningAction);
+        });
+    });
+
+    window.addEventListener("keydown", captureKey, true);
+
     // ── Sliders volume ─────────────────────────────────────────────
     function syncSlider(slider, display, audioMethod) {
         if (!slider || !display) return;
@@ -161,8 +260,16 @@
             if (cams && cams.tpsCamera) {
                 cams.tpsCamera.radius = TPS_BASE_RADIUS - offset;
             }
+            if (cams && cams.thirdPersonCamera) {
+                cams.thirdPersonCamera.radius = THIRD_BASE_RADIUS - offset;
+            }
         });
     }
+
+    if (window.inputBindings && typeof window.inputBindings.getBindings === "function") {
+        keybinds = window.inputBindings.getBindings();
+    }
+    syncKeybindButtons();
 
     // ── API publique ───────────────────────────────────────────────
     window.settingsMenu = { open: open, close: close, toggle: toggle };

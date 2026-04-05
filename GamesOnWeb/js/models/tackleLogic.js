@@ -25,7 +25,14 @@ class TackleController {
     handleKeyDown(event, context) {
         if (!event || !context) return;
         if (event.repeat) return;
-        if (event.key !== "x" && event.key !== "X") return;
+        const bind = context.tackleKey || "x";
+        const key = (event.key || "").toLowerCase();
+        const isMatch = bind === "Space"
+            ? event.code === "Space"
+            : bind === "Shift"
+                ? event.key === "Shift"
+                : key === String(bind).toLowerCase();
+        if (!isMatch) return;
 
         this.tackleTeam = context.team || null;
 
