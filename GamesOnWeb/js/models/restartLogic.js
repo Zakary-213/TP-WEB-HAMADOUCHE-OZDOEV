@@ -8,9 +8,14 @@ const restartState = {
     exitPosition: null,
     waitingForKick: false,
     aiKickTime: 0,
+
+    cornerHalf: null,
+
     aiCharging: false,
     aiChargeStart: 0,
-    aiAimDirection: null
+    aiAimDirection: null,
+
+    phase: "idle" // idle | setup | aiming | kicked
 };
 
 function resetRestartState() {
@@ -23,9 +28,35 @@ function resetRestartState() {
     restartState.exitPosition = null;
     restartState.waitingForKick = false;
     restartState.aiKickTime = 0;
+    restartState.cornerHalf = null;
     restartState.aiCharging = false;
     restartState.aiChargeStart = 0;
     restartState.aiAimDirection = null;
+    restartState.phase = "idle";
+}
+
+function isRestartActive() {
+    return restartState.active;
+}
+
+function isRestartWaitingKick() {
+    return restartState.active && restartState.waitingForKick;
+}
+
+function isRestartTaker(player) {
+    return (
+        restartState.active &&
+        restartState.waitingForKick &&
+        restartState.taker === player
+    );
+}
+
+function isRestartForTeam(team) {
+    return isRestartWaitingKick() && restartState.team === team;
+}
+
+function isRestartAgainstTeam(team) {
+    return isRestartWaitingKick() && restartState.team && restartState.team !== team;
 }
 
 function getRestartDecision(ball, myTeam, opponentTeam) {
@@ -48,7 +79,6 @@ function getRestartDecision(ball, myTeam, opponentTeam) {
         maxX = 54;
     }
 
-    // TOUCHES
     if (z < minZ) {
         return {
             type: "throwIn",
@@ -67,9 +97,7 @@ function getRestartDecision(ball, myTeam, opponentTeam) {
         };
     }
 
-    // SORTIE DERRIÈRE LA LIGNE DE BUT GAUCHE
     if (x < minX) {
-        // But côté gauche = défendu par myTeam
         if (lastTeam === myTeam) {
             return {
                 type: "corner",
@@ -87,9 +115,7 @@ function getRestartDecision(ball, myTeam, opponentTeam) {
         };
     }
 
-    // SORTIE DERRIÈRE LA LIGNE DE BUT DROITE
     if (x > maxX) {
-        // But côté droit = défendu par opponentTeam
         if (lastTeam === opponentTeam) {
             return {
                 type: "corner",
@@ -126,6 +152,7 @@ function startRestart(ball, decision, myTeam, opponentTeam, cameras) {
     restartState.side = decision.side;
     restartState.exitPosition = decision.exitPosition ? decision.exitPosition.clone() : ball.position.clone();
     restartState.waitingForKick = true;
+    restartState.phase = "setup";
 
     ball.restartLocked = true;
     ball.restartTaker = null;
@@ -137,10 +164,10 @@ function startRestart(ball, decision, myTeam, opponentTeam, cameras) {
     } else if (decision.type === "goalKick") {
         placeGoalKick(ball, decision, myTeam, opponentTeam, cameras);
     }
-    if (decision.team && !decision.team.isPlayerControlled) {
-        restartState.aiKickTime = performance.now() + 900;
-    }
 
+    if (decision.team && !decision.team.isPlayerControlled) {
+        restartState.aiKickTime = performance.now() + 500;
+    }
 }
 
 function placeThrowIn(ball, decision, myTeam, opponentTeam, cameras) {
@@ -148,7 +175,6 @@ function placeThrowIn(ball, decision, myTeam, opponentTeam, cameras) {
     if (!restartTeam) return;
 
     const exitPos = decision.exitPosition || ball.position;
-
     const x = BABYLON.Scalar.Clamp(exitPos.x, -45, 45);
 
     let playerZ;
@@ -162,7 +188,6 @@ function placeThrowIn(ball, decision, myTeam, opponentTeam, cameras) {
         ballZ = 27.8;
     }
 
-    // joueur le plus proche du point de remise
     const taker = getClosestPlayerToPosition(restartTeam, new BABYLON.Vector3(x, 0, playerZ), false);
     if (!taker) return;
 
@@ -182,9 +207,8 @@ function placeThrowIn(ball, decision, myTeam, opponentTeam, cameras) {
 
     setRestartActivePlayer(restartTeam, taker, cameras);
 
-    // petit lock pour éviter autoswitch / possession parasite juste après placement
-    if (restartTeam.lockAutoSwitch) restartTeam.lockAutoSwitch(900);
-    if (restartTeam.lockTeamPossession) restartTeam.lockTeamPossession(900);
+    if (restartTeam.lockAutoSwitch) restartTeam.lockAutoSwitch(1200);
+    if (restartTeam.lockTeamPossession) restartTeam.lockTeamPossession(1200);
 }
 
 function placeCorner(ball, decision, myTeam, opponentTeam, cameras) {
@@ -196,8 +220,6 @@ function placeCorner(ball, decision, myTeam, opponentTeam, cameras) {
     let takerX, ballX;
     let takerZ, ballZ;
 
-    // On place le joueur légèrement DANS le terrain
-    // et la balle proche du point de corner mais jouable
     if (decision.side === "left") {
         takerX = -47.8;
         ballX = -48.8;
@@ -240,8 +262,8 @@ function placeCorner(ball, decision, myTeam, opponentTeam, cameras) {
 
     setRestartActivePlayer(restartTeam, taker, cameras);
 
-    if (restartTeam.lockAutoSwitch) restartTeam.lockAutoSwitch(900);
-    if (restartTeam.lockTeamPossession) restartTeam.lockTeamPossession(900);
+    if (restartTeam.lockAutoSwitch) restartTeam.lockAutoSwitch(1200);
+    if (restartTeam.lockTeamPossession) restartTeam.lockTeamPossession(1200);
 }
 
 function placeGoalKick(ball, decision, myTeam, opponentTeam, cameras) {
@@ -253,7 +275,6 @@ function placeGoalKick(ball, decision, myTeam, opponentTeam, cameras) {
 
     let playerX, ballX;
 
-    // Plus profond dans la surface, moins collé aux cages
     if (decision.side === "left") {
         playerX = -41.5;
         ballX = -40.0;
@@ -281,19 +302,19 @@ function placeGoalKick(ball, decision, myTeam, opponentTeam, cameras) {
 
     setRestartActivePlayer(restartTeam, goalkeeper, cameras);
 
-    if (restartTeam.lockAutoSwitch) restartTeam.lockAutoSwitch(900);
-    if (restartTeam.lockTeamPossession) restartTeam.lockTeamPossession(900);
+    if (restartTeam.lockAutoSwitch) restartTeam.lockAutoSwitch(1200);
+    if (restartTeam.lockTeamPossession) restartTeam.lockTeamPossession(1200);
 }
 
 function setRestartActivePlayer(team, taker, cameras) {
     if (!team || !taker) return;
 
-    team.activePlayer = taker;
-
     if (team.switchPlayerSmooth) {
         team.switchPlayerSmooth(taker, cameras, team.scene, 160);
     } else if (team.switchPlayer) {
         team.switchPlayer(taker, cameras);
+    } else {
+        team.activePlayer = taker;
     }
 }
 
@@ -331,9 +352,23 @@ function orientPlayerTowardBall(player, ball) {
     if (dir.lengthSquared() === 0) return;
 
     dir.normalize();
+    orientPlayerTowardDirection(player, dir);
+}
 
-    // Tu pourras ajuster selon l’orientation native de ton modèle
-    player.model.rotation.y = Math.atan2(dir.x, dir.z);
+function orientPlayerTowardDirection(player, dir) {
+    if (!player || !dir) return;
+
+    const flat = dir.clone();
+    flat.y = 0;
+
+    if (flat.lengthSquared() === 0) return;
+    flat.normalize();
+
+    player.facingDirection = flat.clone();
+
+    if (player.model) {
+        player.model.rotation.y = Math.atan2(flat.x, flat.z);
+    }
 }
 
 function sanitizeRestartDirection(direction, state) {
@@ -344,43 +379,24 @@ function sanitizeRestartDirection(direction, state) {
         dir = getDefaultRestartDirection(state);
     }
 
-    // TOUCHES
     if (state.type === "throwIn") {
-        if (state.side === "top" && dir.z <= 0) {
-            dir.z = Math.abs(dir.z) || 0.35;
-        }
-        if (state.side === "bottom" && dir.z >= 0) {
-            dir.z = -Math.abs(dir.z) || -0.35;
-        }
+        if (state.side === "top" && dir.z <= 0) dir.z = Math.abs(dir.z) || 0.35;
+        if (state.side === "bottom" && dir.z >= 0) dir.z = -Math.abs(dir.z) || -0.35;
     }
 
-    // CORNERS
     if (state.type === "corner") {
         const topHalf = state.cornerHalf === "top";
 
-        if (state.side === "left" && dir.x <= 0) {
-            dir.x = Math.abs(dir.x) || 0.35;
-        }
-        if (state.side === "right" && dir.x >= 0) {
-            dir.x = -Math.abs(dir.x) || -0.35;
-        }
+        if (state.side === "left" && dir.x <= 0) dir.x = Math.abs(dir.x) || 0.35;
+        if (state.side === "right" && dir.x >= 0) dir.x = -Math.abs(dir.x) || -0.35;
 
-        if (topHalf && dir.z <= 0) {
-            dir.z = Math.abs(dir.z) || 0.35;
-        }
-        if (!topHalf && dir.z >= 0) {
-            dir.z = -Math.abs(dir.z) || -0.35;
-        }
+        if (topHalf && dir.z <= 0) dir.z = Math.abs(dir.z) || 0.35;
+        if (!topHalf && dir.z >= 0) dir.z = -Math.abs(dir.z) || -0.35;
     }
 
-    // 6 MÈTRES
     if (state.type === "goalKick") {
-        if (state.side === "left" && dir.x <= 0) {
-            dir.x = Math.abs(dir.x) || 0.4;
-        }
-        if (state.side === "right" && dir.x >= 0) {
-            dir.x = -Math.abs(dir.x) || -0.4;
-        }
+        if (state.side === "left" && dir.x <= 0) dir.x = Math.abs(dir.x) || 0.4;
+        if (state.side === "right" && dir.x >= 0) dir.x = -Math.abs(dir.x) || -0.4;
     }
 
     if (dir.lengthSquared() === 0) {
@@ -423,6 +439,156 @@ function getDefaultRestartDirection(state) {
     return new BABYLON.Vector3(1, 0, 0);
 }
 
+function getRestartClearanceRadius() {
+    if (!isRestartWaitingKick()) return 0;
+    return restartState.type === "goalKick" ? 7.0 : 4.5;
+}
+
+function getRestartSafeRadius() {
+    if (!isRestartWaitingKick()) return 0;
+    return restartState.type === "goalKick" ? 9.0 : 6.0;
+}
+
+function updateTeamForRestart(team, ball) {
+    if (!isRestartWaitingKick() || !team || !team.players || !restartState.position) return false;
+
+    const taker = restartState.taker;
+    const ballPos = restartState.position.clone();
+    const isTakerTeam = restartState.team === team;
+
+    team.ballChaser = null;
+
+    if ("aiControlledPlayer" in team) {
+        team.aiControlledPlayer = taker;
+    }
+    if ("goalkeeperLocked" in team) {
+        team.goalkeeperLocked = false;
+    }
+    if ("goalkeeperClaiming" in team) {
+        team.goalkeeperClaiming = false;
+    }
+    if ("aiShotCharging" in team) {
+        team.aiShotCharging = false;
+        team.aiShotCarrier = null;
+        team.aiShotDirection = null;
+    }
+
+    team.players.forEach(player => {
+        if (!player) return;
+
+        // tireur figé
+        if (player === taker) {
+            if (player.playAnimation) player.playAnimation("idle");
+            return;
+        }
+
+        // joueur humain actif jamais piloté par l'IA
+        if (team.isPlayerControlled && player === team.activePlayer) {
+            return;
+        }
+
+        // GK ne monte pas sur touche / corner
+        if (player.role === "GK" && restartState.type !== "goalKick") {
+            const gkHold = player.homePosition.clone();
+            team.movePlayerTowards(player, gkHold, 0.04);
+            return;
+        }
+
+        let target;
+
+        if (isTakerTeam) {
+            target = getDynamicSupportTarget(team, player, ballPos);
+        } else {
+            target = getDynamicMarkingTarget(team, player, ballPos, restartState.team);
+        }
+
+        if (!target) return;
+
+        target.x = Math.max(player.minX, Math.min(player.maxX, target.x));
+        target.z = Math.max(player.minZ, Math.min(player.maxZ, target.z));
+
+        const speed = isTakerTeam ? 0.075 : 0.05;
+        team.movePlayerTowards(player, target, speed);
+    });
+
+    return true;
+}
+
+function scoreRestartPassTarget(team, taker, candidate, ball) {
+    if (!team || !taker || !candidate || !candidate.position || !ball || !ball.position) return -Infinity;
+    if (candidate === taker) return -Infinity;
+
+    const toMate = candidate.position.subtract(ball.position);
+    const dist = toMate.length();
+
+    if (restartState.type === "throwIn" && (dist < 4 || dist > 20)) return -Infinity;
+    if (restartState.type === "corner" && (dist < 4 || dist > 28)) return -Infinity;
+    if (restartState.type === "goalKick" && (dist < 6 || dist > 34)) return -Infinity;
+
+    let score = 100 - dist;
+
+    if (candidate.role === "ATT") score += 8;
+    if (candidate.role === "DEF") score += 4;
+
+    if (restartState.type === "goalKick") {
+        if (restartState.side === "left" && candidate.position.x > ball.position.x) score += 18;
+        if (restartState.side === "right" && candidate.position.x < ball.position.x) score += 18;
+    } else {
+        if (restartState.side === "left" && candidate.position.x > ball.position.x) score += 8;
+        if (restartState.side === "right" && candidate.position.x < ball.position.x) score += 8;
+    }
+
+    const opponents = team.opponents || [];
+    opponents.forEach(op => {
+        if (!op || !op.position) return;
+
+        const d = BABYLON.Vector3.Distance(op.position, candidate.position);
+        if (d < 10) {
+            score -= (10 - d) * 5.5;
+        }
+    });
+
+    const seg = candidate.position.subtract(ball.position);
+    const segLenSq = seg.lengthSquared();
+
+    if (segLenSq > 0.001) {
+        opponents.forEach(op => {
+            if (!op || !op.position) return;
+
+            const ap = op.position.subtract(ball.position);
+            const t = BABYLON.Scalar.Clamp(BABYLON.Vector3.Dot(ap, seg) / segLenSq, 0, 1);
+            const proj = ball.position.add(seg.scale(t));
+            const dLine = BABYLON.Vector3.Distance(op.position, proj);
+
+            if (dLine < 2.2) {
+                score -= (2.2 - dLine) * 25;
+            }
+        });
+    }
+
+    return score;
+}
+
+function findBestRestartPassTarget(team, taker, ball) {
+    if (!team || !team.players) return null;
+
+    let best = null;
+    let bestScore = -Infinity;
+
+    team.players.forEach(player => {
+        if (!player || player === taker) return;
+
+        const score = scoreRestartPassTarget(team, taker, player, ball);
+
+        if (score > bestScore) {
+            bestScore = score;
+            best = player;
+        }
+    });
+
+    return best;
+}
+
 function takeRestartKick(ball, direction, gaugeForce) {
     if (!ball || !restartState.active || !restartState.waitingForKick || !restartState.taker) {
         return;
@@ -436,19 +602,15 @@ function takeRestartKick(ball, direction, gaugeForce) {
 
     let force = gaugeForce;
 
-    // On adapte la jauge normale (30 / 45 / 60)
-    // à des plages plus cohérentes selon la remise
     if (restartState.type === "throwIn") {
         if (gaugeForce <= 30) force = 30;
         else if (gaugeForce <= 45) force = 45;
         else force = 65;
-    } 
-    else if (restartState.type === "corner") {
+    } else if (restartState.type === "corner") {
         if (gaugeForce <= 30) force = 30;
         else if (gaugeForce <= 45) force = 45;
         else force = 60;
-    } 
-    else if (restartState.type === "goalKick") {
+    } else if (restartState.type === "goalKick") {
         if (gaugeForce <= 30) force = 32;
         else if (gaugeForce <= 45) force = 46;
         else force = 60;
@@ -466,6 +628,11 @@ function takeRestartKick(ball, direction, gaugeForce) {
         window.matchAudio.playKick();
     }
 
+    restartState.phase = "kicked";
+    if (restartState.team) {
+        restartState.team.switchLockUntil = 0;
+        restartState.team.teamPossessionLockUntil = performance.now() + 250;
+    }
     endRestart(ball);
 }
 
@@ -475,27 +642,10 @@ function endRestart(ball) {
     ball.restartLocked = false;
     ball.restartTaker = null;
 
-    // petit buffer pour éviter qu’une collision instantanée recasse tout
     ball.pushLockUntil = performance.now() + 180;
     ball.ignorePlayerCollisionUntil = performance.now() + 180;
 
     resetRestartState();
-}
-
-function isRestartActive() {
-    return restartState.active;
-}
-
-function isRestartWaitingKick() {
-    return restartState.active && restartState.waitingForKick;
-}
-
-function isRestartTaker(player) {
-    return (
-        restartState.active &&
-        restartState.waitingForKick &&
-        restartState.taker === player
-    );
 }
 
 function updateAIRestart(ball) {
@@ -504,42 +654,12 @@ function updateAIRestart(ball) {
     if (!restartState.taker) return;
 
     const now = performance.now();
+    if (now < restartState.aiKickTime) return;
+
     const taker = restartState.taker;
-
-    const mates = restartState.team.players.filter(p => p && p !== taker);
-
-    let targetMate = null;
-    let bestScore = -Infinity;
-
-    mates.forEach(p => {
-        if (!p || !p.position) return;
-
-        const toMate = p.position.subtract(ball.position);
-        const dist = toMate.length();
-        if (dist < 4 || dist > 28) return;
-
-        let score = 100 - dist;
-
-        // bonus si bien démarqué
-        (restartState.team.opponents || []).forEach(op => {
-            if (!op || !op.position) return;
-            const d = BABYLON.Vector3.Distance(op.position, p.position);
-            if (d < 8) score -= (8 - d) * 8;
-        });
-
-        if (restartState.type === "goalKick") {
-            if (restartState.side === "left" && p.position.x > ball.position.x) score += 20;
-            if (restartState.side === "right" && p.position.x < ball.position.x) score += 20;
-        }
-
-        if (score > bestScore) {
-            bestScore = score;
-            targetMate = p;
-        }
-    });
+    const targetMate = findBestRestartPassTarget(restartState.team, taker, ball);
 
     let baseDir;
-
     if (targetMate) {
         baseDir = targetMate.position.subtract(ball.position);
         baseDir.y = 0;
@@ -556,31 +676,29 @@ function updateAIRestart(ball) {
     if (!restartState.aiCharging) {
         restartState.aiCharging = true;
         restartState.aiChargeStart = now;
+        restartState.phase = "aiming";
     }
 
     const t = (now - restartState.aiChargeStart) / 1000;
-    const scan = Math.sin(t * 3.2) * 0.35;
-
+    const scan = Math.sin(t * 3.4) * 0.32;
     const cos = Math.cos(scan);
     const sin = Math.sin(scan);
 
-    const scannedDir = new BABYLON.Vector3(
+    let scannedDir = new BABYLON.Vector3(
         baseDir.x * cos - baseDir.z * sin,
         0,
         baseDir.x * sin + baseDir.z * cos
     );
 
-    restartState.aiAimDirection = sanitizeRestartDirection(scannedDir, restartState);
+    scannedDir = sanitizeRestartDirection(scannedDir, restartState);
+    restartState.aiAimDirection = scannedDir.clone();
+
     orientPlayerTowardDirection(taker, restartState.aiAimDirection);
 
     const chargeDuration = now - restartState.aiChargeStart;
-
-    if (chargeDuration < 900) {
-        return;
-    }
+    if (chargeDuration < 900) return;
 
     let fakeGaugeForce = 45;
-    if (restartState.type === "throwIn") fakeGaugeForce = 45;
     if (restartState.type === "corner") fakeGaugeForce = 60;
     if (restartState.type === "goalKick") fakeGaugeForce = 60;
 
@@ -591,7 +709,7 @@ function enforceRestartClearance(ball, myTeam, opponentTeam) {
     if (!isRestartWaitingKick()) return;
     if (!restartState.taker || !ball || !ball.position) return;
 
-    const radius = restartState.type === "goalKick" ? 7 : 4.2;
+    const radius = getRestartClearanceRadius();
 
     const allPlayers = [
         ...(myTeam?.players || []),
@@ -614,7 +732,6 @@ function enforceRestartClearance(ball, myTeam, opponentTeam) {
                 nx = dx / dist;
                 nz = dz / dist;
             } else {
-                // cas ultra rare : joueur exactement sur la balle
                 nx = player.side === 1 ? -1 : 1;
                 nz = 0;
             }
@@ -626,110 +743,237 @@ function enforceRestartClearance(ball, myTeam, opponentTeam) {
     });
 }
 
-function isRestartForTeam(team) {
-    return isRestartWaitingKick() && restartState.team === team;
-}
+function spreadRestartTargets(targets, minSpacing = 5.5) {
+    if (!targets || targets.length === 0) return targets;
 
-function isRestartAgainstTeam(team) {
-    return isRestartWaitingKick() && restartState.team && restartState.team !== team;
-}
+    const result = targets.map(t => t.clone());
 
-function orientPlayerTowardDirection(player, dir) {
-    if (!player || !dir) return;
+    for (let pass = 0; pass < 4; pass++) {
+        for (let i = 0; i < result.length; i++) {
+            for (let j = i + 1; j < result.length; j++) {
+                const a = result[i];
+                const b = result[j];
 
-    const flat = dir.clone();
-    flat.y = 0;
+                const dx = b.x - a.x;
+                const dz = b.z - a.z;
+                const dist = Math.sqrt(dx * dx + dz * dz);
 
-    if (flat.lengthSquared() === 0) return;
-    flat.normalize();
+                if (dist < minSpacing) {
+                    const nx = dist > 0.001 ? dx / dist : 0;
+                    const nz = dist > 0.001 ? dz / dist : 1;
 
-    player.facingDirection = flat.clone();
+                    const push = (minSpacing - dist) * 0.5;
 
-    if (player.model) {
-        player.model.rotation.y = Math.atan2(flat.x, flat.z);
+                    a.x -= nx * push;
+                    a.z -= nz * push;
+
+                    b.x += nx * push;
+                    b.z += nz * push;
+                }
+            }
+        }
     }
+
+    return result;
 }
 
-function updateTeamForRestart(team, ball) {
-    if (!isRestartWaitingKick() || !team || !team.players) return false;
+function getDynamicSupportTarget(team, player, ballPos) {
+    const t = performance.now() * 0.0012;
+    const side = player.side || 1;
 
-    const isTakerTeam = restartState.team === team;
+    // le GK ne monte jamais sur touche/corner
+    if (player.role === "GK" && restartState.type !== "goalKick") {
+        return player.homePosition.clone();
+    }
+
+    const fieldPlayers = team.players.filter(p => p && p.role !== "GK");
+    const fieldIndex = Math.max(0, fieldPlayers.indexOf(player));
+
+    let target = player.homePosition.clone();
+
+    if (restartState.type === "throwIn") {
+        // Répartition type :
+        // 0 = solution courte haute
+        // 1 = solution courte basse
+        // 2 = solution intermédiaire au coeur du jeu
+        // 3 = solution plus lointaine / opposée
+
+        if (fieldIndex === 0) {
+            target.x = ballPos.x + side * 8;
+            target.z = ballPos.z - 10;
+        }
+        else if (fieldIndex === 1) {
+            target.x = ballPos.x + side * 8;
+            target.z = ballPos.z + 10;
+        }
+        else if (fieldIndex === 2) {
+            // on garde une zone plus intérieure sur le terrain
+            target.x = player.homePosition.x + side * 8;
+            target.z = player.homePosition.z * 0.6;
+        }
+        else {
+            // joueur plus loin, plus utile comme solution de renversement
+            target.x = player.homePosition.x + side * 12;
+            target.z = player.homePosition.z;
+        }
+    }
+
+    if (restartState.type === "corner") {
+        const inwardX = restartState.side === "left" ? 1 : -1;
+
+        if (fieldIndex === 0) {
+            target.x = ballPos.x + inwardX * 10;
+            target.z = ballPos.z + (restartState.cornerHalf === "top" ? 8 : -8);
+        }
+        else if (fieldIndex === 1) {
+            target.x = ballPos.x + inwardX * 16;
+            target.z = restartState.cornerHalf === "top" ? -5 : 5;
+        }
+        else if (fieldIndex === 2) {
+            target.x = player.homePosition.x + inwardX * 10;
+            target.z = player.homePosition.z * 0.7;
+        }
+        else {
+            target.x = player.homePosition.x;
+            target.z = player.homePosition.z;
+        }
+    }
+
+    if (restartState.type === "goalKick") {
+        const dirX = restartState.side === "left" ? 1 : -1;
+
+        if (player.role === "DEF") {
+            target.x = player.homePosition.x + dirX * 8;
+            target.z = player.homePosition.z < 0 ? -16 : 16;
+        } else if (player.role === "ATT") {
+            target.x = player.homePosition.x + dirX * 10;
+            target.z = player.homePosition.z < 0 ? -8 : 8;
+        }
+    }
+
+    // mouvement vivant autour de la zone choisie
+    target.x += Math.sin(t + fieldIndex * 1.7) * 2.4;
+    target.z += Math.cos(t * 1.15 + fieldIndex * 2.1) * 3.0;
+
+    // sécurité autour du ballon seulement pour les solutions courtes
+    if (restartState.type === "throwIn" && fieldIndex <= 1) {
+        const dx = target.x - ballPos.x;
+        const dz = target.z - ballPos.z;
+        const dist = Math.sqrt(dx * dx + dz * dz);
+        const safeR = getRestartSafeRadius() + 1.0;
+
+        if (dist < safeR) {
+            const nx = dist > 0.001 ? dx / dist : side;
+            const nz = dist > 0.001 ? dz / dist : (fieldIndex === 0 ? -1 : 1);
+            target.x = ballPos.x + nx * safeR;
+            target.z = ballPos.z + nz * safeR;
+        }
+    }
+
+    target.x = Math.max(player.minX, Math.min(player.maxX, target.x));
+    target.z = Math.max(player.minZ, Math.min(player.maxZ, target.z));
+
+    return target;
+}
+
+function getDynamicMarkingTarget(team, player, ballPos, takerTeam) {
+    if (!takerTeam || !takerTeam.players) {
+        return player.homePosition.clone();
+    }
+
     const taker = restartState.taker;
-    const ballPos = restartState.position || (ball ? ball.position : null);
 
-    if (!ballPos) return true;
+    const candidates = takerTeam.players.filter(p => {
+        if (!p || !p.position) return false;
+        if (p === taker) return false;
+        if (restartState.type !== "goalKick" && p.role === "GK") return false;
+        return true;
+    });
 
-    team.players.forEach(player => {
-        if (!player) return;
+    if (!candidates.length) {
+        return player.homePosition.clone();
+    }
 
-        // Le tireur reste figé
-        if (player === taker) {
-            if (player.playAnimation) player.playAnimation("idle");
-            return;
-        }
+    let bestTargetPlayer = null;
+    let bestScore = Infinity;
 
-        let target = player.homePosition.clone();
-
-        if (isTakerTeam) {
-            // Les coéquipiers se démarquent
-            const sideSign = team === restartState.team ? 1 : -1;
-
-            if (restartState.type === "throwIn") {
-                target.x = ballPos.x + (player.role === "ATT" ? 10 : 6) * player.side;
-                target.z = player.homePosition.z + (player.homePosition.z < 0 ? -4 : 4);
-            }
-
-            if (restartState.type === "corner") {
-                const inwardX = restartState.side === "left" ? 8 : -8;
-                target.x = ballPos.x + inwardX + (player.role === "ATT" ? 4 : 0);
-                target.z = player.homePosition.z * 0.6;
-            }
-
-            if (restartState.type === "goalKick") {
-                target.x = ballPos.x + (restartState.side === "left" ? 10 : -10) + (player.role === "ATT" ? 8 * player.side : 0);
-                target.z = player.homePosition.z * 0.9;
-            }
-        } else {
-            // L’équipe adverse marque les joueurs mais ne colle pas le tireur
-            const clearance = restartState.type === "goalKick" ? 7.5 : 5.0;
-
-            target = player.homePosition.clone();
-
-            if (restartState.type === "throwIn") {
-                target.x = ballPos.x + (restartState.side === "top" ? 2 : -2);
-                target.z = player.homePosition.z;
-            }
-
-            if (restartState.type === "corner") {
-                target.x = ballPos.x + (restartState.side === "left" ? 10 : -10);
-                target.z = player.homePosition.z * 0.5;
-            }
-
-            if (restartState.type === "goalKick") {
-                target.x = ballPos.x + (restartState.side === "left" ? 14 : -14);
-                target.z = player.homePosition.z * 0.8;
-            }
-
-            const dx = target.x - ballPos.x;
-            const dz = target.z - ballPos.z;
-            const dist = Math.sqrt(dx * dx + dz * dz);
-
-            if (dist < clearance) {
-                const nx = dist > 0.001 ? dx / dist : (player.side === 1 ? -1 : 1);
-                const nz = dist > 0.001 ? dz / dist : 0;
-
-                target.x = ballPos.x + nx * clearance;
-                target.z = ballPos.z + nz * clearance;
-            }
-        }
-
-        target.x = Math.max(player.minX, Math.min(player.maxX, target.x));
-        target.z = Math.max(player.minZ, Math.min(player.maxZ, target.z));
-
-        if (team.movePlayerTowards) {
-            team.movePlayerTowards(player, target);
+    candidates.forEach(candidate => {
+        const dist = BABYLON.Vector3.Distance(player.position, candidate.position);
+        if (dist < bestScore) {
+            bestScore = dist;
+            bestTargetPlayer = candidate;
         }
     });
 
-    return true;
+    if (!bestTargetPlayer) {
+        return player.homePosition.clone();
+    }
+
+    const goalDir = restartState.side === "left"
+        ? new BABYLON.Vector3(1, 0, 0)
+        : new BABYLON.Vector3(-1, 0, 0);
+
+    const desired = bestTargetPlayer.position.subtract(goalDir.scale(4.5));
+
+    const tt = performance.now() * 0.001;
+    desired.z += Math.sin(tt + player.homePosition.z * 0.15) * 1.8;
+
+    const dx = desired.x - ballPos.x;
+    const dz = desired.z - ballPos.z;
+    const dist = Math.sqrt(dx * dx + dz * dz);
+    const safeR = getRestartSafeRadius() + 1.5;
+
+    if (dist < safeR) {
+        const nx = dist > 0.001 ? dx / dist : -player.side;
+        const nz = dist > 0.001 ? dz / dist : (player.homePosition.z < 0 ? -1 : 1);
+        desired.x = ballPos.x + nx * safeR;
+        desired.z = ballPos.z + nz * safeR;
+    }
+
+    // latence de réaction = ils suivent moins parfaitement
+    if (!player.restartLagTarget) {
+        player.restartLagTarget = desired.clone();
+    }
+
+    player.restartLagTarget = BABYLON.Vector3.Lerp(
+        player.restartLagTarget,
+        desired,
+        0.07
+    );
+
+    player.restartLagTarget.x = Math.max(player.minX, Math.min(player.maxX, player.restartLagTarget.x));
+    player.restartLagTarget.z = Math.max(player.minZ, Math.min(player.maxZ, player.restartLagTarget.z));
+
+    return player.restartLagTarget.clone();
+}
+
+function applyRestartTeamSpacing(team, minSpacing = 7.0) {
+    if (!team || !team.players) return;
+
+    for (let pass = 0; pass < 3; pass++) {
+        for (let i = 0; i < team.players.length; i++) {
+            const a = team.players[i];
+            if (!a || a === restartState.taker) continue;
+
+            for (let j = i + 1; j < team.players.length; j++) {
+                const b = team.players[j];
+                if (!b || b === restartState.taker) continue;
+
+                const dx = b.position.x - a.position.x;
+                const dz = b.position.z - a.position.z;
+                const dist = Math.sqrt(dx * dx + dz * dz);
+
+                if (dist < minSpacing) {
+                    const nx = dist > 0.001 ? dx / dist : 1;
+                    const nz = dist > 0.001 ? dz / dist : 0;
+                    const push = (minSpacing - dist) * 0.5;
+
+                    a.position.x -= nx * push;
+                    a.position.z -= nz * push;
+                    b.position.x += nx * push;
+                    b.position.z += nz * push;
+                }
+            }
+        }
+    }
 }

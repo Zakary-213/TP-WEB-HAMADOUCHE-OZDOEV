@@ -324,7 +324,7 @@ class Team {
         }
     }
     
-    movePlayerTowards(player, target) {
+    movePlayerTowards(player, target, speedOverride = null) {
         if (player.isTackling) return;
 
         const dir = target.subtract(player.position);
@@ -340,7 +340,7 @@ class Team {
         dir.normalize();
         player.facingDirection = dir.clone();
 
-        const speed = 0.07;
+        const speed = speedOverride ?? 0.07;
         player.move(dir.x, dir.z, speed);
     }
 
@@ -379,31 +379,26 @@ class Team {
     }
 
     switchPlayerSmooth(newPlayer, cameras, scene, duration = 180){
-
         if(!newPlayer) return;
         if(newPlayer === this.activePlayer) return;
 
         const oldPlayer = this.activePlayer;
-
         this.activePlayer = newPlayer;
 
         if(cameras?.fpvCamera){
             cameras.fpvCamera.parent = newPlayer;
         }
 
-        // Si on est en TPS, on anime le pivot caméra
-        if(
+        const canAnimateCamera =
             scene &&
             cameras &&
-            cameras.tpsCamera &&
             cameras.cameraTargetNode &&
-            scene.activeCamera === cameras.tpsCamera &&
-            oldPlayer
-        ){
+            oldPlayer &&
+            scene.activeCamera !== cameras.fpvCamera;
+
+        if (canAnimateCamera) {
             animateCameraSwitch(scene, cameras, oldPlayer, newPlayer, duration);
-        }
-        else if(cameras?.cameraTargetNode){
-            // sinon on replace direct le pivot
+        } else if(cameras?.cameraTargetNode){
             cameras.cameraTargetNode.position.copyFrom(newPlayer.position);
         }
     }

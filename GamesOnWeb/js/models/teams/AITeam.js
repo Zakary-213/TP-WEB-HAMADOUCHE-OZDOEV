@@ -29,8 +29,9 @@ class AITeam extends Team {
     }
 
     update(ball) {
-        if (updateTeamForRestart(this, ball)) return;
         if (!ball || !ball.position) return;
+
+        if (updateTeamForRestart(this, ball)) return;
 
         this.aiControlledPlayer = null;
         this.goalkeeperLocked = false;
