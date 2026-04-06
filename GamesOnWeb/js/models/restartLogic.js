@@ -7,7 +7,10 @@ const restartState = {
     position: null,
     exitPosition: null,
     waitingForKick: false,
-    aiKickTime: 0
+    aiKickTime: 0,
+    aiCharging: false,
+    aiChargeStart: 0,
+    aiAimDirection: null
 };
 
 function resetRestartState() {
@@ -20,6 +23,9 @@ function resetRestartState() {
     restartState.exitPosition = null;
     restartState.waitingForKick = false;
     restartState.aiKickTime = 0;
+    restartState.aiCharging = false;
+    restartState.aiChargeStart = 0;
+    restartState.aiAimDirection = null;
 }
 
 function getRestartDecision(ball, myTeam, opponentTeam) {
@@ -498,9 +504,8 @@ function updateAIRestart(ball) {
     if (!restartState.taker) return;
 
     const now = performance.now();
-    if (now < restartState.aiKickTime) return;
-
     const taker = restartState.taker;
+
     const mates = restartState.team.players.filter(p => p && p !== taker);
 
     let targetMate = null;
@@ -511,18 +516,20 @@ function updateAIRestart(ball) {
 
         const toMate = p.position.subtract(ball.position);
         const dist = toMate.length();
-        if (dist < 4 || dist > 30) return;
+        if (dist < 4 || dist > 28) return;
 
         let score = 100 - dist;
 
-        // Bonus si le coéquipier est plutôt vers l'avant
-        if (restartState.type === "goalKick") {
-            if (restartState.side === "left" && p.position.x > ball.position.x) score += 25;
-            if (restartState.side === "right" && p.position.x < ball.position.x) score += 25;
-        }
+        // bonus si bien démarqué
+        (restartState.team.opponents || []).forEach(op => {
+            if (!op || !op.position) return;
+            const d = BABYLON.Vector3.Distance(op.position, p.position);
+            if (d < 8) score -= (8 - d) * 8;
+        });
 
-        if (restartState.type === "throwIn" || restartState.type === "corner") {
-            score += 10;
+        if (restartState.type === "goalKick") {
+            if (restartState.side === "left" && p.position.x > ball.position.x) score += 20;
+            if (restartState.side === "right" && p.position.x < ball.position.x) score += 20;
         }
 
         if (score > bestScore) {
@@ -531,27 +538,53 @@ function updateAIRestart(ball) {
         }
     });
 
-    let dir;
+    let baseDir;
 
     if (targetMate) {
-        dir = targetMate.position.subtract(ball.position);
-        dir.y = 0;
+        baseDir = targetMate.position.subtract(ball.position);
+        baseDir.y = 0;
     } else {
-        dir = getDefaultRestartDirection(restartState);
+        baseDir = getDefaultRestartDirection(restartState);
     }
 
-    if (dir.lengthSquared() === 0) {
-        dir = getDefaultRestartDirection(restartState);
+    if (baseDir.lengthSquared() === 0) {
+        baseDir = getDefaultRestartDirection(restartState);
     }
 
-    dir.normalize();
+    baseDir.normalize();
+
+    if (!restartState.aiCharging) {
+        restartState.aiCharging = true;
+        restartState.aiChargeStart = now;
+    }
+
+    const t = (now - restartState.aiChargeStart) / 1000;
+    const scan = Math.sin(t * 3.2) * 0.35;
+
+    const cos = Math.cos(scan);
+    const sin = Math.sin(scan);
+
+    const scannedDir = new BABYLON.Vector3(
+        baseDir.x * cos - baseDir.z * sin,
+        0,
+        baseDir.x * sin + baseDir.z * cos
+    );
+
+    restartState.aiAimDirection = sanitizeRestartDirection(scannedDir, restartState);
+    orientPlayerTowardDirection(taker, restartState.aiAimDirection);
+
+    const chargeDuration = now - restartState.aiChargeStart;
+
+    if (chargeDuration < 900) {
+        return;
+    }
 
     let fakeGaugeForce = 45;
     if (restartState.type === "throwIn") fakeGaugeForce = 45;
     if (restartState.type === "corner") fakeGaugeForce = 60;
     if (restartState.type === "goalKick") fakeGaugeForce = 60;
 
-    takeRestartKick(ball, dir, fakeGaugeForce);
+    takeRestartKick(ball, restartState.aiAimDirection, fakeGaugeForce);
 }
 
 function enforceRestartClearance(ball, myTeam, opponentTeam) {
@@ -591,4 +624,112 @@ function enforceRestartClearance(ball, myTeam, opponentTeam) {
             player.position.z += nz * push;
         }
     });
+}
+
+function isRestartForTeam(team) {
+    return isRestartWaitingKick() && restartState.team === team;
+}
+
+function isRestartAgainstTeam(team) {
+    return isRestartWaitingKick() && restartState.team && restartState.team !== team;
+}
+
+function orientPlayerTowardDirection(player, dir) {
+    if (!player || !dir) return;
+
+    const flat = dir.clone();
+    flat.y = 0;
+
+    if (flat.lengthSquared() === 0) return;
+    flat.normalize();
+
+    player.facingDirection = flat.clone();
+
+    if (player.model) {
+        player.model.rotation.y = Math.atan2(flat.x, flat.z);
+    }
+}
+
+function updateTeamForRestart(team, ball) {
+    if (!isRestartWaitingKick() || !team || !team.players) return false;
+
+    const isTakerTeam = restartState.team === team;
+    const taker = restartState.taker;
+    const ballPos = restartState.position || (ball ? ball.position : null);
+
+    if (!ballPos) return true;
+
+    team.players.forEach(player => {
+        if (!player) return;
+
+        // Le tireur reste figé
+        if (player === taker) {
+            if (player.playAnimation) player.playAnimation("idle");
+            return;
+        }
+
+        let target = player.homePosition.clone();
+
+        if (isTakerTeam) {
+            // Les coéquipiers se démarquent
+            const sideSign = team === restartState.team ? 1 : -1;
+
+            if (restartState.type === "throwIn") {
+                target.x = ballPos.x + (player.role === "ATT" ? 10 : 6) * player.side;
+                target.z = player.homePosition.z + (player.homePosition.z < 0 ? -4 : 4);
+            }
+
+            if (restartState.type === "corner") {
+                const inwardX = restartState.side === "left" ? 8 : -8;
+                target.x = ballPos.x + inwardX + (player.role === "ATT" ? 4 : 0);
+                target.z = player.homePosition.z * 0.6;
+            }
+
+            if (restartState.type === "goalKick") {
+                target.x = ballPos.x + (restartState.side === "left" ? 10 : -10) + (player.role === "ATT" ? 8 * player.side : 0);
+                target.z = player.homePosition.z * 0.9;
+            }
+        } else {
+            // L’équipe adverse marque les joueurs mais ne colle pas le tireur
+            const clearance = restartState.type === "goalKick" ? 7.5 : 5.0;
+
+            target = player.homePosition.clone();
+
+            if (restartState.type === "throwIn") {
+                target.x = ballPos.x + (restartState.side === "top" ? 2 : -2);
+                target.z = player.homePosition.z;
+            }
+
+            if (restartState.type === "corner") {
+                target.x = ballPos.x + (restartState.side === "left" ? 10 : -10);
+                target.z = player.homePosition.z * 0.5;
+            }
+
+            if (restartState.type === "goalKick") {
+                target.x = ballPos.x + (restartState.side === "left" ? 14 : -14);
+                target.z = player.homePosition.z * 0.8;
+            }
+
+            const dx = target.x - ballPos.x;
+            const dz = target.z - ballPos.z;
+            const dist = Math.sqrt(dx * dx + dz * dz);
+
+            if (dist < clearance) {
+                const nx = dist > 0.001 ? dx / dist : (player.side === 1 ? -1 : 1);
+                const nz = dist > 0.001 ? dz / dist : 0;
+
+                target.x = ballPos.x + nx * clearance;
+                target.z = ballPos.z + nz * clearance;
+            }
+        }
+
+        target.x = Math.max(player.minX, Math.min(player.maxX, target.x));
+        target.z = Math.max(player.minZ, Math.min(player.maxZ, target.z));
+
+        if (team.movePlayerTowards) {
+            team.movePlayerTowards(player, target);
+        }
+    });
+
+    return true;
 }

@@ -771,16 +771,18 @@ const createScene = function () {
         // Met à jour l'IA uniquement si son comportement est implémenté pour ce stade
         if (opponentTeam && opponentTeam.aiImplemented) opponentTeam.update(ball);
 
-        opponentTeam.players.forEach(bot => {
-            if (!bot) return;
+        if (!isRestartWaitingKick()) {
+            opponentTeam.players.forEach(bot => {
+                if (!bot) return;
 
-            tackleController.tryAITackle(
-                bot,
-                ball,
-                myTeam,
-                opponentTeam
-            );
-        });
+                tackleController.tryAITackle(
+                    bot,
+                    ball,
+                    myTeam,
+                    opponentTeam
+                );
+            });
+        }
 
         tackleController.updateAITackle();
 
@@ -963,30 +965,55 @@ const createScene = function () {
         activePlayer.stamina = stamina;
 
         if (restartTakerLocked) {
-            // Pendant une remise : le tireur ne bouge pas,
-            // mais on peut quand même changer la direction visée
             movement = tackleController.updateAndMove(activePlayer, 0, 0, baseSpeed);
 
-            let aimX = 0;
-            let aimZ = 0;
+            const turnSpeed = 0.045;
 
-            // On garde la même logique d'axes que ton mode TPS
-            if (input.forward) aimX += 1;
-            if (input.backward) aimX -= 1;
-            if (input.left) aimZ += 1;
-            if (input.right) aimZ -= 1;
-
-            if (aimX !== 0 || aimZ !== 0) {
-                const aim = new BABYLON.Vector3(aimX, 0, aimZ);
-                aim.normalize();
-
-                lastDirection = sanitizeRestartDirection(aim, restartState);
-                playerFacing = lastDirection.clone();
-            } else {
+            if (!lastDirection || lastDirection.lengthSquared() === 0) {
                 lastDirection = getDefaultRestartDirection(restartState);
-                playerFacing = lastDirection.clone();
             }
-        } else {
+
+            let restartDir = lastDirection.clone();
+            restartDir.y = 0;
+
+            if (restartDir.lengthSquared() === 0) {
+                restartDir = getDefaultRestartDirection(restartState);
+            }
+
+            restartDir.normalize();
+
+            if (input.left) {
+                const angle = -turnSpeed;
+                const cos = Math.cos(angle);
+                const sin = Math.sin(angle);
+
+                restartDir = new BABYLON.Vector3(
+                    restartDir.x * cos - restartDir.z * sin,
+                    0,
+                    restartDir.x * sin + restartDir.z * cos
+                );
+            }
+
+            if (input.right) {
+                const angle = turnSpeed;
+                const cos = Math.cos(angle);
+                const sin = Math.sin(angle);
+
+                restartDir = new BABYLON.Vector3(
+                    restartDir.x * cos - restartDir.z * sin,
+                    0,
+                    restartDir.x * sin + restartDir.z * cos
+                );
+            }
+
+            restartDir = sanitizeRestartDirection(restartDir, restartState);
+
+            lastDirection = restartDir.clone();
+            playerFacing = restartDir.clone();
+
+            orientPlayerTowardDirection(activePlayer, restartDir);
+        } 
+        else {
             movement = tackleController.updateAndMove(activePlayer, moveX, moveZ, effectiveSpeed);
         }
 
@@ -1072,6 +1099,7 @@ const createScene = function () {
 
         // UPDATE JAUGE
         const humanCharging = isCharging;
+        const aiRestartCharging = isRestartWaitingKick() && restartState.aiCharging && restartState.taker;
         const aiCharging = opponentTeam && opponentTeam.aiShotCharging;
 
         if (humanCharging) {
@@ -1081,6 +1109,15 @@ const createScene = function () {
                 kickGauge,
                 controlledPlayer,
                 lastDirection,
+                time
+            );
+        } else if (aiRestartCharging) {
+            const time = performance.now() / 1000;
+
+            updateKickGauge(
+                kickGauge,
+                restartState.taker,
+                restartState.aiAimDirection || getDefaultRestartDirection(restartState),
                 time
             );
         } else if (aiCharging && opponentTeam.aiShotCarrier && opponentTeam.aiShotDirection) {
@@ -1171,6 +1208,10 @@ const createScene = function () {
                     const dist = Math.sqrt(dx * dx + dz * dz);
 
                     if (dist < COMBINED_R && dist > 0.001) {
+                        if (p.teamRef) {
+                            ball.lastKicker = p;
+                            ball.lastTouchTeam = p.teamRef;
+                        }
                         const nx = dx / dist;
                         const nz = dz / dist;
 

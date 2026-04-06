@@ -30,6 +30,7 @@ class Team {
     addPlayer(position, side = 1) {
 
         const newPlayer = createPlayer(this.scene, position, this.color, this.meshIndex);
+        newPlayer.teamRef = this;
         
         // On modifie la taille du joueur pour qu'elle corresponde à ce qui était dans script.js
         if(newPlayer.model){
@@ -105,7 +106,7 @@ class Team {
     }
 
     update(ball){
-
+        if (updateTeamForRestart(this, ball)) return;
         const teamHasBall = this.hasBall(ball);
 
         // si on récupère la balle on annule le chasseur
