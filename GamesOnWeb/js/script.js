@@ -427,6 +427,8 @@ const createScene = function () {
             }
 
             if (action === "switchLeft") {
+                if (isRestartWaitingKick()) return;
+
                 const p = myTeam.getPlayerOnSide("left");
                 myTeam.switchPlayerSmooth(p, cameras, scene, 180);
                 activePlayer = myTeam.activePlayer;
@@ -436,6 +438,8 @@ const createScene = function () {
             }
 
             if (action === "switchRight") {
+                if (isRestartWaitingKick()) return;
+
                 const p = myTeam.getPlayerOnSide("right");
                 myTeam.switchPlayerSmooth(p, cameras, scene, 180);
                 activePlayer = myTeam.activePlayer;
@@ -916,11 +920,13 @@ const createScene = function () {
             const l1Btn = gp.buttons && gp.buttons[gamepadBinds.switchLeft];
             const l1Pressed = !!(l1Btn && l1Btn.pressed);
             if (l1Pressed && !gamepadState.lastL1Pressed) {
-                const p = myTeam.getPlayerOnSide("left");
-                myTeam.switchPlayerSmooth(p, cameras, scene, 180);
-                activePlayer = myTeam.activePlayer;
-                if (selectionIndicator && activePlayer) {
-                    selectionIndicator.parent = activePlayer;
+                if (!isRestartWaitingKick()) {
+                    const p = myTeam.getPlayerOnSide("left");
+                    myTeam.switchPlayerSmooth(p, cameras, scene, 180);
+                    activePlayer = myTeam.activePlayer;
+                    if (selectionIndicator && activePlayer) {
+                        selectionIndicator.parent = activePlayer;
+                    }
                 }
             }
             gamepadState.lastL1Pressed = l1Pressed;
@@ -928,11 +934,13 @@ const createScene = function () {
             const r1Btn = gp.buttons && gp.buttons[gamepadBinds.switchRight];
             const r1Pressed = !!(r1Btn && r1Btn.pressed);
             if (r1Pressed && !gamepadState.lastR1Pressed) {
-                const p = myTeam.getPlayerOnSide("right");
-                myTeam.switchPlayerSmooth(p, cameras, scene, 180);
-                activePlayer = myTeam.activePlayer;
-                if (selectionIndicator && activePlayer) {
-                    selectionIndicator.parent = activePlayer;
+                if (!isRestartWaitingKick()) {
+                    const p = myTeam.getPlayerOnSide("right");
+                    myTeam.switchPlayerSmooth(p, cameras, scene, 180);
+                    activePlayer = myTeam.activePlayer;
+                    if (selectionIndicator && activePlayer) {
+                        selectionIndicator.parent = activePlayer;
+                    }
                 }
             }
             gamepadState.lastR1Pressed = r1Pressed;
