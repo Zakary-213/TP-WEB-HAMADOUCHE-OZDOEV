@@ -356,6 +356,23 @@ const createScene = function () {
             resetTeamStamina(myTeam);
             resetTeamStamina(opponentTeam);
 
+            activePlayer = myTeam.players[3];
+            myTeam.activePlayer = myTeam.players[3];
+
+            if (selectionIndicator && activePlayer) {
+                selectionIndicator.parent = activePlayer;
+            }
+
+            if (cameras?.fpvCamera) {
+                cameras.fpvCamera.parent = activePlayer;
+            }
+
+            if (cameraRuntime && typeof cameraRuntime.syncTargetToActivePlayer === "function") {
+                cameraRuntime.syncTargetToActivePlayer(activePlayer);
+            } else if (cameras?.cameraTargetNode && activePlayer?.position) {
+                cameras.cameraTargetNode.position.copyFrom(activePlayer.position);
+            }
+
             if (window.matchAudio && typeof window.matchAudio.playWhistle === "function") {
                 window.matchAudio.playWhistle();
             }
