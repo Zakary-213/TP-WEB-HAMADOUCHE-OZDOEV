@@ -145,7 +145,12 @@ function kick(scene, ball, player, lastDirection, force, team) {
 
     team.lastBallPlayer = player;
     team.lockAutoSwitch(500);
-    team.lockTeamPossession(1550);
+
+    if (team && team.isPlayerControlled) {
+        team.lockTeamPossession(1550);
+    } else {
+        team.lockTeamPossession(180);
+    }
 
     ball.lastKicker = player;
     ball.lastTouchTeam = team;

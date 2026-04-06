@@ -260,6 +260,7 @@ const createScene = function () {
 
     // Jauge de tir
     const kickGauge = createKickGauge(scene);
+    window.kickGauge = kickGauge;
     drawGaugeColors(kickGauge);
 
     const myTeam = new PlayerTeam(scene, "My Team", new BABYLON.Color3(1, 0, 0));
@@ -840,18 +841,31 @@ const createScene = function () {
                 }
             }
 
-            checkBallCollision(bot, ball, dir, opponentTeam);
+            const botIsSprinting = false;
+            checkBallCollision(bot, ball, dir, opponentTeam, null, botIsSprinting);
         });
     }
 
         // UPDATE JAUGE
-        if (isCharging) {
+        const humanCharging = isCharging;
+        const aiCharging = opponentTeam && opponentTeam.aiShotCharging;
+
+        if (humanCharging) {
             const time = performance.now() / 1000;
 
             updateKickGauge(
                 kickGauge,
                 controlledPlayer,
                 lastDirection,
+                time
+            );
+        } else if (aiCharging && opponentTeam.aiShotCarrier && opponentTeam.aiShotDirection) {
+            const time = performance.now() / 1000;
+
+            updateKickGauge(
+                kickGauge,
+                opponentTeam.aiShotCarrier,
+                opponentTeam.aiShotDirection,
                 time
             );
         } else {

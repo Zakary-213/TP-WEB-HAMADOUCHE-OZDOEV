@@ -250,6 +250,20 @@ class AITeamHuitieme extends AITeam {
 
         if (!ballCarrier) return;
 
+        const isNearGoal = ballCarrier.position.x < -34;
+        const isCenteredEnough = Math.abs(ballCarrier.position.z) < 16;
+        const shouldPrepareShot = isNearGoal && isCenteredEnough;
+
+        if (this.aiShotCharging) {
+            this.handleAIShot(ball);
+            return;
+        }
+
+        if (shouldPrepareShot) {
+            this.startAIShot(ballCarrier, ball);
+            return;
+        }
+
         let dir = new BABYLON.Vector3(-50, 0, 0).subtract(ballCarrier.position);
 
         const margin = 5;
@@ -259,29 +273,35 @@ class AITeamHuitieme extends AITeam {
         if (ballCarrier.position.x < -45 + margin) dir.x += 1.5;
 
         this.opponents.forEach(opponent => {
+            if (!opponent || !opponent.position) return;
+
             const toOpponent = opponent.position.subtract(ballCarrier.position);
             const dist = toOpponent.length();
 
             if (dist < 8) {
                 const avoid = ballCarrier.position.subtract(opponent.position);
-                avoid.normalize();
-                dir.addInPlace(avoid.scale(3));
+                avoid.y = 0;
+
+                if (avoid.lengthSquared() > 0.0001) {
+                    avoid.normalize();
+                    dir.addInPlace(avoid.scale(3));
+                }
             }
         });
 
         if (dir.lengthSquared() === 0) return;
 
+        dir.y = 0;
         dir.normalize();
-        const moveDir = dir.clone();
 
         this.aiControlledPlayer = ballCarrier;
         this.ballChaser = ballCarrier;
 
-        this.setFacing(ballCarrier, moveDir);
-        ballCarrier.move(moveDir.x, moveDir.z, 0.1);
+        this.setFacing(ballCarrier, dir);
+        ballCarrier.move(dir.x, dir.z, 0.07);
 
         this.players.forEach(player => {
-            if (player === ballCarrier) return;
+            if (!player || player === ballCarrier) return;
 
             const support = player.homePosition.clone();
             support.x += (ballCarrier.position.x - player.homePosition.x) * 0.5;
@@ -624,4 +644,97 @@ class AITeamHuitieme extends AITeam {
             this.movePlayerTowards(player, target);
         });
     }
+
+    // -----------------------
+    // AI SHOT (pour les tirs à courte distance)
+    // -----------------------
+    startAIShot(player, ball) {
+        this.aiShotCharging = true;
+        this.aiShotChargeStart = performance.now();
+        this.aiShotCarrier = player;
+        this.aiControlledPlayer = player;
+        this.ballChaser = player;
+
+        this.aiShotDirection = new BABYLON.Vector3(-1, 0, 0);
+        this.aiShotCurrentValue = 0;
+    }
+
+    handleAIShot(ball) {
+        const player = this.aiShotCarrier;
+        if (!player || !ball || !ball.position) {
+            this.aiShotCharging = false;
+            this.aiShotCarrier = null;
+            this.aiShotDirection = null;
+            this.aiControlledPlayer = null;
+            this.ballChaser = null;
+            return;
+        }
+
+        const now = performance.now();
+        const chargeTime = now - this.aiShotChargeStart;
+
+        const enemyGK = this.opponents.find(p => p && p.role === "GK") || null;
+
+        let baseTargetZ = 0;
+        if (enemyGK) {
+            baseTargetZ = enemyGK.position.z >= 0 ? -7 : 7;
+        }
+
+        const scanOffset = Math.sin((chargeTime / 1000) * 7) * 2.8;
+        const targetZ = BABYLON.Scalar.Clamp(baseTargetZ + scanOffset, -8.5, 8.5);
+
+        const goalTarget = new BABYLON.Vector3(-50, 0, targetZ);
+        const dir = goalTarget.subtract(player.position);
+        dir.y = 0;
+
+        if (dir.lengthSquared() > 0.0001) {
+            dir.normalize();
+            this.aiShotDirection = dir.clone();
+        } else {
+            this.aiShotDirection = new BABYLON.Vector3(-1, 0, 0);
+        }
+
+        this.aiControlledPlayer = player;
+        this.ballChaser = player;
+
+        this.setFacing(player, this.aiShotDirection);
+
+        const shotDistance = BABYLON.Vector3.Distance(player.position, ball.position);
+        if (shotDistance > 2.6) {
+            this.aiShotCharging = false;
+            this.aiShotCarrier = null;
+            this.aiShotDirection = null;
+            this.aiControlledPlayer = null;
+            this.ballChaser = null;
+            return;
+        }
+
+        const clearSideFromGK = !enemyGK || Math.abs(targetZ - enemyGK.position.z) > 2.2;
+        const enoughCharge = chargeTime > 380;
+        const mustShoot = chargeTime > 900;
+
+        if (enoughCharge && clearSideFromGK || mustShoot) {
+            const force = 55;
+
+            kick(
+                this.scene,
+                ball,
+                player,
+                this.aiShotDirection,
+                force,
+                this
+            );
+
+            this.aiShotCharging = false;
+            this.aiShotCarrier = null;
+            this.aiShotDirection = null;
+            this.aiControlledPlayer = null;
+            this.ballChaser = null;
+
+            this.teamPossessionLockUntil = performance.now() + 180;
+            return;
+        }
+    }
+
+    
 }

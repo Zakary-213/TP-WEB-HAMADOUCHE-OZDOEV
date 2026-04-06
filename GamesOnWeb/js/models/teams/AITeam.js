@@ -20,6 +20,12 @@ class AITeam extends Team {
 
         this.goalkeeperCurrentRoamTarget = null;
         this.goalkeeperNextRoamDecisionTime = 0;
+
+        this.aiShotCharging = false;
+        this.aiShotChargeStart = 0;
+        this.aiShotCarrier = null;
+        this.aiShotDirection = null;
+        this.aiShotCurrentValue = 0;
     }
 
     update(ball) {
@@ -28,6 +34,12 @@ class AITeam extends Team {
         this.aiControlledPlayer = null;
         this.goalkeeperLocked = false;
         this.goalkeeperClaiming = false;
+
+        if (this.aiShotCharging) {
+            this.handleAIShot(ball);
+            this.updateBasePositioning(ball);
+            return;
+        }
 
         this.aiBehavior(ball);
         this.updateBasePositioning(ball);
