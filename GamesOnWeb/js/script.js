@@ -478,6 +478,206 @@ const createScene = function () {
     let lastKickTime = 0;
     const kickCooldown = 300;
 
+    let goalEmergencyUntil = 0;
+    let lastGoalEmergencySwitch = 0;
+
+    function getTeamGoalkeeper(team) {
+        return team?.players?.find(p => p && p.role === "GK") || null;
+    }
+
+    function getClosestPlayerFromTeamToBall(team, ball) {
+        if (!team?.players || !ball?.position) return null;
+
+        let closest = null;
+        let bestDist = Infinity;
+
+        team.players.forEach(player => {
+            if (!player || !player.position) return;
+
+            const dist = BABYLON.Vector3.Distance(player.position, ball.position);
+            if (dist < bestDist) {
+                bestDist = dist;
+                closest = player;
+            }
+        });
+
+        return closest;
+    }
+
+    function switchInstantToGoalkeeper() {
+        const gk = getTeamGoalkeeper(myTeam);
+        if (!gk) return false;
+
+        if (myTeam.activePlayer !== gk) {
+            myTeam.switchPlayer(gk, cameras);
+
+            if (cameras?.cameraTargetNode) {
+                cameras.cameraTargetNode.position.copyFrom(gk.position);
+            }
+
+            if (selectionIndicator) {
+                selectionIndicator.parent = gk;
+            }
+        }
+
+        activePlayer = myTeam.activePlayer;
+
+        if (cameraRuntime && typeof cameraRuntime.syncTargetToActivePlayer === "function") {
+            cameraRuntime.syncTargetToActivePlayer(gk);
+        }
+
+        myTeam.lockAutoSwitch(900);
+        myTeam.goalEmergencyModeUntil = performance.now() + 1400;
+        goalEmergencyUntil = performance.now() + 1400;
+        lastGoalEmergencySwitch = performance.now();
+        return true;
+    }
+
+    function isDangerOnMyGoal() {
+        const gk = getTeamGoalkeeper(myTeam);
+        if (!gk || !ball?.position) return false;
+
+        const myGoalX = gk.homePosition ? gk.homePosition.x : gk.position.x;
+        const isLeftGoal = myGoalX < 0;
+
+        const boxDepth = 18;
+        const boxHalfWidth = 16;
+        const warningLine = 26;
+
+        const inMyBox = isLeftGoal
+            ? (ball.position.x <= myGoalX + boxDepth && Math.abs(ball.position.z) <= boxHalfWidth)
+            : (ball.position.x >= myGoalX - boxDepth && Math.abs(ball.position.z) <= boxHalfWidth);
+
+        const inDangerZone = isLeftGoal
+            ? ball.position.x <= warningLine * -1
+            : ball.position.x >= warningLine;
+
+        let ballTowardGoal = false;
+        if (ball.velocity) {
+            const vx = ball.velocity.x || 0;
+            ballTowardGoal = isLeftGoal ? vx < -0.08 : vx > 0.08;
+        }
+
+        const closestOpponent = getClosestPlayerFromTeamToBall(opponentTeam, ball);
+        const closestMate = getClosestPlayerFromTeamToBall(myTeam, ball);
+
+        const oppDist = closestOpponent
+            ? BABYLON.Vector3.Distance(closestOpponent.position, ball.position)
+            : Infinity;
+
+        const mateDist = closestMate
+            ? BABYLON.Vector3.Distance(closestMate.position, ball.position)
+            : Infinity;
+
+        const opponentLikelyHasBall =
+            ball.lastTouchTeam === opponentTeam ||
+            oppDist < 3.2 ||
+            oppDist + 0.8 < mateDist;
+
+        const shooterNearBall =
+            closestOpponent &&
+            closestOpponent.position &&
+            BABYLON.Vector3.Distance(closestOpponent.position, ball.position) < 4.5;
+
+        const activeFarFromGK =
+            myTeam.activePlayer &&
+            myTeam.activePlayer !== gk &&
+            BABYLON.Vector3.Distance(myTeam.activePlayer.position, gk.position) > 14;
+
+        // déclenchement fort = dans la surface
+        if (inMyBox && opponentLikelyHasBall && activeFarFromGK) {
+            return true;
+        }
+
+        // déclenchement moyen = l'action avance vers le but + l'adversaire contrôle
+        if (inDangerZone && opponentLikelyHasBall && ballTowardGoal && activeFarFromGK) {
+            return true;
+        }
+
+        // déclenchement anticipation tir
+        if (inDangerZone && shooterNearBall && opponentLikelyHasBall && activeFarFromGK) {
+            return true;
+        }
+
+        return false;
+    }
+
+    function handleGoalEmergencySwitch() {
+        const now = performance.now();
+        const gk = getTeamGoalkeeper(myTeam);
+
+        if (isRestartWaitingKick()) return false;
+
+        // Si on est déjà en mode urgence GK
+        if (gk && myTeam.activePlayer === gk) {
+            if (shouldKeepGoalkeeperEmergency()) {
+                myTeam.goalEmergencyModeUntil = now + 200;
+                goalEmergencyUntil = now + 200;
+                return true;
+            }
+
+            // danger terminé -> on libère le mode urgence
+            myTeam.goalEmergencyModeUntil = 0;
+            goalEmergencyUntil = 0;
+            return false;
+        }
+
+        if (now < goalEmergencyUntil) return true;
+        if (now - lastGoalEmergencySwitch < 500) return false;
+
+        if (isDangerOnMyGoal()) {
+            return switchInstantToGoalkeeper();
+        }
+
+        return false;
+    }
+
+    function shouldKeepGoalkeeperEmergency() {
+        const gk = getTeamGoalkeeper(myTeam);
+        if (!gk || !ball?.position) return false;
+        if (myTeam.activePlayer !== gk) return false;
+
+        const myGoalX = gk.homePosition ? gk.homePosition.x : gk.position.x;
+        const isLeftGoal = myGoalX < 0;
+
+        const boxDepth = 20;
+        const boxHalfWidth = 18;
+        const warningLine = 30;
+
+        const inMyBox = isLeftGoal
+            ? (ball.position.x <= myGoalX + boxDepth && Math.abs(ball.position.z) <= boxHalfWidth)
+            : (ball.position.x >= myGoalX - boxDepth && Math.abs(ball.position.z) <= boxHalfWidth);
+
+        const inDangerZone = isLeftGoal
+            ? ball.position.x <= -warningLine
+            : ball.position.x >= warningLine;
+
+        const closestOpponent = getClosestPlayerFromTeamToBall(opponentTeam, ball);
+        const closestMate = getClosestPlayerFromTeamToBall(myTeam, ball);
+
+        const oppDist = closestOpponent
+            ? BABYLON.Vector3.Distance(closestOpponent.position, ball.position)
+            : Infinity;
+
+        const mateDist = closestMate
+            ? BABYLON.Vector3.Distance(closestMate.position, ball.position)
+            : Infinity;
+
+        const opponentStillThreatening =
+            ball.lastTouchTeam === opponentTeam ||
+            oppDist < 3.2 ||
+            oppDist + 0.8 < mateDist;
+
+        let ballTowardGoal = false;
+        if (ball.velocity) {
+            const vx = ball.velocity.x || 0;
+            ballTowardGoal = isLeftGoal ? vx < -0.05 : vx > 0.05;
+        }
+
+        return (inMyBox && opponentStillThreatening) || (inDangerZone && (opponentStillThreatening || ballTowardGoal));
+    }
+
+    
     scene.onBeforeRenderObservable.add(()=>{
         if (preMatchIntroPlaying || gameplayPaused) {
             // On fige le gameplay à la mi-temps (10 secondes)
@@ -494,9 +694,16 @@ const createScene = function () {
             return;
         }
 
+        let emergencyGoalSwitchTriggered = false;
+
         if (!isRestartWaitingKick()) {
-            myTeam.autoSwitch(ball, cameras);
+            emergencyGoalSwitchTriggered = handleGoalEmergencySwitch();
+
+            if (!emergencyGoalSwitchTriggered) {
+                myTeam.autoSwitch(ball, cameras);
+            }
         }
+
         activePlayer = myTeam.activePlayer;
 
         // Si l'auto-switch a changé de joueur actif, on recolle la flèche dessus
@@ -1092,3 +1299,5 @@ window.startTournamentMatch = startGame;
 window.addEventListener("resize", function () {
     engine.resize();
 });
+
+    

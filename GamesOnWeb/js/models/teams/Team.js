@@ -22,6 +22,8 @@ class Team {
         // petit délai pendant lequel on considère encore qu'on a la possession
         this.teamPossessionLockUntil = 0;
 
+        this.goalEmergencyModeUntil = 0;
+
         
     }
 
@@ -499,20 +501,19 @@ class Team {
     }
 
     autoSwitch(ball, cameras){
-
         const now = performance.now();
+
+        if (now < this.goalEmergencyModeUntil) return;
 
         // Auto switch uniquement quand MON équipe a la balle
         if(!this.teamHasBall(ball)) return;
 
         if(now < this.switchLockUntil) return;
-
         if(now - this.lastSwitchTime < this.switchCooldown) return;
 
         const closest = this.getClosestPlayerToBall(ball);
 
         if(!closest) return;
-
         if(closest === this.activePlayer) return;
 
         const distActive = BABYLON.Vector3.Distance(
@@ -525,9 +526,7 @@ class Team {
             ball.position
         );
 
-        // On exige un vrai avantage
         if(distClosest + 1 < distActive){
-
             this.switchPlayerSmooth(closest, cameras, this.scene, 180);
             this.lastSwitchTime = now;
         }
