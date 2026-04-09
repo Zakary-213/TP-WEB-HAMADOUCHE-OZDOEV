@@ -325,23 +325,48 @@ class Team {
     }
     
     movePlayerTowards(player, target, speedOverride = null) {
+        if (!player || !target) return;
         if (player.isTackling) return;
 
-        const dir = target.subtract(player.position);
-        const dist = dir.length();
+        initSteeringPlayer(player);
+
+        const toTarget = target.subtract(player.position);
+        toTarget.y = 0;
+        const dist = toTarget.length();
 
         if (dist < 0.15) {
+            resetSteeringVelocity(player);
+
             if (player.playAnimation) {
                 player.playAnimation("idle");
             }
             return;
         }
 
-        dir.normalize();
-        player.facingDirection = dir.clone();
+        if (speedOverride != null) {
+            player.maxSteeringSpeed = speedOverride;
+        } else {
+            player.maxSteeringSpeed = 0.07;
+        }
 
-        const speed = speedOverride ?? 0.07;
-        player.move(dir.x, dir.z, speed);
+        const steering = seekSteering(player, target, player.maxSteeringSpeed);
+        const velocity = applySteering(player, steering);
+
+        if (velocity.lengthSquared() < 0.00001) {
+            if (player.playAnimation) {
+                player.playAnimation("idle");
+            }
+            return;
+        }
+
+        const moveDir = velocity.clone();
+        moveDir.y = 0;
+        moveDir.normalize();
+
+        player.facingDirection = moveDir.clone();
+
+        const moveSpeed = velocity.length();
+        player.move(moveDir.x, moveDir.z, moveSpeed);
     }
 
     resetPositions(){
@@ -349,6 +374,7 @@ class Team {
         this.players.forEach(player=>{
 
             player.position = player.initialPosition.clone();
+            resetSteeringVelocity(player);
             
             if(player.model){
                 player.model.rotation.y = player.initialRotationY;
@@ -599,6 +625,4 @@ class Team {
             Math.cos(time + player.homePosition.z) * amplitude
         );
     }
-
-
 }
