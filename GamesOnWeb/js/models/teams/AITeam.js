@@ -26,12 +26,18 @@ class AITeam extends Team {
         this.aiShotCarrier = null;
         this.aiShotDirection = null;
         this.aiShotCurrentValue = 0;
+
+        this._aiFrameMoveId = 0;
     }
 
     update(ball) {
         if (!ball || !ball.position) return;
 
         if (updateTeamForRestart(this, ball)) return;
+
+        this._aiFrameMoveId = this.scene && this.scene.getFrameId
+            ? this.scene.getFrameId()
+            : performance.now();
 
         this.aiControlledPlayer = null;
         this.goalkeeperLocked = false;
@@ -81,6 +87,7 @@ class AITeam extends Team {
             if (player === this.ballChaser) return;
             if (player === this.aiControlledPlayer) return;
             if (player.role === "GK" && this.goalkeeperLocked) return;
+            if (this.hasPlayerMovedThisFrame(player)) return;
 
             let target = player.homePosition.clone();
 
@@ -103,7 +110,112 @@ class AITeam extends Team {
             target.z = Math.max(player.minZ, Math.min(player.maxZ, target.z));
 
             this.movePlayerTowards(player, target);
+            this.markPlayerMovedThisFrame(player);
         });
+    }
+
+    moveAIPlayerTowards(player, target, options = {}) {
+        if (!player || !target) return;
+        if (player.isTackling) return;
+        if (player._tackleStunUntil && Date.now() < player._tackleStunUntil) return;
+
+        initSteeringPlayer(player);
+
+        const toTarget = target.subtract(player.position);
+        toTarget.y = 0;
+        const dist = toTarget.length();
+
+        const stopDistance = options.stopDistance ?? 0.15;
+        if (dist < stopDistance) {
+            resetSteeringVelocity(player);
+
+            if (player.playAnimation) {
+                player.playAnimation("idle");
+            }
+            return;
+        }
+
+        const maxSpeed = options.maxSpeed ?? 0.07;
+        const maxForce = options.maxForce ?? 0.02;
+
+        player.maxSteeringSpeed = maxSpeed;
+        player.maxSteeringForce = maxForce;
+
+        const steering = seekSteering(player, target, maxSpeed);
+        const velocity = applySteering(player, steering);
+
+        if (velocity.lengthSquared() < 0.00001) {
+            if (player.playAnimation) {
+                player.playAnimation("idle");
+            }
+            return;
+        }
+
+        const moveDir = velocity.clone();
+        moveDir.y = 0;
+
+        if (moveDir.lengthSquared() < 0.00001) return;
+
+        moveDir.normalize();
+
+        const facingDirection = options.facingDirection || moveDir;
+
+        if (facingDirection && facingDirection.lengthSquared() > 0.0001) {
+            this.setFacing(player, facingDirection);
+        }
+
+        const moveSpeed = velocity.length();
+        player.move(moveDir.x, moveDir.z, moveSpeed);
+        this.markPlayerMovedThisFrame(player);
+    }
+
+    moveAICarrierTowards(player, target, options = {}) {
+        if (!player || !target) return;
+
+        this.moveAIPlayerTowards(player, target, {
+            maxSpeed: options.maxSpeed ?? 0.07,
+            maxForce: options.maxForce ?? 0.028,
+            stopDistance: options.stopDistance ?? 0.05,
+            facingDirection: options.facingDirection ?? null
+        });
+    }
+
+    moveAIGoalkeeperWithBall(gk, ball, target) {
+        if (!gk || !ball || !target) return;
+
+        const holdDir = new BABYLON.Vector3(-1, 0, 0);
+
+        this.moveAIPlayerTowards(gk, target, {
+            maxSpeed: 0.042,
+            maxForce: 0.02,
+            stopDistance: 0.05,
+            facingDirection: holdDir
+        });
+
+        this.setFacing(gk, holdDir);
+
+        ball.lastKicker = gk;
+        ball.lastTouchTeam = this;
+
+        if (!ball.velocity) {
+            ball.velocity = new BABYLON.Vector3(0, 0, 0);
+        }
+
+        ball.velocity.set(0, 0, 0);
+
+        ball.position.x = gk.position.x + holdDir.x * 0.95;
+        ball.position.z = gk.position.z + holdDir.z * 0.95;
+        ball.position.y = 0.75;
+    }
+
+    markPlayerMovedThisFrame(player) {
+        if (!player) return;
+        player._aiLastMoveFrame = this._aiFrameMoveId;
+    }
+
+    hasPlayerMovedThisFrame(player) {
+        if (!player) return false;
+        return player._aiLastMoveFrame === this._aiFrameMoveId;
     }
 
     

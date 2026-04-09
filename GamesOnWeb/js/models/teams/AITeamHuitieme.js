@@ -165,6 +165,7 @@ class AITeamHuitieme extends AITeam {
                 target.z = Math.max(player.minZ, Math.min(player.maxZ, target.z));
 
                 this.movePlayerTowards(player, target);
+                this.markPlayerMovedThisFrame(player);
             });
 
             return;
@@ -227,6 +228,7 @@ class AITeamHuitieme extends AITeam {
 
         if (this.ballChaser) {
             this.movePlayerTowards(this.ballChaser, targetPos);
+            this.markPlayerMovedThisFrame(this.ballChaser);
         }
     }
 
@@ -297,8 +299,13 @@ class AITeamHuitieme extends AITeam {
         this.aiControlledPlayer = ballCarrier;
         this.ballChaser = ballCarrier;
 
-        this.setFacing(ballCarrier, dir);
-        ballCarrier.move(dir.x, dir.z, 0.07);
+        const carrierTarget = ballCarrier.position.add(dir.scale(6));
+
+        this.moveAICarrierTowards(ballCarrier, carrierTarget, {
+            maxSpeed: 0.07,
+            maxForce: 0.028,
+            facingDirection: dir
+        });
 
         this.players.forEach(player => {
             if (!player || player === ballCarrier) return;
@@ -308,6 +315,7 @@ class AITeamHuitieme extends AITeam {
             support.z += (ballCarrier.position.z - player.homePosition.z) * 0.5;
 
             this.movePlayerTowards(player, support);
+            this.markPlayerMovedThisFrame(player);
         });
     }
 
@@ -377,24 +385,34 @@ class AITeamHuitieme extends AITeam {
         if (gk.isTackling) return;
         if (gk._tackleStunUntil && Date.now() < gk._tackleStunUntil) return;
 
-        const dir = target.subtract(gk.position);
-        const dist = dir.length();
+        const toTarget = target.subtract(gk.position);
+        toTarget.y = 0;
+        const dist = toTarget.length();
 
         if (dist < 0.05) {
+            resetSteeringVelocity(gk);
+
             if (gk.playAnimation) gk.playAnimation("idle");
             return;
         }
 
-        dir.normalize();
-
-        const speed = speedOverride ?? (dist > 1.5 ? 0.08 : 0.06);
-        gk.move(dir.x, dir.z, speed);
+        let facingDir = null;
 
         if (keepFacingForward) {
-            this.setFacing(gk, new BABYLON.Vector3(-1, 0, 0));
+            facingDir = new BABYLON.Vector3(-1, 0, 0);
         } else {
-            this.setFacing(gk, dir);
+            facingDir = toTarget.clone();
+            facingDir.y = 0;
         }
+
+        const speed = speedOverride ?? (dist > 1.5 ? 0.08 : 0.06);
+
+        this.moveAIPlayerTowards(gk, target, {
+            maxSpeed: speed,
+            maxForce: 0.024,
+            stopDistance: 0.05,
+            facingDirection: facingDir
+        });
     }
 
     tryGoalkeeperIntercept(gk, ball) {
@@ -476,26 +494,7 @@ class AITeamHuitieme extends AITeam {
     }
 
     moveGoalkeeperWithBall(gk, ball, target) {
-        if (!gk || !ball || !target) return;
-
-        const dir = target.subtract(gk.position);
-        dir.y = 0;
-
-        if (dir.lengthSquared() > 0.0001) {
-            dir.normalize();
-            gk.move(dir.x, dir.z, 0.042);
-        }
-
-        const holdDir = new BABYLON.Vector3(-1, 0, 0);
-        this.setFacing(gk, holdDir);
-
-        ball.lastKicker = gk;
-        ball.lastTouchTeam = this;
-        ball.velocity.set(0, 0, 0);
-
-        ball.position.x = gk.position.x + holdDir.x * 0.95;
-        ball.position.z = gk.position.z + holdDir.z * 0.95;
-        ball.position.y = 0.75;
+        this.moveAIGoalkeeperWithBall(gk, ball, target);
     }
 
     computeGoalkeeperRoamTarget(gk, nearestOpponent) {
@@ -642,6 +641,7 @@ class AITeamHuitieme extends AITeam {
             target.z = Math.max(player.minZ, Math.min(player.maxZ, target.z));
 
             this.movePlayerTowards(player, target);
+            this.markPlayerMovedThisFrame(player);
         });
     }
 

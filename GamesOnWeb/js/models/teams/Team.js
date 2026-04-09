@@ -334,7 +334,10 @@ class Team {
         toTarget.y = 0;
         const dist = toTarget.length();
 
-        if (dist < 0.15) {
+        const stopDistance = 0.35;
+        const slowRadius = 3.0;
+
+        if (dist < stopDistance) {
             resetSteeringVelocity(player);
 
             if (player.playAnimation) {
@@ -343,13 +346,18 @@ class Team {
             return;
         }
 
-        if (speedOverride != null) {
-            player.maxSteeringSpeed = speedOverride;
-        } else {
-            player.maxSteeringSpeed = 0.07;
+        const baseSpeed = speedOverride ?? 0.07;
+
+        let desiredSpeed = baseSpeed;
+        if (dist < slowRadius) {
+            desiredSpeed = baseSpeed * (dist / slowRadius);
+            desiredSpeed = Math.max(desiredSpeed, 0.02);
         }
 
-        const steering = seekSteering(player, target, player.maxSteeringSpeed);
+        player.maxSteeringSpeed = desiredSpeed;
+        player.maxSteeringForce = 0.012;
+
+        const steering = seekSteering(player, target, desiredSpeed);
         const velocity = applySteering(player, steering);
 
         if (velocity.lengthSquared() < 0.00001) {
@@ -361,6 +369,9 @@ class Team {
 
         const moveDir = velocity.clone();
         moveDir.y = 0;
+
+        if (moveDir.lengthSquared() < 0.00001) return;
+
         moveDir.normalize();
 
         player.facingDirection = moveDir.clone();
