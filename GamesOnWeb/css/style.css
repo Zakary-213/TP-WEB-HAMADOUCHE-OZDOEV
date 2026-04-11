@@ -354,7 +354,7 @@ body {
 }
 
 /* Police "style foot" pour l'overlay mi-temps */
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@500;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;700;900&family=Barlow+Condensed:wght@600;700;900&family=Montserrat:wght@500;700;800;900&display=swap');
 
 #renderCanvas {
     width: 100%;
@@ -1168,103 +1168,735 @@ body {
     transform: translateY(0);
 }
 
-.settings-panel--skin {
-    width: min(640px, 94vw);
+/* ── Versus skin overlay (design adapte) ── */
+#versus-skin-overlay {
+    --c-bg: #080c14;
+    --c-surface: #0d1422;
+    --c-panel: #111927;
+    --c-border: rgba(255,255,255,0.07);
+    --c-accent: #00e5ff;
+    --c-accent2: #7fff00;
+    --c-gold: #f5c842;
+    --c-text: #e8edf8;
+    --c-muted: rgba(232,237,248,0.45);
+    --c-glow: rgba(0,229,255,0.18);
+    --radius: 16px;
+    --transition: 0.38s cubic-bezier(0.22,1,0.36,1);
+    align-items: stretch;
+    justify-content: stretch;
+    background: rgba(8,12,20,0.8);
+    backdrop-filter: blur(12px) saturate(1.1);
+    -webkit-backdrop-filter: blur(12px) saturate(1.1);
+    font-family: "Barlow", "Montserrat", "Segoe UI", sans-serif;
+    color: var(--c-text);
 }
 
-.versus-skin-carousel {
-    min-height: 400px;
+#versus-skin-overlay .shell {
     display: grid;
-    grid-template-columns: auto 1fr auto;
-    align-items: center;
-    gap: 16px;
-    padding: 18px 22px 24px;
-}
-
-.versus-skin-nav {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    border: 1px solid rgba(255,255,255,0.2);
-    background: rgba(255,255,255,0.08);
-    color: #eaf0ff;
-    font-size: 16px;
-    font-weight: 800;
-    cursor: pointer;
-    transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
-}
-
-.versus-skin-nav:hover,
-.versus-skin-nav:focus-visible {
-    transform: translateY(-1px);
-    background: rgba(77,143,255,0.22);
-    border-color: rgba(77,143,255,0.6);
-}
-
-.versus-skin-card {
-    border-radius: 18px;
-    border: 1px solid rgba(255,255,255,0.14);
-    background: rgba(255,255,255,0.03);
-    padding: 16px 16px 20px;
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04), 0 8px 32px rgba(0,0,0,0.3);
-}
-
-.versus-skin-preview {
-    height: 300px;
-    border-radius: 14px;
-    margin-bottom: 14px;
-    border: 1px solid rgba(255,255,255,0.10);
-    overflow: hidden;
-    /* Fond : sol léger + dégradé lumineux centré derrière le personnage */
-    background:
-        radial-gradient(ellipse 70% 35% at 50% 100%, rgba(77,143,255,0.18) 0%, transparent 70%),
-        radial-gradient(ellipse 90% 60% at 50% 60%, rgba(140,180,255,0.10) 0%, transparent 70%),
-        linear-gradient(180deg,
-            rgba(8, 14, 30, 0.98) 0%,
-            rgba(14, 22, 44, 0.96) 55%,
-            rgba(18, 28, 55, 0.92) 100%);
-    box-shadow: inset 0 -2px 18px rgba(77,143,255,0.10);
+    grid-template-columns: 1fr 540px 1fr;
+    grid-template-rows: auto 1fr auto;
+    min-height: 100%;
+    width: 100%;
     position: relative;
+    overflow: hidden;
+    z-index: 1;
 }
 
-.versus-skin-canvas {
+#versus-skin-overlay .bg-layer {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+}
+
+#versus-skin-overlay .bg-layer::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0,229,255,0.06) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 100% 100%, rgba(127,255,0,0.04) 0%, transparent 55%),
+        radial-gradient(ellipse 50% 50% at 0% 50%, rgba(0,229,255,0.03) 0%, transparent 50%);
+}
+
+#versus-skin-overlay .bg-lines {
+    position: absolute;
+    inset: 0;
+    opacity: 0.04;
+    background: repeating-linear-gradient(0deg, transparent, transparent 59px, rgba(255,255,255,0.8) 60px);
+}
+
+#versus-skin-overlay .bg-scan {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(transparent 50%, rgba(0,0,0,0.025) 50%);
+    background-size: 100% 4px;
+    animation: skinScan 8s linear infinite;
+    opacity: 0.3;
+}
+
+@keyframes skinScan {
+    from { background-position: 0 0; }
+    to { background-position: 0 100vh; }
+}
+
+#versus-skin-overlay .header {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 22px 40px 18px;
+    border-bottom: 1px solid var(--c-border);
+    position: relative;
+    z-index: 10;
+    background: rgba(8,12,20,0.8);
+    backdrop-filter: blur(12px);
+}
+
+#versus-skin-overlay .header-logo {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 28px;
+    letter-spacing: 3px;
+    background: linear-gradient(90deg, #fff 0%, var(--c-accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+#versus-skin-overlay .header-mode {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--c-muted);
+}
+
+#versus-skin-overlay .header-mode::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--c-accent2);
+    box-shadow: 0 0 8px var(--c-accent2);
+    animation: skinBlink 1.4s ease-in-out infinite;
+}
+
+@keyframes skinBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+#versus-skin-overlay .header-step {
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: var(--c-muted);
+}
+
+#versus-skin-overlay .header-close {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.06);
+    color: #cdd6f0;
+    font-size: 14px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+#versus-skin-overlay .header-close:hover {
+    background: rgba(255,80,80,0.25);
+    border-color: rgba(255,80,80,0.4);
+    color: #fff;
+}
+
+#versus-skin-overlay .panel-left {
+    grid-column: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 40px 32px 40px 40px;
+    position: relative;
+    z-index: 5;
+}
+
+#versus-skin-overlay .skin-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#versus-skin-overlay .skin-option {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    border: 1px solid var(--c-border);
+    background: transparent;
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+    color: var(--c-text);
+}
+
+#versus-skin-overlay .skin-option.is-disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+#versus-skin-overlay .skin-option.is-disabled::before {
+    opacity: 0;
+}
+
+#versus-skin-overlay .skin-option::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(0,229,255,0.08), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+#versus-skin-overlay .skin-option:hover::before,
+#versus-skin-overlay .skin-option.active::before {
+    opacity: 1;
+}
+
+#versus-skin-overlay .skin-option.active {
+    border-color: rgba(0,229,255,0.5);
+    background: rgba(0,229,255,0.06);
+    box-shadow: 0 0 0 1px rgba(0,229,255,0.2) inset, 0 8px 30px rgba(0,229,255,0.08);
+}
+
+#versus-skin-overlay .skin-option-badge {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 15px;
+    letter-spacing: 1px;
+    flex-shrink: 0;
+}
+
+#versus-skin-overlay .skin-option-info {
+    flex: 1;
+    text-align: left;
+}
+
+#versus-skin-overlay .skin-option-name {
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.5px;
+}
+
+#versus-skin-overlay .skin-option-lock {
+    margin-top: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.65);
+}
+
+#versus-skin-overlay .skin-option-tier {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--c-muted);
+    margin-top: 2px;
+}
+
+#versus-skin-overlay .skin-option-check {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    flex-shrink: 0;
+}
+
+#versus-skin-overlay .skin-option.is-disabled .skin-option-check {
+    opacity: 0.4;
+}
+
+#versus-skin-overlay .skin-option.active .skin-option-check {
+    border-color: var(--c-accent);
+    background: var(--c-accent);
+}
+
+#versus-skin-overlay .skin-option-check::after {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #fff;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+#versus-skin-overlay .skin-option.active .skin-option-check::after {
+    opacity: 1;
+}
+
+#versus-skin-overlay .section-label {
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 700;
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--c-muted);
+    margin-bottom: 16px;
+}
+
+#versus-skin-overlay .panel-center {
+    grid-column: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 20px;
+    position: relative;
+    z-index: 5;
+}
+
+#versus-skin-overlay .player-card {
+    width: 100%;
+    max-width: 480px;
+    border-radius: 24px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: var(--c-panel);
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 40px 100px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04) inset;
+    transition: var(--transition);
+    animation: skinCardIn 0.5s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+#versus-skin-overlay .player-stage {
+    position: relative;
+    height: 340px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    overflow: hidden;
+}
+
+#versus-skin-overlay .player-stage-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    transition: background var(--transition);
+}
+
+#versus-skin-overlay .player-stage-glow {
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 280px;
+    height: 100px;
+    border-radius: 50%;
+    filter: blur(40px);
+    transition: background var(--transition);
+    opacity: 0.5;
+    z-index: 0;
+}
+
+#versus-skin-overlay .player-stage-scanline {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,255,255,0.012) 3px, rgba(255,255,255,0.012) 4px);
+    pointer-events: none;
+    z-index: 2;
+}
+
+#versus-skin-overlay .versus-skin-canvas {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     display: block;
+    z-index: 1;
 }
 
-.versus-skin-name {
-    margin: 0 0 4px;
-    font-size: 20px;
-    color: #f3f7ff;
-    font-weight: 800;
-    letter-spacing: 0.25px;
+#versus-skin-overlay .player-number {
+    position: absolute;
+    top: 20px;
+    right: 24px;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 88px;
+    line-height: 1;
+    letter-spacing: -2px;
+    opacity: 0.06;
+    color: #fff;
+    user-select: none;
+    transition: var(--transition);
+    z-index: 2;
 }
 
-.versus-skin-desc {
-    margin: 0;
-    color: #c0cae4;
-    font-size: 13px;
-    font-weight: 500;
-}
-
-.versus-skin-indicators {
-    margin-top: 14px;
+#versus-skin-overlay .player-team-badge {
+    position: absolute;
+    top: 20px;
+    left: 24px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.06);
     display: flex;
-    gap: 6px;
+    align-items: center;
+    justify-content: center;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 13px;
+    letter-spacing: 1px;
+    color: rgba(255,255,255,0.6);
+    z-index: 2;
+}
+
+#versus-skin-overlay .player-rating {
+    position: absolute;
+    bottom: 20px;
+    right: 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(8px);
+    z-index: 2;
+}
+
+#versus-skin-overlay .player-rating-val {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 32px;
+    line-height: 1;
+    transition: color var(--transition);
+}
+
+#versus-skin-overlay .player-rating-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--c-muted);
+    margin-top: 2px;
+}
+
+#versus-skin-overlay .player-info {
+    padding: 20px 24px 24px;
+    border-top: 1px solid var(--c-border);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: 12px;
+}
+
+#versus-skin-overlay .player-name {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 38px;
+    letter-spacing: 1px;
+    line-height: 0.95;
+    transition: var(--transition);
+}
+
+#versus-skin-overlay .player-pos {
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--c-muted);
+    margin-top: 6px;
+}
+
+#versus-skin-overlay .player-stats {
+    display: flex;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+#versus-skin-overlay .stat-pill {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    min-width: 52px;
+}
+
+#versus-skin-overlay .stat-val {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 22px;
+    transition: color var(--transition);
+}
+
+#versus-skin-overlay .stat-key {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--c-muted);
+}
+
+#versus-skin-overlay .unlock-pill {
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    transition: var(--transition);
+}
+
+#versus-skin-overlay .skin-nav-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-top: 16px;
+}
+
+#versus-skin-overlay .skin-nav-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.04);
+    color: var(--c-text);
+    font-size: 16px;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
     justify-content: center;
 }
 
-.versus-skin-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.28);
+#versus-skin-overlay .skin-nav-btn:hover,
+#versus-skin-overlay .skin-nav-btn:focus-visible {
+    background: rgba(255,255,255,0.09);
+    border-color: rgba(255,255,255,0.2);
 }
 
-.versus-skin-dot.is-active {
-    background: #58a0ff;
-    box-shadow: 0 0 10px rgba(88,160,255,0.7);
+#versus-skin-overlay .skin-dots {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+#versus-skin-overlay .skin-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.15);
+    border: none;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+#versus-skin-overlay .skin-dot.is-active {
+    width: 20px;
+    background: var(--c-accent);
+}
+
+#versus-skin-overlay .panel-right {
+    grid-column: 3;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 40px 40px 40px 32px;
+    position: relative;
+    z-index: 5;
+    gap: 24px;
+}
+
+#versus-skin-overlay .stat-bar-row { margin-bottom: 14px; }
+
+#versus-skin-overlay .stat-bar-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+#versus-skin-overlay .stat-bar-name {
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+}
+
+#versus-skin-overlay .stat-bar-num {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 16px;
+    transition: color var(--transition);
+}
+
+#versus-skin-overlay .stat-bar-track {
+    height: 4px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+#versus-skin-overlay .stat-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.6s cubic-bezier(0.22,1,0.36,1), background 0.4s;
+}
+
+#versus-skin-overlay .skin-desc {
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid var(--c-border);
+    background: rgba(255,255,255,0.02);
+}
+
+
+#versus-skin-overlay .skin-dot.is-disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+#versus-skin-overlay .skin-desc-title {
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--c-muted);
+    margin-bottom: 8px;
+}
+
+#versus-skin-overlay .skin-desc-text {
+    font-size: 13px;
+    line-height: 1.6;
+    color: rgba(232,237,248,0.7);
+}
+
+#versus-skin-overlay .actions {
+    display: flex;
+    gap: 10px;
+    flex-direction: column;
+}
+
+#versus-skin-overlay .btn-primary {
+    padding: 14px 24px;
+    border-radius: 12px;
+    border: none;
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: var(--transition);
+    width: 100%;
+    color: #000;
+}
+
+#versus-skin-overlay .btn-secondary {
+    padding: 13px 24px;
+    border-radius: 12px;
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: var(--transition);
+    width: 100%;
+    color: var(--c-text);
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.04);
+}
+
+#versus-skin-overlay .btn-secondary:hover {
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(255,255,255,0.2);
+}
+
+#versus-skin-overlay .footer {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    padding: 16px 40px;
+    border-top: 1px solid var(--c-border);
+    position: relative;
+    z-index: 10;
+    background: rgba(8,12,20,0.7);
+    backdrop-filter: blur(8px);
+}
+
+#versus-skin-overlay .footer-hint {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--c-muted);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+#versus-skin-overlay .kbd {
+    padding: 3px 8px;
+    border-radius: 5px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.06);
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+@keyframes skinCardIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 1100px) {
+    #versus-skin-overlay .shell { grid-template-columns: 1fr 440px 1fr; }
+    #versus-skin-overlay .panel-left,
+    #versus-skin-overlay .panel-right {
+        padding-left: 24px;
+        padding-right: 24px;
+    }
+}
+
+@media (max-width: 860px) {
+    #versus-skin-overlay .shell {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto auto auto;
+    }
+    #versus-skin-overlay .panel-left { grid-column: 1; order: 3; padding: 20px 20px 10px; }
+    #versus-skin-overlay .panel-center { grid-column: 1; order: 2; padding: 20px; }
+    #versus-skin-overlay .panel-right { grid-column: 1; order: 4; padding: 10px 20px 20px; }
+    #versus-skin-overlay .header,
+    #versus-skin-overlay .footer { grid-column: 1; }
+    #versus-skin-overlay .player-card { max-width: 360px; }
+    #versus-skin-overlay .player-stage { height: 260px; }
+    #versus-skin-overlay .player-name { font-size: 28px; }
 }
 
 #gamepad-notif {

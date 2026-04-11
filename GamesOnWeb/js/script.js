@@ -269,6 +269,11 @@ const createScene = function (gameMode) {
     drawGaugeColors(kickGauge);
 
     const myTeam = new PlayerTeam(scene, "My Team", new BABYLON.Color3(1, 0, 0));
+    const storedP1Mesh = window.localStorage.getItem("gow-player1-skin-mesh-index");
+    const parsedP1Mesh = Number.parseInt(storedP1Mesh, 10);
+    if (Number.isInteger(parsedP1Mesh) && parsedP1Mesh >= 0) {
+        myTeam.meshIndex = parsedP1Mesh;
+    }
     myTeam.createTeamFormation(1); // 1 pour le côté gauche
 
     // Pour l'instant, le "joueur actif" est le premier attaquant (index 3)
