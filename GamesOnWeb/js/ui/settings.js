@@ -22,6 +22,7 @@
     let keybinds = {};
     let gamepadBinds = {};
     let listeningAction = null;
+    let listeningActionP2 = null;
     let listeningGamepadAction = null;
     let lastNavAt = 0;
     let lastSubmitPressed = false;
@@ -52,6 +53,21 @@
         if (!value) return "-";
         if (value === "Space") return "Space";
         if (value === "Shift") return "Shift";
+        // Touches spéciales
+        const SPECIAL = {
+            "arrowup": "↑",
+            "arrowdown": "↓",
+            "arrowleft": "←",
+            "arrowright": "→",
+            "enter": "Entrée",
+            "rshift": "Shift►",
+            "shiftright": "Shift►",
+            "numpaddecimal": "Num .",
+            "numpad4": "Num 4",
+            "numpad6": "Num 6"
+        };
+        const lc = value.toLowerCase();
+        if (SPECIAL[lc]) return SPECIAL[lc];
         if (value.length === 1) return value.toUpperCase();
         return value;
     }
@@ -60,6 +76,16 @@
         keybindBtns.forEach(function (btn) {
             const action = btn.dataset.action;
             btn.textContent = formatKeyLabel(keybinds[action]);
+        });
+    }
+
+    const keybindP2Btns = document.querySelectorAll(".settings-keybind-btn[data-action-p2]");
+    let player2Binds = {};
+
+    function syncKeybindP2Buttons() {
+        keybindP2Btns.forEach(function (btn) {
+            const action = btn.dataset.actionP2;
+            btn.textContent = formatKeyLabel(player2Binds[action]);
         });
     }
 
@@ -97,6 +123,16 @@
         keybindBtns.forEach(function (btn) {
             btn.classList.toggle("is-listening", btn.dataset.action === nextAction);
             if (btn.dataset.action === nextAction) {
+                btn.textContent = "Appuie...";
+            }
+        });
+    }
+
+    function setListeningP2Button(nextAction) {
+        keybindP2Btns.forEach(function (btn) {
+            const act = btn.dataset.actionP2;
+            btn.classList.toggle("is-listening", act === nextAction);
+            if (act === nextAction) {
                 btn.textContent = "Appuie...";
             }
         });
@@ -164,6 +200,65 @@
         listeningAction = null;
         setListeningButton(null);
         syncKeybindButtons();
+    }
+
+    function captureKeyP2(event) {
+        if (!listeningActionP2) return;
+        event.preventDefault();
+
+        if (event.key === "Escape") {
+            listeningActionP2 = null;
+            setListeningP2Button(null);
+            syncKeybindP2Buttons();
+            return;
+        }
+
+        // Préférer event.code pour les touches spéciales (flèches, Enter, Numpad...)
+        let value = null;
+        if (event.code && event.code !== "" && event.code !== "Unidentified") {
+            // Cas particuliers simples basés sur event.key
+            if (event.key === "Shift") {
+                value = event.code; // "ShiftLeft" ou "ShiftRight"
+            } else if (event.code === "Space") {
+                value = "Space";
+            } else {
+                value = event.code; // "ArrowUp", "Enter", "KeyZ", "Numpad4"...
+            }
+        } else if (event.key && event.key.length === 1) {
+            value = event.key.toLowerCase();
+        } else if (event.key) {
+            value = event.key;
+        }
+
+        if (!value) return;
+
+        var inputBindings = window.inputBindings;
+        if (!inputBindings || typeof inputBindings.setPlayer2Binding !== "function") return;
+
+        var result = inputBindings.setPlayer2Binding(listeningActionP2, value);
+        if (!result.ok) {
+            var currentAction = listeningActionP2;
+            setListeningP2Button(null);
+            listeningActionP2 = null;
+            if (currentAction) {
+                var btn = document.querySelector(
+                    '.settings-keybind-btn[data-action-p2="' + currentAction + '"]'
+                );
+                if (btn) {
+                    btn.textContent = "Déjà pris";
+                    window.setTimeout(function () { syncKeybindP2Buttons(); }, 800);
+                }
+            }
+            return;
+        }
+
+        if (typeof inputBindings.getPlayer2Bindings === "function") {
+            player2Binds = inputBindings.getPlayer2Bindings();
+        }
+
+        listeningActionP2 = null;
+        setListeningP2Button(null);
+        syncKeybindP2Buttons();
     }
 
     function captureGamepadBinding() {
@@ -261,6 +356,7 @@
         if (typeof window.isIntroPlaying === "function" && window.isIntroPlaying()) return;
         isOpen = true;
         syncKeybindButtons();
+        syncKeybindP2Buttons();
         syncGamepadButtons();
         syncCamButtons();
         overlay.classList.add("settings-overlay--open");
@@ -417,6 +513,19 @@
         btn.addEventListener("click", function () {
             listeningAction = btn.dataset.action;
             setListeningButton(listeningAction);
+            listeningActionP2 = null;
+            setListeningP2Button(null);
+            listeningGamepadAction = null;
+            setListeningGamepadButton(null);
+        });
+    });
+
+    keybindP2Btns.forEach(function (btn) {
+        btn.addEventListener("click", function () {
+            listeningActionP2 = btn.dataset.actionP2;
+            setListeningP2Button(listeningActionP2);
+            listeningAction = null;
+            setListeningButton(null);
             listeningGamepadAction = null;
             setListeningGamepadButton(null);
         });
@@ -432,6 +541,7 @@
     });
 
     window.addEventListener("keydown", captureKey, true);
+    window.addEventListener("keydown", captureKeyP2, true);
     pollSettingsGamepad();
 
     // ── Sliders volume ─────────────────────────────────────────────
@@ -477,10 +587,14 @@
     if (window.inputBindings && typeof window.inputBindings.getBindings === "function") {
         keybinds = window.inputBindings.getBindings();
     }
+    if (window.inputBindings && typeof window.inputBindings.getPlayer2Bindings === "function") {
+        player2Binds = window.inputBindings.getPlayer2Bindings();
+    }
     if (window.inputBindings && typeof window.inputBindings.getGamepadBindings === "function") {
         gamepadBinds = window.inputBindings.getGamepadBindings();
     }
     syncKeybindButtons();
+    syncKeybindP2Buttons();
     syncGamepadButtons();
 
     // ── API publique ───────────────────────────────────────────────

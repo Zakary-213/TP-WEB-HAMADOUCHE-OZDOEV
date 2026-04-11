@@ -119,12 +119,15 @@ function setupGamepadNotifications() {
 setupGamepadNotifications();
 
 // Crée un indicateur visuel (petite flèche) au-dessus d'un joueur sélectionné
-function createSelectionIndicator(scene, playerNode) {
-        const root = new BABYLON.TransformNode("selectionIndicatorRoot", scene);
+function createSelectionIndicator(scene, playerNode, options = {}) {
+    const suffix = options.suffix || "";
+    const color = options.color || new BABYLON.Color3(1, 0.9, 0.2);
+
+    const root = new BABYLON.TransformNode("selectionIndicatorRoot" + suffix, scene);
         // Hauteur suffisante pour être bien au-dessus de la tête, même avec les skins les plus grands
         root.position = new BABYLON.Vector3(0, 10, 0);
 
-        const arrow = BABYLON.MeshBuilder.CreateCylinder("selectionArrow", {
+    const arrow = BABYLON.MeshBuilder.CreateCylinder("selectionArrow" + suffix, {
             height: 1.6,
             diameterTop: 0,
             diameterBottom: 0.9,
@@ -132,8 +135,8 @@ function createSelectionIndicator(scene, playerNode) {
         }, scene);
         arrow.parent = root;
 
-        const mat = new BABYLON.StandardMaterial("selectionArrowMat", scene);
-        mat.emissiveColor = new BABYLON.Color3(1, 0.9, 0.2); // jaune lumineux
+    const mat = new BABYLON.StandardMaterial("selectionArrowMat" + suffix, scene);
+    mat.emissiveColor = color;
         mat.specularColor = new BABYLON.Color3(0, 0, 0);
         arrow.material = mat;
 
@@ -172,7 +175,9 @@ function placeTeamsForIntro(myTeam, opponentTeam) {
     placeTeamLine(opponentTeam, -1);
 }
 
-const createScene = function () {
+const createScene = function (gameMode) {
+
+    const mode = gameMode === "versus" ? "versus" : "tournament";
 
     // VARIABLES 
     let chargeStart = 0;
@@ -204,6 +209,7 @@ const createScene = function () {
 
     // --- TOURNAMENT STATE ---
     let tournamentStage = "huitieme";
+    const isVersusMode = mode === "versus";
 
     // --- Structure ---
 
@@ -270,23 +276,47 @@ const createScene = function () {
     const basePlayer = activePlayer;
     myTeam.activePlayer = activePlayer;
 
-        // Indicateur de sélection (flèche) au-dessus du joueur actif
-        const selectionIndicator = createSelectionIndicator(scene, activePlayer);
+    // Indicateur de sélection (flèche) au-dessus du joueur actif (J1)
+    const selectionIndicator = createSelectionIndicator(scene, activePlayer, {
+        suffix: "_p1",
+        color: new BABYLON.Color3(1, 0.9, 0.2)
+    });
 
-    // Opponent team based on tournament stage
+    // Indicateur de sélection du joueur actif J2 (mode 1v1) : rouge
+    let player2SelectionIndicator = null;
+
+    // Opponent team based on game mode / tournament stage
     let opponentTeam;
-    switch(tournamentStage) {
-        case "huitieme": opponentTeam = new AITeamHuitieme(scene, "Adversaire", new BABYLON.Color3(0, 0, 1)); break;
-        case "quart": opponentTeam = new AITeamQuart(scene, "Adversaire", new BABYLON.Color3(0, 0, 1)); break;
-        case "demi": opponentTeam = new AITeamDemi(scene, "Adversaire", new BABYLON.Color3(0, 0, 1)); break;
-        case "finale": opponentTeam = new AITeamFinale(scene, "Adversaire", new BABYLON.Color3(0, 0, 1)); break;
-        default: opponentTeam = new AITeamHuitieme(scene, "Adversaire", new BABYLON.Color3(0, 0, 1)); break;
+    if (isVersusMode) {
+        opponentTeam = new PlayerTeam(scene, "Player 2", new BABYLON.Color3(0, 0, 1));
+        const storedP2Mesh = window.localStorage.getItem("gow-player2-skin-mesh-index");
+        const parsedP2Mesh = Number.parseInt(storedP2Mesh, 10);
+        if (Number.isInteger(parsedP2Mesh) && parsedP2Mesh >= 0) {
+            opponentTeam.meshIndex = parsedP2Mesh;
+        }
+    } else {
+        switch(tournamentStage) {
+            case "huitieme": opponentTeam = new AITeamHuitieme(scene, "Adversaire", new BABYLON.Color3(0, 0, 1)); break;
+            case "quart": opponentTeam = new AITeamQuart(scene, "Adversaire", new BABYLON.Color3(0, 0, 1)); break;
+            case "demi": opponentTeam = new AITeamDemi(scene, "Adversaire", new BABYLON.Color3(0, 0, 1)); break;
+            case "finale": opponentTeam = new AITeamFinale(scene, "Adversaire", new BABYLON.Color3(0, 0, 1)); break;
+            default: opponentTeam = new AITeamHuitieme(scene, "Adversaire", new BABYLON.Color3(0, 0, 1)); break;
+        }
     }
     opponentTeam.createTeamFormation(-1); // -1 pour le côté droit
     myTeam.opponents = opponentTeam.players;
     opponentTeam.opponents = myTeam.players;
+    if (isVersusMode) {
+        opponentTeam.activePlayer = opponentTeam.players[3] || opponentTeam.players[0] || null;
+
+        player2SelectionIndicator = createSelectionIndicator(scene, opponentTeam.activePlayer || null, {
+            suffix: "_p2",
+            color: new BABYLON.Color3(1, 0.2, 0.2)
+        });
+    }
 
     const tackleController = new TackleController();
+    let player2Controller = null;
 
     // Mi-temps / fin de match (piloté par js/ui/matchFlow.js)
     // Mi-temps réglée à 30 secondes.
@@ -361,6 +391,38 @@ const createScene = function () {
         }
     });
     window.goalReplayController = goalReplay;
+
+    if (isVersusMode && window.Player2Controller) {
+        player2Controller = new window.Player2Controller({
+            scene,
+            team: opponentTeam,
+            opponentTeam: myTeam,
+            ball,
+            tackleController,
+            // Bloque J2 uniquement pendant intro / pause / replay, pas pendant le jeu normal
+            isBlocked: () => preMatchIntroPlaying || gameplayPaused || goalReplay.isReplayActive(),
+            computeMoveAxes: (inputP2) => {
+                if (cameraRuntime && typeof cameraRuntime.computeMoveAxes === "function") {
+                    return cameraRuntime.computeMoveAxes(inputP2);
+                }
+                let mx = 0;
+                let mz = 0;
+                if (inputP2.forward) mx += 1;
+                if (inputP2.backward) mx -= 1;
+                if (inputP2.left) mz += 1;
+                if (inputP2.right) mz -= 1;
+                return { moveX: mx, moveZ: mz };
+            },
+            isMovementLocked: (player) => isRestartTaker(player),
+            onShoot: ({ player, direction, force }) => {
+                if (isRestartWaitingKick() && isRestartTaker(player)) {
+                    takeRestartKick(ball, direction, force);
+                } else {
+                    kick(scene, ball, player, direction, force, opponentTeam);
+                }
+            }
+        });
+    }
 
     // Branche la gestion mi-temps / fin du match (affichage + pause/reprise)
     if (window.createMatchFlow) {
@@ -490,6 +552,7 @@ const createScene = function () {
             // Pendant l'intro replay et le replay lui-meme, on masque la jauge de tir.
             hideKickGauge(kickGauge);
             if (selectionIndicator) selectionIndicator.setEnabled(false);
+            if (player2SelectionIndicator) player2SelectionIndicator.setEnabled(false);
             return;
         }
 
@@ -501,6 +564,13 @@ const createScene = function () {
         // Si l'auto-switch a changé de joueur actif, on recolle la flèche dessus
         if (selectionIndicator && activePlayer && selectionIndicator.parent !== activePlayer) {
             selectionIndicator.parent = activePlayer;
+        }
+
+        if (player2SelectionIndicator) {
+            const p2Active = opponentTeam && opponentTeam.activePlayer ? opponentTeam.activePlayer : null;
+            if (p2Active && player2SelectionIndicator.parent !== p2Active) {
+                player2SelectionIndicator.parent = p2Active;
+            }
         }
 
         if (isRestartWaitingKick() && restartState.position) {
@@ -542,20 +612,37 @@ const createScene = function () {
             }
         }
 
+        // Indicateur J2 (mode 1v1) : visible hors FPV + jauge d'endurance rouge
+        if (player2SelectionIndicator) {
+            const p2Active = opponentTeam && opponentTeam.activePlayer ? opponentTeam.activePlayer : null;
+            const showIndicator = scene.activeCamera !== cameras.fpvCamera && !!p2Active;
+            player2SelectionIndicator.setEnabled(showIndicator);
+
+            if (p2Active) {
+                const staminaForIndicator = p2Active.stamina ?? 1;
+                const minScale = 0.25;
+                const maxScale = 1.0;
+                const s = minScale + (maxScale - minScale) * staminaForIndicator;
+                player2SelectionIndicator.scaling.y = s;
+            }
+        }
+
         myTeam.update(ball);
         // Met à jour l'IA uniquement si son comportement est implémenté pour ce stade
         if (opponentTeam && opponentTeam.aiImplemented) opponentTeam.update(ball);
 
-        opponentTeam.players.forEach(bot => {
-            if (!bot) return;
+        if (opponentTeam && opponentTeam.aiImplemented) {
+            opponentTeam.players.forEach(bot => {
+                if (!bot) return;
 
-            tackleController.tryAITackle(
-                bot,
-                ball,
-                myTeam,
-                opponentTeam
-            );
-        });
+                tackleController.tryAITackle(
+                    bot,
+                    ball,
+                    myTeam,
+                    opponentTeam
+                );
+            });
+        }
 
         tackleController.updateAITackle();
 
@@ -613,15 +700,54 @@ const createScene = function () {
             const stickX = Math.abs(rawX) > deadzone ? rawX : 0;
             const stickY = Math.abs(rawY) > deadzone ? rawY : 0;
 
-            // Stick Y -> avant/arriere (moveX), Stick X -> gauche/droite (moveZ)
-            moveX = -stickY;
-            moveZ = -stickX;
+            if (scene.activeCamera === cameras.broadcastCamera) {
+                // Mapping manette broadcast = flèches écran
+                // Stick X : gauche/droite écran | Stick Y : haut/bas écran
+                const alpha = cameras.broadcastCamera.alpha;
 
-            if (moveX === 0 && moveZ === 0 && gp.buttons) {
-                if (gp.buttons[12] && gp.buttons[12].pressed) moveX += 1;
-                if (gp.buttons[13] && gp.buttons[13].pressed) moveX -= 1;
-                if (gp.buttons[14] && gp.buttons[14].pressed) moveZ += 1;
-                if (gp.buttons[15] && gp.buttons[15].pressed) moveZ -= 1;
+                const screenRight = new BABYLON.Vector3(
+                    Math.cos(alpha + Math.PI / 2),
+                    0,
+                    Math.sin(alpha + Math.PI / 2)
+                );
+                const screenUp = new BABYLON.Vector3(
+                    -Math.cos(alpha),
+                    0,
+                    -Math.sin(alpha)
+                );
+
+                let h = stickX;   // droite écran
+                let v = -stickY;  // haut écran
+
+                // Fallback D-pad si stick neutre
+                if (h === 0 && v === 0 && gp.buttons) {
+                    if (gp.buttons[15] && gp.buttons[15].pressed) h += 1; // droite
+                    if (gp.buttons[14] && gp.buttons[14].pressed) h -= 1; // gauche
+                    if (gp.buttons[12] && gp.buttons[12].pressed) v += 1; // haut
+                    if (gp.buttons[13] && gp.buttons[13].pressed) v -= 1; // bas
+                }
+
+                const moveVector = screenRight.scale(h).add(screenUp.scale(v));
+                if (moveVector.lengthSquared() > 0) {
+                    moveVector.normalize();
+                    moveX = moveVector.x;
+                    moveZ = moveVector.z;
+                } else {
+                    moveX = 0;
+                    moveZ = 0;
+                }
+            } else {
+                // Mapping standard hors broadcast
+                // Stick Y -> avant/arriere (moveX), Stick X -> gauche/droite (moveZ)
+                moveX = -stickY;
+                moveZ = -stickX;
+
+                if (moveX === 0 && moveZ === 0 && gp.buttons) {
+                    if (gp.buttons[12] && gp.buttons[12].pressed) moveX += 1;
+                    if (gp.buttons[13] && gp.buttons[13].pressed) moveX -= 1;
+                    if (gp.buttons[14] && gp.buttons[14].pressed) moveZ += 1;
+                    if (gp.buttons[15] && gp.buttons[15].pressed) moveZ -= 1;
+                }
             }
 
             const sprintBtn = gp.buttons && gp.buttons[gamepadBinds.sprint];
@@ -777,9 +903,35 @@ const createScene = function () {
             playerFacing = lastDirection.clone();
         }
 
-        // COLLISION JOUEUR HUMAIN → BALLE
+        // COLLISION JOUEUR HUMAIN (J1) → BALLE
         checkBallCollision(controlledPlayer, ball, playerFacing, myTeam, playerMoveVelocity, input.sprint);
         tryStealBall(controlledPlayer, ball, myTeam);
+
+        // COLLISION JOUEUR HUMAIN (J2 en mode 1v1) → BALLE
+        if (player2Controller) {
+            const p2State = player2Controller.update({
+                dt,
+                baseSpeed,
+                sprintMultiplier: SPRINT_MULTIPLIER,
+                staminaDrainRate: STAMINA_DRAIN_RATE,
+                staminaRegenRate: STAMINA_REGEN_RATE,
+                computeMoveAxes: cameraRuntime && typeof cameraRuntime.computeMoveAxes === "function"
+                    ? (inputP2) => cameraRuntime.computeMoveAxes(inputP2)
+                    : null
+            });
+
+            if (p2State && p2State.controlledPlayer) {
+                checkBallCollision(
+                    p2State.controlledPlayer,
+                    ball,
+                    p2State.playerFacing,
+                    opponentTeam,
+                    p2State.playerMoveVelocity,
+                    p2State.isSprinting
+                );
+                tryStealBall(p2State.controlledPlayer, ball, opponentTeam);
+            }
+        }
         
         // Si la balle sort du terrain, on lance l'animation de chute
         if (
@@ -1002,7 +1154,9 @@ const createScene = function () {
         demi: "Demi-finale",
         finale: "Finale"
     };
-    const tournamentIntroLabel = TOURNAMENT_INTRO_LABEL_BY_STAGE[tournamentStage] || "Huitieme de finale";
+    const tournamentIntroLabel = mode === "versus"
+        ? "MODE 1VS1"
+        : (TOURNAMENT_INTRO_LABEL_BY_STAGE[tournamentStage] || "Huitieme de finale");
 
     // Lancement du match après l'intro caméra
     if (typeof window.startPreMatchIntro === "function") {
@@ -1063,17 +1217,23 @@ const createScene = function () {
 let gameStarted = false;
 let activeScene = null;
 
-function startGame() {
+function startGame(mode) {
     if (gameStarted) return;
     gameStarted = true;
-    activeScene = createScene();
+    activeScene = createScene(mode);
 
     engine.runRenderLoop(function () {
         if (activeScene) activeScene.render();
     });
 }
 
-window.startTournamentMatch = startGame;
+window.startTournamentMatch = function () {
+    startGame("tournament");
+};
+
+window.startVersusMatch = function () {
+    startGame("versus");
+};
 
 window.addEventListener("resize", function () {
     engine.resize();

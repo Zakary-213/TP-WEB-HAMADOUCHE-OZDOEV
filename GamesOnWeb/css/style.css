@@ -29,6 +29,14 @@ body {
     pointer-events: auto;
 }
 
+/* Quand le menu principal est affiché, on masque complètement les overlays de match */
+#main-menu[aria-hidden="false"] ~ #match-hud,
+#main-menu[aria-hidden="false"] ~ #halftime-overlay,
+#main-menu[aria-hidden="false"] ~ #match-end-overlay,
+#main-menu[aria-hidden="false"] ~ #pre-match-tournament-overlay {
+    display: none !important;
+}
+
 .main-menu-backdrop {
     position: absolute;
     inset: 0;
@@ -219,6 +227,75 @@ body {
     background:
         radial-gradient(circle at top, rgba(62, 198, 255, 0.4), transparent 60%),
         linear-gradient(180deg, rgba(12, 22, 42, 0.8), rgba(6, 12, 22, 0.95));
+}
+
+.menu-preview-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.menu-preview-tournament-anim {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background:
+        radial-gradient(circle at center, rgba(62, 198, 255, 0.2), transparent 62%),
+        linear-gradient(180deg, rgba(10, 22, 44, 0.9), rgba(7, 14, 28, 0.98));
+    overflow: hidden;
+}
+
+.menu-preview-tournament-anim .pre-match-tournament-line {
+    white-space: normal;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-shadow:
+        0 3px 10px rgba(0, 0, 0, 0.5),
+        0 0 14px rgba(1, 205, 254, 0.2);
+}
+
+.menu-preview-tournament-anim .pre-match-tournament-head,
+.menu-preview-tournament-anim .pre-match-tournament-tail span {
+    font-size: clamp(20px, 2.1vw, 34px);
+    letter-spacing: 2px;
+}
+
+.menu-preview-tournament-anim .pre-match-tournament-head {
+    opacity: 0;
+}
+
+.menu-preview-tournament-anim .pre-match-tournament-tail {
+    margin-left: 0;
+    margin-top: 6px;
+    opacity: 0;
+}
+
+.menu-preview-tournament-anim .pre-match-tournament-tail span {
+    display: inline-block;
+    white-space: nowrap;
+    margin-left: var(--slide-start, -220px);
+}
+
+.menu-preview-frame[data-preview="tournament"].is-active .pre-match-tournament-head,
+.menu-preview-frame[data-preview="versus"].is-active .pre-match-tournament-head {
+    animation: preMatchRevealShowup 2.8s ease-out infinite;
+}
+
+.menu-preview-frame[data-preview="tournament"].is-active .pre-match-tournament-tail,
+.menu-preview-frame[data-preview="versus"].is-active .pre-match-tournament-tail {
+    animation: preMatchReveal 2.8s ease-out infinite;
+}
+
+.menu-preview-frame[data-preview="tournament"].is-active .pre-match-tournament-tail span,
+.menu-preview-frame[data-preview="versus"].is-active .pre-match-tournament-tail span {
+    animation: preMatchSlideIn 2.8s ease-out infinite;
 }
 
 .main-menu-footer {
@@ -1089,6 +1166,105 @@ body {
 
 .settings-resume-btn:active {
     transform: translateY(0);
+}
+
+.settings-panel--skin {
+    width: min(640px, 94vw);
+}
+
+.versus-skin-carousel {
+    min-height: 400px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 22px 24px;
+}
+
+.versus-skin-nav {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.08);
+    color: #eaf0ff;
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.versus-skin-nav:hover,
+.versus-skin-nav:focus-visible {
+    transform: translateY(-1px);
+    background: rgba(77,143,255,0.22);
+    border-color: rgba(77,143,255,0.6);
+}
+
+.versus-skin-card {
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,0.14);
+    background: rgba(255,255,255,0.03);
+    padding: 16px 16px 20px;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04), 0 8px 32px rgba(0,0,0,0.3);
+}
+
+.versus-skin-preview {
+    height: 300px;
+    border-radius: 14px;
+    margin-bottom: 14px;
+    border: 1px solid rgba(255,255,255,0.10);
+    overflow: hidden;
+    /* Fond : sol léger + dégradé lumineux centré derrière le personnage */
+    background:
+        radial-gradient(ellipse 70% 35% at 50% 100%, rgba(77,143,255,0.18) 0%, transparent 70%),
+        radial-gradient(ellipse 90% 60% at 50% 60%, rgba(140,180,255,0.10) 0%, transparent 70%),
+        linear-gradient(180deg,
+            rgba(8, 14, 30, 0.98) 0%,
+            rgba(14, 22, 44, 0.96) 55%,
+            rgba(18, 28, 55, 0.92) 100%);
+    box-shadow: inset 0 -2px 18px rgba(77,143,255,0.10);
+    position: relative;
+}
+
+.versus-skin-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.versus-skin-name {
+    margin: 0 0 4px;
+    font-size: 20px;
+    color: #f3f7ff;
+    font-weight: 800;
+    letter-spacing: 0.25px;
+}
+
+.versus-skin-desc {
+    margin: 0;
+    color: #c0cae4;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.versus-skin-indicators {
+    margin-top: 14px;
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+}
+
+.versus-skin-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.28);
+}
+
+.versus-skin-dot.is-active {
+    background: #58a0ff;
+    box-shadow: 0 0 10px rgba(88,160,255,0.7);
 }
 
 #gamepad-notif {
