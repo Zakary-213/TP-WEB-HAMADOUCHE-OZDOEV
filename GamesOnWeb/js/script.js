@@ -1151,6 +1151,7 @@ function quitGame() {
         }
         activeMatchFlow = null;
     }
+    window.selectedVersusStage = TOURNAMENT_STAGES[0];
 
     // Arrêter tous les sons en cours
     if (window.matchAudio && typeof window.matchAudio.stopAll === "function") {
@@ -1208,7 +1209,12 @@ window.startTournamentMatch = function () {
     startGame("tournament");
 };
 
-window.startVersusMatch = function () {
+window.startVersusMatch = function (selectedStage) {
+    const stage = TOURNAMENT_STAGES.includes(selectedStage)
+        ? selectedStage
+        : (TOURNAMENT_STAGES.includes(window.selectedVersusStage) ? window.selectedVersusStage : TOURNAMENT_STAGES[0]);
+    currentTournamentStage = stage;
+    window.selectedVersusStage = stage;
     startGame("versus");
 };
 

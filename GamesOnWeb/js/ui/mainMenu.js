@@ -60,6 +60,7 @@
     var P1_SKIN_MESH_STORAGE_KEY = "gow-player1-skin-mesh-index";
     var P2_SKIN_STORAGE_KEY = "gow-player2-skin-ui";
     var P2_SKIN_MESH_STORAGE_KEY = "gow-player2-skin-mesh-index";
+    var VERSUS_STAGE_STORAGE_KEY = "gow-versus-stage-ui";
 
     var skinPreviewEngine = null;
     var skinPreviewScene = null;
@@ -70,6 +71,88 @@
     var skinPreviewLoaded = false;
     var skinPreviewLoading = false;
     var skinPreviewRenderLoopStarted = false;
+    var versusFlowStep = "controls";
+    var selectedVersusStageIndex = 0;
+    var versusStageOptions = [
+        {
+            id: "huitieme",
+            order: "01",
+            name: "HUITIEME",
+            sub: "DE FINALE",
+            pos: "Entrée de tournoi",
+            color: "#00aaff",
+            color2: "#0066cc",
+            bgFrom: "rgba(0,140,255,0.12)",
+            bgTo: "rgba(0,60,140,0.05)",
+            glowColor: "rgba(0,170,255,0.35)",
+            desc: "Le point de départ du tournoi. Ambiance ouverte, lecture claire et rythme immédiat.",
+            tier: "HUITIEME",
+            tierBg: "rgba(0,170,255,0.12)",
+            tierCol: "#00aaff",
+            unlockBg: "rgba(0,170,255,0.12)",
+            unlockCol: "#00aaff",
+            unlockText: "Disponible"
+        },
+        {
+            id: "quart",
+            order: "02",
+            name: "QUART",
+            sub: "DE FINALE",
+            pos: "Montée en intensité",
+            color: "#7fff00",
+            color2: "#4db800",
+            bgFrom: "rgba(100,255,0,0.10)",
+            bgTo: "rgba(40,100,0,0.04)",
+            glowColor: "rgba(127,255,0,0.32)",
+            desc: "Les tribunes se resserrent, chaque duel compte et le tempo devient plus tendu.",
+            tier: "QUART",
+            tierBg: "rgba(127,255,0,0.12)",
+            tierCol: "#7fff00",
+            unlockBg: "rgba(127,255,0,0.12)",
+            unlockCol: "#7fff00",
+            unlockText: "Disponible"
+        },
+        {
+            id: "demi",
+            order: "03",
+            name: "DEMI",
+            sub: "FINALE",
+            pos: "Atmosphere maximale",
+            color: "#ff6b35",
+            color2: "#cc4400",
+            bgFrom: "rgba(255,90,30,0.12)",
+            bgTo: "rgba(100,30,0,0.05)",
+            glowColor: "rgba(255,100,40,0.38)",
+            desc: "La pression monte, le stade devient plus serré et la moindre erreur se paie cher.",
+            tier: "DEMI",
+            tierBg: "rgba(255,107,53,0.12)",
+            tierCol: "#ff6b35",
+            unlockBg: "rgba(255,107,53,0.12)",
+            unlockCol: "#ff6b35",
+            unlockText: "Disponible"
+        },
+        {
+            id: "finale",
+            order: "04",
+            name: "FINALE",
+            sub: "GRAND MATCH",
+            pos: "Ultime rendez-vous",
+            color: "#f5c842",
+            color2: "#c49a00",
+            bgFrom: "rgba(245,200,66,0.14)",
+            bgTo: "rgba(120,90,0,0.05)",
+            glowColor: "rgba(245,200,66,0.45)",
+            desc: "Le cadre le plus spectaculaire: lumière, tension et style grand final.",
+            tier: "FINALE",
+            tierBg: "rgba(245,200,66,0.15)",
+            tierCol: "#f5c842",
+            unlockBg: "rgba(245,200,66,0.14)",
+            unlockCol: "#f5c842",
+            unlockText: "Disponible"
+        }
+    ];
+
+    window.selectedVersusStage = window.selectedVersusStage || "huitieme";
     var p2Skins = [
         {
             id: "skin0", meshIndex: 1, name: "PARIS", sub: "",
@@ -180,6 +263,29 @@
         p2SkinIndex = found >= 0 ? found : 0;
     }
 
+    function findStageIndexById(id) {
+        if (!id) return -1;
+        return versusStageOptions.findIndex(function (stage) { return stage.id === id; });
+    }
+
+    function loadSavedVersusStageSelection() {
+        var savedId = window.localStorage.getItem(VERSUS_STAGE_STORAGE_KEY) || window.selectedVersusStage;
+        var found = findStageIndexById(savedId);
+        selectedVersusStageIndex = found >= 0 ? found : 0;
+        window.selectedVersusStage = versusStageOptions[selectedVersusStageIndex].id;
+    }
+
+    function getActiveVersusStage() {
+        return versusStageOptions[selectedVersusStageIndex] || versusStageOptions[0];
+    }
+
+    function setActiveVersusStageIndex(nextIndex) {
+        if (!versusStageOptions.length) return;
+        var clamped = (nextIndex + versusStageOptions.length) % versusStageOptions.length;
+        selectedVersusStageIndex = clamped;
+        window.selectedVersusStage = getActiveVersusStage().id;
+    }
+
     function getActiveSkinIndex() {
         return currentSkinPlayer === 1 ? p1SkinIndex : p2SkinIndex;
     }
@@ -193,16 +299,29 @@
     }
 
     function updateSkinHeader() {
+        if (versusFlowStep === "stage") {
+            var stage = getActiveVersusStage();
+            if (skinHeaderMode) skinHeaderMode.textContent = "Selection du stade";
+            if (skinHeaderStep) skinHeaderStep.textContent = "ETAPE 4 / 4";
+            if (skinPlayerBadge) skinPlayerBadge.textContent = stage.order;
+            if (versusSkinCanvas) versusSkinCanvas.style.display = "none";
+            if (versusSkinConfirmBtn) versusSkinConfirmBtn.textContent = "Lancer le match";
+            if (versusSkinBackBtn) versusSkinBackBtn.textContent = "← Retour au skin joueur 2";
+            return;
+        }
+
         var isP1 = currentSkinPlayer === 1;
         if (skinHeaderMode) skinHeaderMode.textContent = isP1 ? "Selection du skin joueur 1" : "Selection du skin joueur 2";
         if (skinHeaderStep) skinHeaderStep.textContent = isP1 ? "ETAPE 2 / 3" : "ETAPE 3 / 3";
         if (skinPlayerBadge) skinPlayerBadge.textContent = isP1 ? "P1" : "P2";
+        if (versusSkinCanvas) versusSkinCanvas.style.display = "";
         if (versusSkinCanvas) {
             versusSkinCanvas.setAttribute("aria-label", isP1 ? "Apercu 3D du skin joueur 1" : "Apercu 3D du skin joueur 2");
         }
         if (versusSkinBackBtn) {
             versusSkinBackBtn.textContent = isP1 ? "← Retour aux controles" : "← Retour au skin joueur 1";
         }
+        if (versusSkinConfirmBtn) versusSkinConfirmBtn.textContent = "Choisir ce skin";
     }
 
     function isSkinBlockedForPlayer(index) {
@@ -578,10 +697,78 @@
     function renderP2Skin() {
         var skin = p2Skins[getActiveSkinIndex()] || p2Skins[0];
         if (!skin) return;
+        versusFlowStep = "skins";
         applySkinTheme(skin);
         updateSkinPreviewMesh();
         renderSkinList();
         renderSkinDots();
+    }
+
+    function renderVersusStageSelection() {
+        var stage = getActiveVersusStage();
+        if (!stage) return;
+
+        versusFlowStep = "stage";
+        if (versusSkinCanvas) versusSkinCanvas.style.display = "none";
+
+        if (stageBg) stageBg.style.background = 'linear-gradient(180deg,' + stage.bgFrom + ' 0%,' + stage.bgTo + ' 100%)';
+        if (stageGlow) stageGlow.style.background = stage.glowColor;
+
+        if (playerNum) playerNum.textContent = stage.order;
+        if (playerName) {
+            playerName.textContent = stage.name + ' ' + stage.sub;
+            playerName.style.color = stage.color;
+        }
+        if (playerPos) playerPos.textContent = stage.pos;
+        if (skinDescText) skinDescText.textContent = stage.desc;
+
+        if (unlockPill) {
+            unlockPill.textContent = stage.unlockText;
+            unlockPill.style.background = stage.unlockBg;
+            unlockPill.style.color = stage.unlockCol;
+            unlockPill.style.border = '1px solid ' + stage.unlockCol + '40';
+        }
+
+        if (versusSkinConfirmBtn) {
+            versusSkinConfirmBtn.textContent = "Lancer le match";
+            versusSkinConfirmBtn.style.background = 'linear-gradient(135deg,' + stage.color2 + ',' + stage.color + ')';
+            versusSkinConfirmBtn.style.boxShadow = '0 8px 30px ' + stage.glowColor;
+        }
+
+        if (versusSkinBackBtn) versusSkinBackBtn.textContent = "← Retour au skin joueur 2";
+        if (skinHeaderMode) skinHeaderMode.textContent = "Selection du stade";
+        if (skinHeaderStep) skinHeaderStep.textContent = "ETAPE 4 / 4";
+        if (skinPlayerBadge) skinPlayerBadge.textContent = stage.order;
+
+        if (skinList) {
+            var html = "";
+            for (var i = 0; i < versusStageOptions.length; i += 1) {
+                var opt = versusStageOptions[i];
+                var activeClass = i === selectedVersusStageIndex ? " active" : "";
+                html += (
+                    '<button class="skin-option' + activeClass + '" type="button" data-stage-index="' + i + '">' +
+                        '<div class="skin-option-badge" style="background:' + opt.tierBg + ';color:' + opt.color + '">' + opt.order + '</div>' +
+                        '<div class="skin-option-info">' +
+                            '<div class="skin-option-name">' + opt.name + ' ' + opt.sub + '</div>' +
+                            '<div class="skin-option-tier">' + opt.tier + '</div>' +
+                        '</div>' +
+                        '<div class="skin-option-check"></div>' +
+                    '</button>'
+                );
+            }
+            skinList.innerHTML = html;
+        }
+
+        if (versusSkinIndicators) {
+            var dotsHtml = "";
+            for (var j = 0; j < versusStageOptions.length; j += 1) {
+                var stageOpt = versusStageOptions[j];
+                var activeDotClass = j === selectedVersusStageIndex ? " is-active" : "";
+                var activeDotStyle = j === selectedVersusStageIndex ? ' style="background:' + stageOpt.color + '"' : "";
+                dotsHtml += '<button class="skin-dot' + activeDotClass + '" type="button" data-stage-index="' + j + '" aria-label="' + stageOpt.name + ' ' + stageOpt.sub + '"' + activeDotStyle + '></button>';
+            }
+            versusSkinIndicators.innerHTML = dotsHtml;
+        }
     }
 
     function changeP2Skin(delta) {
@@ -594,12 +781,14 @@
 
     function openVersusSkinCarousel() {
         if (!versusSkinOverlay) return;
+        versusFlowStep = "skins";
         currentSkinPlayer = 1;
         loadSavedP1SkinSelection();
         updateSkinHeader();
         lastSkinNavAt = 0;
         lastSkinSubmitPressed = false;
         lastSkinBackPressed = false;
+        if (versusSkinCanvas) versusSkinCanvas.style.display = "";
         ensureSkinPreviewReady();
         loadSkinPreviewMeshes();
         renderP2Skin();
@@ -609,6 +798,7 @@
     }
 
     function switchToPlayer2Skin() {
+        versusFlowStep = "skins";
         currentSkinPlayer = 2;
         loadSavedP2SkinSelection();
         if (isSkinBlockedForPlayer(p2SkinIndex)) {
@@ -620,7 +810,30 @@
         if (skinPreviewEngine) skinPreviewEngine.resize();
     }
 
+    function openVersusStageSelection() {
+        if (!versusSkinOverlay) return;
+        loadSavedVersusStageSelection();
+        versusFlowStep = "stage";
+        lastSkinNavAt = 0;
+        lastSkinSubmitPressed = false;
+        lastSkinBackPressed = false;
+        updateSkinHeader();
+        renderVersusStageSelection();
+        versusSkinOverlay.classList.add("settings-overlay--open");
+        versusSkinOverlay.setAttribute("aria-hidden", "false");
+        if (skinPreviewEngine) skinPreviewEngine.resize();
+    }
+
     function goToPreviousSkinStep() {
+        if (versusFlowStep === "stage") {
+            versusFlowStep = "skins";
+            currentSkinPlayer = 2;
+            if (versusSkinCanvas) versusSkinCanvas.style.display = "";
+            updateSkinHeader();
+            renderP2Skin();
+            return;
+        }
+
         if (currentSkinPlayer === 2) {
             currentSkinPlayer = 1;
             updateSkinHeader();
@@ -629,6 +842,13 @@
         }
         closeVersusSkinCarousel();
         openVersusControls();
+    }
+
+    function changeVersusStage(delta) {
+        if (!versusStageOptions.length) return;
+        var nextIndex = (selectedVersusStageIndex + delta + versusStageOptions.length) % versusStageOptions.length;
+        setActiveVersusStageIndex(nextIndex);
+        renderVersusStageSelection();
     }
 
     function closeVersusSkinCarousel() {
@@ -816,13 +1036,18 @@
     function handleSkinGamepad(pad) {
         if (!isVersusSkinOpen()) return false;
 
-        var nav = getSkinNavInputFromGamepad(pad);
+        var nav = versusFlowStep === "stage" ? getSkinNavInputFromGamepad(pad) : getSkinNavInputFromGamepad(pad);
         var now = performance.now();
 
         if (nav && now - lastSkinNavAt > 180) {
             lastSkinNavAt = now;
-            if (nav === "left") changeP2Skin(-1);
-            if (nav === "right") changeP2Skin(1);
+            if (versusFlowStep === "stage") {
+                if (nav === "left") changeVersusStage(-1);
+                if (nav === "right") changeVersusStage(1);
+            } else {
+                if (nav === "left") changeP2Skin(-1);
+                if (nav === "right") changeP2Skin(1);
+            }
         }
 
         var buttons = pad && pad.buttons ? pad.buttons : [];
@@ -969,7 +1194,18 @@
     if (skinList) {
         skinList.addEventListener("click", function (event) {
             var btn = event.target && event.target.closest ? event.target.closest(".skin-option") : null;
-            if (!btn || !btn.dataset || typeof btn.dataset.index === "undefined") return;
+            if (!btn || !btn.dataset) return;
+
+            if (versusFlowStep === "stage" && typeof btn.dataset.stageIndex !== "undefined") {
+                var nextStageIndex = Number.parseInt(btn.dataset.stageIndex, 10);
+                if (!Number.isNaN(nextStageIndex)) {
+                    setActiveVersusStageIndex(nextStageIndex);
+                    renderVersusStageSelection();
+                }
+                return;
+            }
+
+            if (typeof btn.dataset.index === "undefined") return;
             var nextIndex = Number.parseInt(btn.dataset.index, 10);
             if (currentSkinPlayer === 2 && isSkinBlockedForPlayer(nextIndex)) return;
             if (!Number.isNaN(nextIndex)) {
@@ -982,7 +1218,19 @@
     if (versusSkinIndicators) {
         versusSkinIndicators.addEventListener("click", function (event) {
             var btn = event.target && event.target.closest ? event.target.closest(".skin-dot") : null;
-            if (!btn || !btn.dataset || typeof btn.dataset.index === "undefined") return;
+            if (!btn || !btn.dataset) return;
+
+            if (versusFlowStep === "stage" && typeof btn.dataset.stageIndex === "undefined") return;
+            if (versusFlowStep === "stage") {
+                var nextStageIndex = Number.parseInt(btn.dataset.stageIndex, 10);
+                if (!Number.isNaN(nextStageIndex)) {
+                    setActiveVersusStageIndex(nextStageIndex);
+                    renderVersusStageSelection();
+                }
+                return;
+            }
+
+            if (typeof btn.dataset.index === "undefined") return;
             var nextIndex = Number.parseInt(btn.dataset.index, 10);
             if (currentSkinPlayer === 2 && isSkinBlockedForPlayer(nextIndex)) return;
             if (!Number.isNaN(nextIndex)) {
@@ -1013,29 +1261,55 @@
                 window.localStorage.setItem(P2_SKIN_STORAGE_KEY, skin.id);
                 window.localStorage.setItem(P2_SKIN_MESH_STORAGE_KEY, String(resolvedMeshIndex));
             }
-            closeVersusSkinCarousel();
-            menu.classList.add("is-hidden");
-            menu.setAttribute("aria-hidden", "true");
-            if (typeof window.startVersusMatch === "function") {
-                window.startVersusMatch();
-            } else if (typeof window.startTournamentMatch === "function") {
-                // fallback temporaire tant que le mode 1v1 dédié n'est pas branché
-                window.startTournamentMatch();
+
+            if (currentSkinPlayer === 2 && versusFlowStep === "skins") {
+                openVersusStageSelection();
+                return;
+            }
+
+            if (versusFlowStep === "stage") {
+                var stage = getActiveVersusStage();
+                if (stage) {
+                    window.localStorage.setItem(VERSUS_STAGE_STORAGE_KEY, stage.id);
+                    window.selectedVersusStage = stage.id;
+                }
+                closeVersusSkinCarousel();
+                menu.classList.add("is-hidden");
+                menu.setAttribute("aria-hidden", "true");
+                if (typeof window.startVersusMatch === "function") {
+                    window.startVersusMatch(stage ? stage.id : window.selectedVersusStage);
+                } else if (typeof window.startTournamentMatch === "function") {
+                    // fallback temporaire tant que le mode 1v1 dédié n'est pas branché
+                    window.startTournamentMatch();
+                }
             }
         });
     }
 
     window.addEventListener("keydown", function (e) {
         if (isVersusSkinOpen()) {
-            if (e.key === "ArrowLeft") {
-                e.preventDefault();
-                changeP2Skin(-1);
-                return;
-            }
-            if (e.key === "ArrowRight") {
-                e.preventDefault();
-                changeP2Skin(1);
-                return;
+            if (versusFlowStep === "stage") {
+                if (e.key === "ArrowLeft") {
+                    e.preventDefault();
+                    changeVersusStage(-1);
+                    return;
+                }
+                if (e.key === "ArrowRight") {
+                    e.preventDefault();
+                    changeVersusStage(1);
+                    return;
+                }
+            } else {
+                if (e.key === "ArrowLeft") {
+                    e.preventDefault();
+                    changeP2Skin(-1);
+                    return;
+                }
+                if (e.key === "ArrowRight") {
+                    e.preventDefault();
+                    changeP2Skin(1);
+                    return;
+                }
             }
             if (e.key === "Enter") {
                 e.preventDefault();
@@ -1071,5 +1345,6 @@
 
     loadSavedP1SkinSelection();
     loadSavedP2SkinSelection();
+    loadSavedVersusStageSelection();
     resetPreview();
 })();
