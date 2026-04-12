@@ -37,13 +37,20 @@ export function updatePlayerMovement(activePlayer, input, moveX, moveZ, dt, para
     if (restartTakerLocked) {
         movement = tackleController.updateAndMove(activePlayer, 0, 0, baseSpeed);
 
-        let aimX = 0;
-        let aimZ = 0;
+        // Priorite au vecteur analogique (manette) calcule dans script.js
+        // puis fallback clavier si absent/neutre.
+        let aimX = Number(input.restartAimX) || 0;
+        let aimZ = Number(input.restartAimZ) || 0;
 
-        if (input.forward) aimX += 1;
-        if (input.backward) aimX -= 1;
-        if (input.left) aimZ += 1;
-        if (input.right) aimZ -= 1;
+        if (Math.abs(aimX) < 0.001) aimX = 0;
+        if (Math.abs(aimZ) < 0.001) aimZ = 0;
+
+        if (aimX === 0 && aimZ === 0) {
+            if (input.forward) aimX += 1;
+            if (input.backward) aimX -= 1;
+            if (input.left) aimZ += 1;
+            if (input.right) aimZ -= 1;
+        }
 
         if (aimX !== 0 || aimZ !== 0) {
             const aim = new BABYLON.Vector3(aimX, 0, aimZ);

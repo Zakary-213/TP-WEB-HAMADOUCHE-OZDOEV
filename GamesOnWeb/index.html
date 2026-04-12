@@ -101,6 +101,9 @@
     <div id="halftime-overlay">
         <div id="halftime-title">MI-TEMPS</div>
         <div id="halftime-reprise">Reprise dans <span id="halftime-countdown">10</span></div>
+        <div class="halftime-actions">
+            <button id="halftime-continue-btn" class="overlay-action-btn overlay-action-btn--yellow" type="button">Continuer</button>
+        </div>
     </div>
 
     <!-- Fin du match (affiché uniquement à la fin) -->
@@ -108,6 +111,10 @@
         <div id="match-end-title">FIN DU MATCH</div>
         <div id="match-end-result">Match terminé</div>
         <div id="match-end-score">YOU 0 - 0 IA</div>
+        <div class="match-end-actions">
+            <button id="match-end-continue-btn" class="overlay-action-btn overlay-action-btn--primary" type="button">Continuer</button>
+            <button id="match-end-quit-btn" class="overlay-action-btn overlay-action-btn--danger" type="button">Quitter la partie</button>
+        </div>
     </div>
 
     <!-- Intro d'avant-match (apparition style broadcast) -->

@@ -501,7 +501,7 @@ body {
     text-align: center;
     color: white;
     display: none; /* activé par script.js pendant la mi-temps */
-    pointer-events: none;
+    pointer-events: auto;
     padding: 22px 36px;
     border-radius: 14px;
     border: 2px solid rgba(255, 215, 0, 0.75); /* doré */
@@ -584,7 +584,7 @@ body {
     text-align: center;
     color: white;
     display: none; /* activé par script.js / matchFlow.js */
-    pointer-events: none;
+    pointer-events: auto;
     padding: 26px 40px;
     border-radius: 16px;
     border: 2px solid rgba(255, 255, 255, 0.25);
@@ -661,6 +661,58 @@ body {
     font-weight: 800;
     font-size: 20px;
     color: rgba(255, 255, 255, 0.95);
+}
+
+.halftime-actions,
+.match-end-actions {
+    margin-top: 14px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.overlay-action-btn {
+    border: none;
+    border-radius: 999px;
+    padding: 10px 22px;
+    color: #fff;
+    font-family: "Montserrat", "Segoe UI", sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+.overlay-action-btn:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.06);
+}
+
+.overlay-action-btn:active {
+    transform: translateY(0);
+}
+
+.overlay-action-btn.overlay-action-btn--selected {
+    outline: 2px solid #ffffff;
+    outline-offset: 2px;
+    filter: brightness(1.12);
+}
+
+.overlay-action-btn--primary {
+    background: linear-gradient(135deg, #2563eb, #4d8fff);
+    box-shadow: 0 5px 18px rgba(77, 143, 255, 0.35);
+}
+
+.overlay-action-btn--yellow {
+    color: #1f1b07;
+    background: linear-gradient(135deg, #f5c84b, #ffdf7a);
+    box-shadow: 0 5px 18px rgba(245, 200, 75, 0.42);
+}
+
+.overlay-action-btn--danger {
+    background: linear-gradient(135deg, #dc2626, #f87171);
+    box-shadow: 0 5px 18px rgba(248, 113, 113, 0.35);
 }
 
 /* -- INTRO TOURNOI (style composition FIFA) -- */
