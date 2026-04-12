@@ -251,13 +251,13 @@
             setListeningP2Button(null);
             listeningActionP2 = null;
             if (currentAction) {
-                var btn = document.querySelector(
+                var btns = document.querySelectorAll(
                     '.settings-keybind-btn[data-action-p2="' + currentAction + '"]'
                 );
-                if (btn) {
+                btns.forEach(function (btn) {
                     btn.textContent = "Déjà pris";
-                    window.setTimeout(function () { syncKeybindP2Buttons(); }, 800);
-                }
+                });
+                window.setTimeout(function () { syncKeybindP2Buttons(); }, 800);
             }
             return;
         }

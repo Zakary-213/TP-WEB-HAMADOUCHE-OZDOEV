@@ -115,7 +115,11 @@
     function normalizeKeyValue(value) {
         if (!value) return null;
         if (value === "Shift") return "Shift";
+        if (value === "ShiftLeft" || value === "ShiftRight" || value === "LShift" || value === "RShift") {
+            return "Shift";
+        }
         if (value === "Space") return "Space";
+        if (/^Key[A-Z]$/.test(value)) return value[3].toLowerCase();
         if (value.length === 1) return value.toLowerCase();
         // Touches spéciales multi-caractères : ArrowUp, Enter, RShift, NumpadDecimal…
         // On les accepte telles quelles (la comparaison se fera via event.code)
