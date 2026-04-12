@@ -10,12 +10,14 @@
     const overlay    = document.getElementById("settings-overlay");
     const closeBtn   = document.getElementById("settings-close-btn");
     const resumeBtn  = document.getElementById("settings-resume-btn");
+    const quitBtn    = document.getElementById("settings-quit-btn");
     const soundSlider  = document.getElementById("set-sound-vol");
     const soundVal     = document.getElementById("set-sound-vol-val");
     const musicSlider  = document.getElementById("set-music-vol");
     const musicVal     = document.getElementById("set-music-vol-val");
     const camBtns    = document.querySelectorAll(".settings-option-btn[data-cam]");
     const keybindBtns = document.querySelectorAll(".settings-keybind-btn[data-action]");
+    const keybindP2Btns = document.querySelectorAll(".settings-keybind-btn[data-action-p2]");
     const gamepadBtns = document.querySelectorAll(".settings-gamepad-btn[data-gamepad-action]");
     const TPS_BASE_RADIUS = 70;  // radius de base de la caméra TPS
     const THIRD_BASE_RADIUS = 60;  // radius de base de la caméra 3e personne
@@ -26,6 +28,7 @@
     let listeningGamepadAction = null;
     let lastNavAt = 0;
     let lastSubmitPressed = false;
+    let lastBackPressed = false;
 
 
     // ── Helpers caméra ─────────────────────────────────────────────
@@ -42,10 +45,18 @@
 
     function syncCamButtons() {
         var current = getActiveCamLabel();
+        var isVersus = typeof window.isVersusMode === "function" && window.isVersusMode();
         camBtns.forEach(function (btn) {
             var active = btn.dataset.cam === current ||
                          (current === null && btn.dataset.cam === "broadcast");
             btn.classList.toggle("active", active);
+            if (isVersus) {
+                btn.disabled = btn.dataset.cam !== "broadcast";
+                btn.classList.toggle("is-locked", btn.dataset.cam !== "broadcast");
+            } else {
+                btn.disabled = false;
+                btn.classList.remove("is-locked");
+            }
         });
     }
 
@@ -79,7 +90,6 @@
         });
     }
 
-    const keybindP2Btns = document.querySelectorAll(".settings-keybind-btn[data-action-p2]");
     let player2Binds = {};
 
     function syncKeybindP2Buttons() {
@@ -329,6 +339,10 @@
         var scene = window.gameScene;
         if (!cams || !scene) return;
 
+        if (typeof window.isVersusMode === "function" && window.isVersusMode()) {
+            camLabel = "broadcast";
+        }
+
         if (camLabel === "broadcast" && cams.broadcastCamera) {
             scene.activeCamera = cams.broadcastCamera;
         } else if (camLabel === "tps" && cams.tpsCamera) {
@@ -349,16 +363,34 @@
         syncCamButtons();
     }
 
+    function isInGameContext() {
+        var mainMenu = document.getElementById("main-menu");
+        if (!mainMenu) return true;
+        return mainMenu.getAttribute("aria-hidden") === "true";
+    }
+
     // ── Ouverture ──────────────────────────────────────────────────
     function open() {
         if (!overlay) return;
         // Bloqué pendant l'intro d'avant-match
         if (typeof window.isIntroPlaying === "function" && window.isIntroPlaying()) return;
         isOpen = true;
+        lastSubmitPressed = false;
+        lastBackPressed = false;
         syncKeybindButtons();
         syncKeybindP2Buttons();
         syncGamepadButtons();
         syncCamButtons();
+
+        var isVersus = typeof window.isVersusMode === "function" && window.isVersusMode();
+        var cameraRow = document.querySelector(".settings-row-camera-mode");
+        var p2Section = document.querySelector(".settings-section-p2");
+        if (cameraRow) cameraRow.style.display = isVersus ? "none" : "flex";
+        if (p2Section) p2Section.style.display = isVersus ? "block" : "none";
+        if (isVersus) {
+            switchCamera("broadcast");
+        }
+
         overlay.classList.add("settings-overlay--open");
         overlay.setAttribute("aria-hidden", "false");
         if (typeof window.setGameplayPaused === "function") {
@@ -388,9 +420,12 @@
 
     function getFocusableElements() {
         if (!overlay) return [];
+        var versusMode = typeof window.isVersusMode === "function" && window.isVersusMode();
         return Array.prototype.slice.call(
             overlay.querySelectorAll(
-                "button.settings-option-btn, button.settings-keybind-btn, button.settings-gamepad-btn, #settings-close-btn, #settings-resume-btn"
+                versusMode
+                    ? "button.settings-keybind-btn, button.settings-gamepad-btn, #settings-close-btn, #settings-resume-btn, #settings-quit-btn"
+                    : "button.settings-option-btn, button.settings-keybind-btn, button.settings-gamepad-btn, #settings-close-btn, #settings-resume-btn, #settings-quit-btn"
             )
         );
     }
@@ -477,6 +512,12 @@
                     }
                 }
                 lastSubmitPressed = !!submit;
+
+                var back = pad && pad.buttons && pad.buttons[1] && pad.buttons[1].pressed;
+                if (back && !lastBackPressed) {
+                    close();
+                }
+                lastBackPressed = !!back;
             }
         }
         if (isSettingsOpen()) {
@@ -489,7 +530,13 @@
     window.addEventListener("keydown", function (e) {
         if (e.key === "Escape") {
             e.preventDefault();
-            toggle();
+            if (isSettingsOpen()) {
+                close();
+                return;
+            }
+            if (isInGameContext()) {
+                open();
+            }
         }
     });
 
@@ -498,6 +545,12 @@
     // ── Boutons ────────────────────────────────────────────────────
     if (closeBtn)  closeBtn.addEventListener("click", close);
     if (resumeBtn) resumeBtn.addEventListener("click", close);
+    if (quitBtn)   quitBtn.addEventListener("click", function () {
+        close();
+        if (typeof window.quitGame === "function") {
+            window.quitGame();
+        }
+    });
     if (overlay)   overlay.addEventListener("click", function (e) {
         if (e.target === overlay) close();
     });

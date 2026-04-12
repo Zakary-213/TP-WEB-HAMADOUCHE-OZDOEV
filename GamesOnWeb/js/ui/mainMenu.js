@@ -53,6 +53,9 @@
     var p1SkinIndex = 0;
     var p2SkinIndex = 0;
     var currentSkinPlayer = 2;
+    var lastSkinNavAt = 0;
+    var lastSkinSubmitPressed = false;
+    var lastSkinBackPressed = false;
     var P1_SKIN_STORAGE_KEY = "gow-player1-skin-ui";
     var P1_SKIN_MESH_STORAGE_KEY = "gow-player1-skin-mesh-index";
     var P2_SKIN_STORAGE_KEY = "gow-player2-skin-ui";
@@ -594,6 +597,9 @@
         currentSkinPlayer = 1;
         loadSavedP1SkinSelection();
         updateSkinHeader();
+        lastSkinNavAt = 0;
+        lastSkinSubmitPressed = false;
+        lastSkinBackPressed = false;
         ensureSkinPreviewReady();
         loadSkinPreviewMeshes();
         renderP2Skin();
@@ -713,8 +719,17 @@
         setActivePreview("idle");
     }
 
+    function isModalOverlayOpen() {
+        var settingsOverlay = document.getElementById("settings-overlay");
+        return (
+            (settingsOverlay && settingsOverlay.getAttribute("aria-hidden") === "false") ||
+            (versusOverlay && versusOverlay.getAttribute("aria-hidden") === "false") ||
+            isVersusSkinOpen()
+        );
+    }
+
     function isMenuVisible() {
-        return !menu.classList.contains("is-hidden") && menu.getAttribute("aria-hidden") !== "true";
+        return !menu.classList.contains("is-hidden") && menu.getAttribute("aria-hidden") !== "true" && !isModalOverlayOpen();
     }
 
     function getFocusIndex() {
@@ -728,10 +743,18 @@
         var i = index % focusable.length;
         if (i < 0) i += focusable.length;
         focusable[i].focus();
+        syncMenuSelection();
     }
 
     function moveFocus(delta) {
         focusAt(getFocusIndex() + delta);
+    }
+
+    function syncMenuSelection() {
+        var active = document.activeElement;
+        focusable.forEach(function (tile) {
+            tile.classList.toggle("is-selected", tile === active);
+        });
     }
 
     function handleMenuNavKey(e) {
@@ -770,10 +793,69 @@
         return null;
     }
 
+    function getSkinNavInputFromGamepad(pad) {
+        if (!pad) return null;
+
+        var axes = pad.axes || [];
+        var deadzone = 0.35;
+        var axX = axes.length > 0 ? axes[0] : 0;
+        var axY = axes.length > 1 ? axes[1] : 0;
+
+        if (Math.abs(axX) > Math.abs(axY)) {
+            if (axX > deadzone) return "right";
+            if (axX < -deadzone) return "left";
+        }
+
+        var btns = pad.buttons || [];
+        if (btns[14] && btns[14].pressed) return "left";
+        if (btns[15] && btns[15].pressed) return "right";
+
+        return null;
+    }
+
+    function handleSkinGamepad(pad) {
+        if (!isVersusSkinOpen()) return false;
+
+        var nav = getSkinNavInputFromGamepad(pad);
+        var now = performance.now();
+
+        if (nav && now - lastSkinNavAt > 180) {
+            lastSkinNavAt = now;
+            if (nav === "left") changeP2Skin(-1);
+            if (nav === "right") changeP2Skin(1);
+        }
+
+        var buttons = pad && pad.buttons ? pad.buttons : [];
+        var confirmPressed = !!(buttons[0] && buttons[0].pressed);
+        var backPressed = !!(buttons[1] && buttons[1].pressed);
+
+        if (confirmPressed && !lastSkinSubmitPressed && versusSkinConfirmBtn) {
+            versusSkinConfirmBtn.click();
+        }
+
+        if (backPressed && !lastSkinBackPressed) {
+            if (versusSkinBackBtn) {
+                versusSkinBackBtn.click();
+            } else {
+                goToPreviousSkinStep();
+            }
+        }
+
+        lastSkinSubmitPressed = confirmPressed;
+        lastSkinBackPressed = backPressed;
+        return true;
+    }
+
     function pollMenuGamepad() {
+        var pads = (navigator.getGamepads && navigator.getGamepads()) || [];
+        var pad = pads.find(function (p) { return p && p.connected; }) || null;
+
+        if (handleSkinGamepad(pad)) {
+            window.requestAnimationFrame(pollMenuGamepad);
+            return;
+        }
+
         if (isMenuVisible()) {
-            var pads = (navigator.getGamepads && navigator.getGamepads()) || [];
-            var pad = pads.find(function (p) { return p && p.connected; }) || null;
             var nav = getNavInputFromGamepad(pad);
             var now = performance.now();
             if (nav && now - lastNavAt > 180) {
@@ -789,6 +871,7 @@
                 }
             }
             lastSubmitPressed = !!submit;
+            syncMenuSelection();
         }
         window.requestAnimationFrame(pollMenuGamepad);
     }
@@ -798,8 +881,18 @@
         tile.addEventListener("mouseenter", function () { setActivePreview(key); });
         tile.addEventListener("focus", function () { setActivePreview(key); });
         tile.addEventListener("mouseleave", resetPreview);
-        tile.addEventListener("blur", resetPreview);
+        tile.addEventListener("blur", function () {
+            resetPreview();
+            syncMenuSelection();
+        });
     });
+
+    focusable.forEach(function (tile) {
+        tile.addEventListener("focus", syncMenuSelection);
+        tile.addEventListener("blur", syncMenuSelection);
+    });
+
+    syncMenuSelection();
 
     window.addEventListener("keydown", handleMenuNavKey, true);
     pollMenuGamepad();

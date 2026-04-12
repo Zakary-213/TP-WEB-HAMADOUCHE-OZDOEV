@@ -85,15 +85,22 @@ const setupCameras = (scene, canvas, playerNode) => {
     // Orientation initiale de la caméra FPV : le joueur regarde devant lui au lancement
     fpvCamera.rotation.y = Math.PI / 2;
 
-    // Activer les contrôles de la souris pour tourner la tête
-    fpvCamera.attachControl(canvas, true);
-    
+    // Désactiver les contrôles par défaut pour éviter les conflits
+    if (fpvCamera.inputs) {
+        fpvCamera.inputs.clear();
+    }
+
     // Désactiver les touches directionnelles par defaut de la caméra 
     // (pour que ZQSD/WASD ne gère que les déplacements du joueur définis dans script.js)
     fpvCamera.keysUp = [];
     fpvCamera.keysDown = [];
     fpvCamera.keysLeft = [];
     fpvCamera.keysRight = [];
+
+    // Optionnellement : gestion de la souris pour la rotation POV
+    // Sera contrôlée aussi via la manette dans script.js
+    fpvCamera.inertia = 0.9;
+    fpvCamera.angularSensibility = 1000;  // Sensibilité souris (plus bas = plus sensible)
 
     // Définir la caméra active par défaut (Broadcast)
     scene.activeCamera = broadcastCamera;

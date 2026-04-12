@@ -26,6 +26,8 @@ function createScoreboard3D(scene) {
 
     // ─── Texture LED (écran) ───────────────────────────────────
     const TEX_W = 512, TEX_H = 192;
+    let leftTeamLabel = "YOU";
+    let rightTeamLabel = "IA";
 
     function makeScreenTexture(name) {
         return new BABYLON.DynamicTexture(name, { width: TEX_W, height: TEX_H }, scene, true);
@@ -33,6 +35,8 @@ function createScoreboard3D(scene) {
 
     function drawScreen(tex, pScore, aScore, mirrored = false) {
         const ctx = tex.getContext();
+        if (!ctx) return; // Garde contre le canvas destroyed
+        
         ctx.clearRect(0, 0, TEX_W, TEX_H);
 
         ctx.save();
@@ -53,18 +57,18 @@ function createScoreboard3D(scene) {
         for (let x = 0; x < TEX_W; x += 8) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,TEX_H); ctx.stroke(); }
         for (let y = 0; y < TEX_H; y += 8) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(TEX_W,y); ctx.stroke(); }
 
-        // Nom YOU (gauche) - rouge
+        // Nom équipe gauche - rouge
         ctx.font = "bold 40px 'Courier New', monospace";
         ctx.textAlign = "center";
         ctx.fillStyle = "#ff4444";
         ctx.shadowColor = "#ff0000";
         ctx.shadowBlur = 14;
-        ctx.fillText("YOU", TEX_W * 0.18, TEX_H / 2 + 14);
+        ctx.fillText(leftTeamLabel, TEX_W * 0.18, TEX_H / 2 + 14);
 
-        // Nom IA (droite) - bleu
+        // Nom équipe droite - bleu
         ctx.fillStyle = "#4488ff";
         ctx.shadowColor = "#0044ff";
-        ctx.fillText("IA", TEX_W * 0.82, TEX_H / 2 + 14);
+        ctx.fillText(rightTeamLabel, TEX_W * 0.82, TEX_H / 2 + 14);
 
         // Score (centre) - blanc lumineux
         ctx.font = "bold 72px 'Courier New', monospace";
@@ -203,6 +207,11 @@ function createScoreboard3D(scene) {
 
     // ─── API publique ──────────────────────────────────────────
     window.scoreBoard3D = {
+        setTeamLabels: function(leftLabel, rightLabel) {
+            leftTeamLabel = leftLabel || "YOU";
+            rightTeamLabel = rightLabel || "IA";
+            drawScreen(texBack, window.gameScoreboard ? window.gameScoreboard.playerScore : 0, window.gameScoreboard ? window.gameScoreboard.aiScore : 0, true);
+        },
         updateScore: function(playerScore, aiScore) {
             drawScreen(texBack, playerScore, aiScore, true);
         }

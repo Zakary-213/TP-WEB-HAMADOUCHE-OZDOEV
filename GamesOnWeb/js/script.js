@@ -1,122 +1,20 @@
+import { gamepadState, getActiveGamepad, getPrimaryStick, setupGamepadNotifications } from "./input/gamepadManager.js";
+import { launchPreMatchIntro } from "./ui/preMatchIntro.js";
+import { checkGoalScored } from "./game/goalDetection.js";
+import { updateBallPhysics } from "./game/ballPhysics.js";
+import { updatePlayerMovement } from "./game/playerMovement.js";
+import { setupTeams } from "./game/teamSetup.js";
+import { getVersusScoreboardLabels } from "./utils/teamLabels.js";
+
 const canvas = document.getElementById("renderCanvas");
 const engine = new BABYLON.Engine(canvas, true);
 
-const gamepadState = {
-    index: null,
-    lastShootPressed: false,
-    lastTacklePressed: false,
-    lastL1Pressed: false,
-    lastR1Pressed: false,
-    lastOptionsPressed: false,
-    lastSkipPressed: false
-};
-
-function getActiveGamepad() {
-    const pads = (navigator.getGamepads && navigator.getGamepads()) || [];
-    if (gamepadState.index !== null && pads[gamepadState.index]) {
-        return pads[gamepadState.index];
-    }
-    for (let i = 0; i < pads.length; i += 1) {
-        if (pads[i]) return pads[i];
-    }
-    return null;
-}
-
-function getPrimaryStick(axes) {
-    const list = Array.isArray(axes) ? axes : [];
-    if (list.length < 2) return { x: 0, y: 0 };
-
-    if (list.length >= 4) {
-        const mag01 = Math.abs(list[0]) + Math.abs(list[1]);
-        const mag23 = Math.abs(list[2]) + Math.abs(list[3]);
-        if (mag23 > mag01 * 1.2) {
-            return { x: list[2], y: list[3] };
-        }
-    }
-
-    return { x: list[0], y: list[1] };
-}
-
-function setupGamepadNotifications() {
-    const notif = document.getElementById("gamepad-notif");
-    const notifName = document.getElementById("gamepad-name");
-    const menu = document.getElementById("main-menu");
-    if (!notif || !notifName) return;
-
-    let hideTimeout = null;
-
-    function showNotif(message, durationMs) {
-        if (menu && (menu.classList.contains("is-hidden") || menu.getAttribute("aria-hidden") === "true")) {
-            return;
-        }
-        notifName.textContent = message;
-        notif.style.display = "flex";
-        if (hideTimeout) window.clearTimeout(hideTimeout);
-        hideTimeout = window.setTimeout(function () {
-            notif.style.display = "none";
-        }, durationMs || 3000);
-    }
-
-    function shortName(id) {
-        if (!id) return "Manette";
-        return id.length > 30 ? id.substring(0, 30) + "..." : id;
-    }
-
-    function handleConnect(gamepad) {
-        if (!gamepad) return;
-        if (typeof gamepad.index === "number") {
-            gamepadState.index = gamepad.index;
-        }
-        showNotif(shortName(gamepad.id) + " connectee !");
-    }
-
-    function handleDisconnect(gamepad) {
-        if (!gamepad) return;
-        if (typeof gamepad.index === "number" && gamepadState.index === gamepad.index) {
-            gamepadState.index = null;
-        }
-        showNotif(shortName(gamepad.id) + " deconnectee !");
-    }
-
-    if (window.BABYLON && BABYLON.GamepadManager) {
-        const gamepadManager = new BABYLON.GamepadManager();
-        gamepadManager.onGamepadConnectedObservable.add(handleConnect);
-        gamepadManager.onGamepadDisconnectedObservable.add(handleDisconnect);
-    }
-
-    window.addEventListener("gamepadconnected", function (event) {
-        handleConnect(event.gamepad);
-    });
-
-    window.addEventListener("gamepaddisconnected", function (event) {
-        handleDisconnect(event.gamepad);
-    });
-
-    // Check already-connected gamepads at page load
-    function scanExistingGamepads() {
-        const pads = (navigator.getGamepads && navigator.getGamepads()) || [];
-        for (let i = 0; i < pads.length; i += 1) {
-            if (pads[i] && pads[i].connected) {
-                showNotif(shortName(pads[i].id) + " connectee !", 4000);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    scanExistingGamepads();
-
-    // Some browsers only expose gamepads after a user gesture.
-    let scanCount = 0;
-    const scanTimer = window.setInterval(function () {
-        scanCount += 1;
-        if (scanExistingGamepads() || scanCount >= 10) {
-            window.clearInterval(scanTimer);
-        }
-    }, 500);
-}
-
 setupGamepadNotifications();
+
+function setGameCanvasVisible(visible) {
+    if (!canvas) return;
+    canvas.style.display = visible ? "block" : "none";
+}
 
 // Crée un indicateur visuel (petite flèche) au-dessus d'un joueur sélectionné
 function createSelectionIndicator(scene, playerNode, options = {}) {
@@ -268,13 +166,17 @@ const createScene = function (gameMode) {
     const kickGauge = createKickGauge(scene);
     drawGaugeColors(kickGauge);
 
-    const myTeam = new PlayerTeam(scene, "My Team", new BABYLON.Color3(1, 0, 0));
-    const storedP1Mesh = window.localStorage.getItem("gow-player1-skin-mesh-index");
-    const parsedP1Mesh = Number.parseInt(storedP1Mesh, 10);
-    if (Number.isInteger(parsedP1Mesh) && parsedP1Mesh >= 0) {
-        myTeam.meshIndex = parsedP1Mesh;
+    const teams = setupTeams(scene, mode, tournamentStage);
+    const myTeam = teams.myTeam;
+    const scoreboardLabels = mode === "versus" ? getVersusScoreboardLabels() : { left: "YOU", right: "IA" };
+
+    if (window.gameScoreboard && typeof window.gameScoreboard.updateTeamLabels === "function") {
+        window.gameScoreboard.updateTeamLabels(scoreboardLabels.left, scoreboardLabels.right);
     }
-    myTeam.createTeamFormation(1); // 1 pour le côté gauche
+
+    if (window.scoreBoard3D && typeof window.scoreBoard3D.setTeamLabels === "function") {
+        window.scoreBoard3D.setTeamLabels(scoreboardLabels.left, scoreboardLabels.right);
+    }
 
     // Pour l'instant, le "joueur actif" est le premier attaquant (index 3)
     let activePlayer = myTeam.players[3]; 
@@ -290,27 +192,7 @@ const createScene = function (gameMode) {
     // Indicateur de sélection du joueur actif J2 (mode 1v1) : rouge
     let player2SelectionIndicator = null;
 
-    // Opponent team based on game mode / tournament stage
-    let opponentTeam;
-    if (isVersusMode) {
-        opponentTeam = new PlayerTeam(scene, "Player 2", new BABYLON.Color3(0, 0, 1));
-        const storedP2Mesh = window.localStorage.getItem("gow-player2-skin-mesh-index");
-        const parsedP2Mesh = Number.parseInt(storedP2Mesh, 10);
-        if (Number.isInteger(parsedP2Mesh) && parsedP2Mesh >= 0) {
-            opponentTeam.meshIndex = parsedP2Mesh;
-        }
-    } else {
-        switch(tournamentStage) {
-            case "huitieme": opponentTeam = new AITeamHuitieme(scene, "Adversaire", new BABYLON.Color3(0, 0, 1)); break;
-            case "quart": opponentTeam = new AITeamQuart(scene, "Adversaire", new BABYLON.Color3(0, 0, 1)); break;
-            case "demi": opponentTeam = new AITeamDemi(scene, "Adversaire", new BABYLON.Color3(0, 0, 1)); break;
-            case "finale": opponentTeam = new AITeamFinale(scene, "Adversaire", new BABYLON.Color3(0, 0, 1)); break;
-            default: opponentTeam = new AITeamHuitieme(scene, "Adversaire", new BABYLON.Color3(0, 0, 1)); break;
-        }
-    }
-    opponentTeam.createTeamFormation(-1); // -1 pour le côté droit
-    myTeam.opponents = opponentTeam.players;
-    opponentTeam.opponents = myTeam.players;
+    const opponentTeam = teams.opponentTeam;
     if (isVersusMode) {
         opponentTeam.activePlayer = opponentTeam.players[3] || opponentTeam.players[0] || null;
 
@@ -324,8 +206,8 @@ const createScene = function (gameMode) {
     let player2Controller = null;
 
     // Mi-temps / fin de match (piloté par js/ui/matchFlow.js)
-    // Mi-temps réglée à 30 secondes.
-    const HALF_TIME_SECONDS = 11111111111111111111130;
+    // Chaque mi-temps dure 10 secondes.
+    const HALF_TIME_SECONDS = 20;
     const HALF_TIME_PAUSE_SECONDS = 10;
 
     let gameplayPaused = false;
@@ -348,6 +230,9 @@ const createScene = function (gameMode) {
 
     // Cameras Setup (TPS et FPS gérées dans cameras.js)
     const cameras = setupCameras(scene, canvas, activePlayer);
+    if (isVersusMode && cameras && cameras.broadcastCamera) {
+        scene.activeCamera = cameras.broadcastCamera;
+    }
     const cameraRuntime = (window.createCameraRuntimeController && typeof window.createCameraRuntimeController === "function")
         ? window.createCameraRuntimeController({ scene, cameras, myTeam, selectionIndicator, ball, tournamentStage })
         : null;
@@ -359,6 +244,7 @@ const createScene = function (gameMode) {
     window.getActivePlayer    = () => activePlayer;
     window.cameraRuntime      = cameraRuntime;
     window.isIntroPlaying     = () => preMatchIntroPlaying;
+    window.isVersusMode       = () => isVersusMode;
     window.isMatchEnded       = () => matchFlow && typeof matchFlow.getStage === "function" && matchFlow.getStage() === 3;
 
     const goalReplay = window.createGoalReplayController({
@@ -450,6 +336,7 @@ const createScene = function (gameMode) {
             basePlayer,
             setActivePlayerFn
         });
+        activeMatchFlow = matchFlow;
     }
 
     // Input & Variables de base
@@ -545,6 +432,32 @@ const createScene = function (gameMode) {
     const kickCooldown = 300;
 
     scene.onBeforeRenderObservable.add(()=>{
+        // ── GESTION DU SKIP MANETTE AVEC PRIORITÉ HAUTE ──
+        const gpSkip = getActiveGamepad();
+        if (gpSkip && gpSkip.buttons) {
+            const gamepadBinds = window.inputBindings && typeof window.inputBindings.getGamepadBindings === "function"
+                ? window.inputBindings.getGamepadBindings()
+                : { shoot: 0, options: 9 };
+            const shootPressed = !!(gpSkip.buttons[gamepadBinds.shoot] && gpSkip.buttons[gamepadBinds.shoot].pressed);
+            const optionsPressed = !!(gpSkip.buttons[gamepadBinds.options] && gpSkip.buttons[gamepadBinds.options].pressed);
+            const canSkip = shootPressed || optionsPressed;
+
+            const replayActive = goalReplay && typeof goalReplay.isReplayActive === "function"
+                ? goalReplay.isReplayActive()
+                : false;
+
+            if (preMatchIntroPlaying || replayActive) {
+                if (canSkip && !gamepadState.lastSkipPressed) {
+                    if (replayActive && typeof goalReplay.skipReplay === "function") {
+                        goalReplay.skipReplay();
+                    } else if (preMatchIntroPlaying && typeof window.skipPreMatchIntro === "function") {
+                        window.skipPreMatchIntro();
+                    }
+                }
+                gamepadState.lastSkipPressed = canSkip;
+            }
+        }
+
         if (preMatchIntroPlaying || gameplayPaused) {
             // On fige le gameplay à la mi-temps (10 secondes)
             return;
@@ -688,7 +601,7 @@ const createScene = function (gameMode) {
         tackleController.applyBallSteal(ball);
         tackleController.maintainBallControl(ball);
         
-        const dt = scene.getEngine().getDeltaTime() / 1000;
+        const dt = Math.min(scene.getEngine().getDeltaTime() / 1000, 0.1);
 
         let moveX = 0;
         let moveZ = 0;
@@ -760,37 +673,23 @@ const createScene = function (gameMode) {
 
             const shootBtn = gp.buttons && gp.buttons[gamepadBinds.shoot];
             const shootPressed = !!(shootBtn && shootBtn.pressed);
-            const replayActive = goalReplay && typeof goalReplay.isReplayActive === "function"
-                ? goalReplay.isReplayActive()
-                : false;
 
-            if (preMatchIntroPlaying || replayActive) {
-                if (shootPressed && !gamepadState.lastSkipPressed) {
-                    if (replayActive && goalReplay && typeof goalReplay.skipReplay === "function") {
-                        goalReplay.skipReplay();
-                    } else if (preMatchIntroPlaying && typeof window.skipPreMatchIntro === "function") {
-                        window.skipPreMatchIntro();
-                    }
-                }
-                gamepadState.lastSkipPressed = shootPressed;
-            } else {
-                if (shootPressed && !gamepadState.lastShootPressed && !isCharging) {
-                    chargeStart = Date.now();
-                    isCharging = true;
-                }
-                if (!shootPressed && gamepadState.lastShootPressed && isCharging) {
-                    const force = computeKickPower(kickGauge);
-                    hideKickGauge(kickGauge);
-                    if (isRestartWaitingKick()) {
-                        takeRestartKick(ball, lastDirection, force);
-                    } else {
-                        kick(scene, ball, activePlayer, lastDirection, force, myTeam);
-                    }
-                    isCharging = false;
-                }
-                gamepadState.lastShootPressed = shootPressed;
-                gamepadState.lastSkipPressed = false;
+            if (shootPressed && !gamepadState.lastShootPressed && !isCharging) {
+                chargeStart = Date.now();
+                isCharging = true;
             }
+            if (!shootPressed && gamepadState.lastShootPressed && isCharging) {
+                const force = computeKickPower(kickGauge);
+                hideKickGauge(kickGauge);
+                if (isRestartWaitingKick()) {
+                    takeRestartKick(ball, lastDirection, force);
+                } else {
+                    kick(scene, ball, activePlayer, lastDirection, force, myTeam);
+                }
+                isCharging = false;
+            }
+            gamepadState.lastShootPressed = shootPressed;
+            gamepadState.lastSkipPressed = false;
 
             const tackleBtn = gp.buttons && gp.buttons[gamepadBinds.tackle];
             const tacklePressed = !!(tackleBtn && tackleBtn.pressed);
@@ -838,75 +737,60 @@ const createScene = function (gameMode) {
                 }
             }
             gamepadState.lastOptionsPressed = optionsPressed;
+
+            // Gestion caméra POV avec stick droit de la manette
+            if (scene.activeCamera === cameras.fpvCamera && gp.axes && gp.axes.length >= 4) {
+                const rightStickX = gp.axes[2] || 0;
+                const rightStickY = gp.axes[3] || 0;
+                const stickDeadzone = 0.15;
+                
+                // Tourner la tête avec le stick droit
+                if (Math.abs(rightStickX) > stickDeadzone || Math.abs(rightStickY) > stickDeadzone) {
+                    const fpv = cameras.fpvCamera;
+                    const rotSpeed = 0.04;  // Sensibilité de rotation
+                    
+                    // Écrire directement à la rotation globale de la caméra (qui est parented au joueur)
+                    // Pour un UniversalCamera parenté, on ajuste la rotation de la caméra relativement
+                    const x = Math.abs(rightStickX) > stickDeadzone ? rightStickX : 0;
+                    const y = Math.abs(rightStickY) > stickDeadzone ? rightStickY : 0;
+                    
+                    // Rotation horizontale (yaw) - rotation autour de l'axe Y global
+                    fpv.rotation.y += x * rotSpeed;
+                    
+                    // Rotation verticale (pitch) - limiter pour éviter de se retourner
+                    fpv.rotation.x -= y * rotSpeed;
+                    fpv.rotation.x = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, fpv.rotation.x));
+                }
+            }
         } else if (cameraRuntime && typeof cameraRuntime.computeMoveAxes === "function") {
             const move = cameraRuntime.computeMoveAxes(input);
             moveX = move.moveX;
             moveZ = move.moveZ;
         }
 
-        // Déplacement normal / tacle glissé avec gestion du sprint / endurance
-        let movement;
-        const restartTakerLocked = isRestartTaker(activePlayer);
+        const movementState = updatePlayerMovement(activePlayer, input, moveX, moveZ, dt, {
+            baseSpeed,
+            sprintMultiplier: SPRINT_MULTIPLIER,
+            staminaDrainRate: STAMINA_DRAIN_RATE,
+            staminaRegenRate: STAMINA_REGEN_RATE,
+            tackleController,
+            restartState,
+            isRestartTaker,
+            sanitizeRestartDirection,
+            getDefaultRestartDirection,
+            lastDirection,
+            playerFacing,
+            previousPlayerPosition
+        });
 
-        // Mise à jour de l'endurance du joueur actif
-        let stamina = activePlayer.stamina;
-        const maxStamina = activePlayer.maxStamina || 1;
-        const isTryingToMove = (moveX !== 0 || moveZ !== 0);
-
-        let effectiveSpeed = baseSpeed;
-
-        if (!restartTakerLocked && isTryingToMove && input.sprint && stamina > 0.05) {
-            // Sprint : vitesse augmentée, jauge qui se vide
-            effectiveSpeed = baseSpeed * SPRINT_MULTIPLIER;
-            stamina -= STAMINA_DRAIN_RATE * dt;
-        } else {
-            // Pas de sprint ou joueur à l'arrêt : la jauge se régénère
-            stamina += STAMINA_REGEN_RATE * dt;
-        }
-
-        if (stamina < 0) stamina = 0;
-        if (stamina > maxStamina) stamina = maxStamina;
-        activePlayer.stamina = stamina;
-
-        if (restartTakerLocked) {
-            // Pendant une remise : le tireur ne bouge pas,
-            // mais on peut quand même changer la direction visée
-            movement = tackleController.updateAndMove(activePlayer, 0, 0, baseSpeed);
-
-            let aimX = 0;
-            let aimZ = 0;
-
-            // On garde la même logique d'axes que ton mode TPS
-            if (input.forward) aimX += 1;
-            if (input.backward) aimX -= 1;
-            if (input.left) aimZ += 1;
-            if (input.right) aimZ -= 1;
-
-            if (aimX !== 0 || aimZ !== 0) {
-                const aim = new BABYLON.Vector3(aimX, 0, aimZ);
-                aim.normalize();
-
-                lastDirection = sanitizeRestartDirection(aim, restartState);
-                playerFacing = lastDirection.clone();
-            } else {
-                lastDirection = getDefaultRestartDirection(restartState);
-                playerFacing = lastDirection.clone();
-            }
-        } else {
-            movement = tackleController.updateAndMove(activePlayer, moveX, moveZ, effectiveSpeed);
-        }
+        const movement = movementState.movement;
+        const restartTakerLocked = movementState.restartTakerLocked;
+        lastDirection = movementState.lastDirection;
+        playerFacing = movementState.playerFacing;
+        playerMoveVelocity = movementState.playerMoveVelocity;
+        previousPlayerPosition = movementState.previousPlayerPosition;
 
         const controlledPlayer = movement.controlledPlayer;
-        const directionOpt = movement.directionOpt;
-
-        const currentPlayerPosition = controlledPlayer.position.clone();
-        playerMoveVelocity = currentPlayerPosition.subtract(previousPlayerPosition);
-        previousPlayerPosition = currentPlayerPosition;
-        
-        if (!restartTakerLocked && directionOpt) {
-            lastDirection = directionOpt;
-            playerFacing = lastDirection.clone();
-        }
 
         // COLLISION JOUEUR HUMAIN (J1) → BALLE
         checkBallCollision(controlledPlayer, ball, playerFacing, myTeam, playerMoveVelocity, input.sprint);
@@ -1002,114 +886,39 @@ const createScene = function (gameMode) {
     }
 
         // UPDATE JAUGE
-        if (isCharging) {
+        const p2ChargeState = player2Controller && typeof player2Controller.getChargeState === "function"
+            ? player2Controller.getChargeState()
+            : null;
+        const p2IsCharging = !!(p2ChargeState && p2ChargeState.isCharging);
+
+        if (isCharging || p2IsCharging) {
             const time = performance.now() / 1000;
 
-            updateKickGauge(
-                kickGauge,
-                controlledPlayer,
-                lastDirection,
-                time
-            );
+            if (p2IsCharging) {
+                updateKickGauge(
+                    kickGauge,
+                    p2ChargeState.activePlayer || opponentTeam?.activePlayer || controlledPlayer,
+                    p2ChargeState.lastDirection || lastDirection,
+                    time
+                );
+            } else {
+                updateKickGauge(
+                    kickGauge,
+                    controlledPlayer,
+                    lastDirection,
+                    time
+                );
+            }
         } else {
             hideKickGauge(kickGauge);
-        }
-
-        // PHYSIQUE SIMPLE DE LA BALLE (tir + rebonds sur les poteaux)
-        if (!ball.velocity) {
-            ball.velocity = new BABYLON.Vector3(0, 0, 0);
         }
 
         if (ball.isOutAnimationPlaying) {
             updateBallOutAnimation(ball, dt);
         } else if (!ball.isOutOfPlay) {
-            // Mise à jour de la position de la balle en fonction de sa vitesse
-            if (ball.velocity.lengthSquared() > 0.000001) {
-                ball.position.x += ball.velocity.x * dt;
-                ball.position.z += ball.velocity.z * dt;
-
-                const friction = 0.985;
-                ball.velocity.scaleInPlace(friction);
-
-                if (ball.velocity.lengthSquared() < 0.0001) {
-                    ball.velocity.set(0, 0, 0);
-                }
-
-                const ballRadius = 0.55;
-                const postRadius = 0.2;
-                const collisionDistance = ballRadius + postRadius;
-
-                let hasBounced = false;
-
-                for (let i = 0; i < goalPosts.length; i++) {
-                    const post = goalPosts[i];
-                    if (!post || hasBounced) continue;
-
-                    const postPos = post.getAbsolutePosition();
-                    const diff = ball.position.subtract(postPos);
-                    const horizontal = new BABYLON.Vector3(diff.x, 0, diff.z);
-                    const dist = horizontal.length();
-
-                    if (dist > 0 && dist < collisionDistance) {
-                        const normal = horizontal.normalize();
-
-                        const reflected = BABYLON.Vector3.Reflect(ball.velocity, normal);
-                        ball.velocity = reflected.scale(0.7);
-
-                        ball.position = postPos.add(normal.scale(collisionDistance));
-                        hasBounced = true;
-                    }
-                }
-            }
-
-            // ─── DÉFLEXION BALLE ↔ JOUEURS ──────────────────────────────────────
-            // Empêche la balle de traverser un joueur quand elle est en mouvement
-            if (!ball.restartLocked) {
-                const BALL_RADIUS   = 0.55;
-                const PLAYER_COLR   = 1.1; // rayon de collision des joueurs
-                const COMBINED_R    = BALL_RADIUS + PLAYER_COLR;
-
-                // Construire la liste de tous les joueurs à vérifier
-                const allPlayers = [...myTeam.players];
-                if (opponentTeam) allPlayers.push(...opponentTeam.players);
-
-                allPlayers.forEach(p => {
-                    if (!p || !p.position) return;
-
-                    // Ignore temporairement le joueur qui vient de tirer / pousser
-                    if (
-                        ball.lastKicker === p &&
-                        ball.ignorePlayerCollisionUntil &&
-                        performance.now() < ball.ignorePlayerCollisionUntil
-                    ) {
-                        return;
-                    }
-
-                    const dx   = ball.position.x - p.position.x;
-                    const dz   = ball.position.z - p.position.z;
-                    const dist = Math.sqrt(dx * dx + dz * dz);
-
-                    if (dist < COMBINED_R && dist > 0.001) {
-                        const nx = dx / dist;
-                        const nz = dz / dist;
-
-                        const dot = ball.velocity.x * nx + ball.velocity.z * nz;
-                        if (dot < 0) {
-                            ball.velocity.x -= 2 * dot * nx;
-                            ball.velocity.z -= 2 * dot * nz;
-
-                            // légère perte d'énergie
-                            ball.velocity.x *= 0.75;
-                            ball.velocity.z *= 0.75;
-                        }
-
-                        const overlap = COMBINED_R - dist;
-                        ball.position.x += nx * overlap;
-                        ball.position.z += nz * overlap;
-                    }
-                });
-            }
-
+            const allPlayers = [...myTeam.players];
+            if (opponentTeam) allPlayers.push(...opponentTeam.players);
+            updateBallPhysics(ball, goalPosts, allPlayers, dt);
         }
 
         if (ball.outAnimationFinished && ball.outDecision) {
@@ -1120,85 +929,21 @@ const createScene = function (gameMode) {
 
         
 
-        // GOAL DETECTION (Vérifie si le ballon est dans un des triggers de but)
-        // On vérifie d'abord que le ballon a une vraie position
-        if (ball && ball.position && !ball.isOutAnimationPlaying && !ball.isOutOfPlay) {
-            
-            // Pour des TransformNodes complexes, on peut utiliser des Sphères virtuelles ou vérifier le Mesh enfant
-            // Ici, le ballon gère sa propre physique donc sa position est suffisante
-            
-            // Méthode simple : on regarde la boundingbox du trigger
-            const ballCenter = ball.position;
-            
-            // On ajoute une vérification de sécurité : le ballon doit être près des cages (X > 45 ou X < -45)
-            // pour éviter un but fantôme si la position d'initialisation croise brièvement un trigger mal placé
-            let playerScored = false;
-            let aiScored = false;
-
-            if (Math.abs(ballCenter.x) > 45) {
-                playerScored = rightGoal.triggerBox.intersectsPoint(ballCenter);
-                aiScored = leftGoal.triggerBox.intersectsPoint(ballCenter);
-            }
-
-            if ((playerScored || aiScored) && goalReplay.isPlaying()) {
-                goalReplay.triggerGoal({ playerScored, aiScored });
-            }
-        }
+        checkGoalScored(ball, leftGoal, rightGoal, goalReplay);
 
     });
 
 
 
-    // --- UI Update (Chronomètre) ---
-    const ENABLE_PRE_MATCH_INTRO = true;
-    const PRE_MATCH_INTRO_DURATION_MS = 10000;
-    const PRE_MATCH_INTRO_TURNS = 1; // 0.5 tour = 180°
-    const TOURNAMENT_INTRO_LABEL_BY_STAGE = {
-        huitieme: "Huitieme de finale",
-        quart: "Quart de finale",
-        demi: "Demi-finale",
-        finale: "Finale"
-    };
-    const tournamentIntroLabel = mode === "versus"
-        ? "MODE 1VS1"
-        : (TOURNAMENT_INTRO_LABEL_BY_STAGE[tournamentStage] || "Huitieme de finale");
-
-    // Lancement du match après l'intro caméra
-    if (typeof window.startPreMatchIntro === "function") {
-        window.startPreMatchIntro(scene, cameras, ENABLE_PRE_MATCH_INTRO, {
-            durationMs: PRE_MATCH_INTRO_DURATION_MS,
-            rotationTurns: PRE_MATCH_INTRO_TURNS,
-            tournamentLabel: tournamentIntroLabel,
-            fromBeta: 0.45,
-            toBeta: 0.75,
-            fromRadius: 220,
-            toRadius: 100,
-            onComplete: () => {
-                // On recolle le pivot caméra sur le joueur actif
-                if (cameraRuntime && typeof cameraRuntime.syncTargetToActivePlayer === "function") {
-                    cameraRuntime.syncTargetToActivePlayer(activePlayer);
-                } else if (cameras?.cameraTargetNode && activePlayer?.position) {
-                    cameras.cameraTargetNode.position.copyFrom(activePlayer.position);
-                }
-
-                preMatchIntroPlaying = false;
-                if (cameras) cameras.allowManualSwitch = true;
-                
-                if (window.matchAudio && typeof window.matchAudio.playWhistle === "function") {
-                    window.matchAudio.playWhistle();
-                }
-                window.gameScoreboard.startTimer();
-            }
-        });
-    } else {
-        preMatchIntroPlaying = false;
-        if (cameras) cameras.allowManualSwitch = true;
-        
-        if (window.matchAudio && typeof window.matchAudio.playWhistle === "function") {
-            window.matchAudio.playWhistle();
-        }
-        window.gameScoreboard.startTimer();
-    }
+    launchPreMatchIntro({
+        scene,
+        cameras,
+        mode,
+        tournamentStage,
+        cameraRuntime,
+        getActivePlayer: () => activePlayer,
+        setIntroPlaying: (value) => { preMatchIntroPlaying = value; }
+    });
 
     scene.onBeforeRenderObservable.add(() => {
         if (!goalReplay.isPlaying()) {
@@ -1206,30 +951,130 @@ const createScene = function (gameMode) {
             return;
         }
 
-        const deltaSeconds = scene.getEngine().getDeltaTime() / 1000;
+        const deltaSeconds = Math.min(scene.getEngine().getDeltaTime() / 1000, 0.1);
         window.gameScoreboard.updateTimer(deltaSeconds);
 
         // Gère la mi-temps + fin de match (dans js/ui/matchFlow.js)
         if (matchFlow) matchFlow.update();
     });
 
-    
-
+    scene.onDisposeObservable.add(() => {
+        if (inputController && typeof inputController.dispose === "function") {
+            inputController.dispose();
+        }
+    });
 
     return scene;
 };
 
 let gameStarted = false;
 let activeScene = null;
+let activeMatchFlow = null;
+let renderLoopId = null;
 
 function startGame(mode) {
-    if (gameStarted) return;
+    // Nettoyage préalable si un jeu est déjà en cours
+    if (gameStarted) {
+        quitGame();
+    }
+
+    const mainMenu = document.getElementById("main-menu");
+    if (mainMenu) {
+        mainMenu.classList.add("is-hidden");
+        mainMenu.setAttribute("aria-hidden", "true");
+    }
+
+    setGameCanvasVisible(true);
+
+    const matchHud = document.getElementById("match-hud");
+    if (matchHud) matchHud.style.display = "flex";
+
     gameStarted = true;
     activeScene = createScene(mode);
 
+    // Réinitialiser le scoreboard APRÈS createScene() pour avoir le canvas 3D
+    if (window.gameScoreboard && typeof window.gameScoreboard.reset === "function") {
+        window.gameScoreboard.reset();
+    }
+
+    // Arrêter l'ancienne boucle si elle existe
+    if (renderLoopId !== null) {
+        engine.stopRenderLoop();
+    }
+
+    // Démarrer une nouvelle boucle de rendu
     engine.runRenderLoop(function () {
         if (activeScene) activeScene.render();
     });
+}
+
+function quitGame() {
+    // Arrêter la boucle de rendu
+    engine.stopRenderLoop();
+    renderLoopId = null;
+
+    // Disposer de la scène Babylon
+    if (activeScene) {
+        activeScene.dispose();
+        activeScene = null;
+    }
+
+    gameStarted = false;
+
+    // Nettoyage complet du matchFlow
+    if (activeMatchFlow) {
+        if (typeof activeMatchFlow.cleanup === "function") {
+            activeMatchFlow.cleanup();
+        }
+        activeMatchFlow = null;
+    }
+
+    // Arrêter tous les sons en cours
+    if (window.matchAudio && typeof window.matchAudio.stopAll === "function") {
+        window.matchAudio.stopAll();
+    }
+
+    // Reset TOUS les globals de session de jeu
+    window.goalReplayController = null;
+    window.gameCameras = null;
+    window.gameScene = null;
+    window.cameraRuntime = null;
+    window.setGameplayPaused = null;
+    window.getActivePlayer = null;
+    window.isIntroPlaying = null;
+    window.isVersusMode = null;
+    window.isMatchEnded = null;
+    window.scoreBoard3D = null;
+
+    // Masquer le canvas
+    setGameCanvasVisible(false);
+
+    // Masquer TOUS les overlays de jeu (utiliser style.display)
+    const elementIds = [
+        "match-hud",
+        "halftime-overlay",
+        "match-end-overlay",
+        "pre-match-tournament-overlay",
+        "replay-skip-btn"
+    ];
+
+    elementIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = "none";
+    });
+
+    // Masquer settings overlay
+    const settingsOverlay = document.getElementById("settings-overlay");
+    if (settingsOverlay) {
+        settingsOverlay.setAttribute("aria-hidden", "true");
+    }
+
+    // Afficher le menu principal
+    const mainMenu = document.getElementById("main-menu");
+    if (mainMenu) {
+        mainMenu.classList.remove("is-hidden");
+        mainMenu.setAttribute("aria-hidden", "false");
+    }
 }
 
 window.startTournamentMatch = function () {
@@ -1239,6 +1084,8 @@ window.startTournamentMatch = function () {
 window.startVersusMatch = function () {
     startGame("versus");
 };
+
+window.quitGame = quitGame;
 
 window.addEventListener("resize", function () {
     engine.resize();

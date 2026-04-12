@@ -79,7 +79,7 @@
         <!-- Tableau des scores façon FIFA -->
         <div id="scoreboard-container">
             <div class="team team-left">
-                <span class="team-name">YOU</span>
+                <span class="team-name" id="score-team-left">YOU</span>
                 <span class="team-color" style="background-color: #ff3333;"></span>
             </div>
             <div class="score-display">
@@ -89,7 +89,7 @@
             </div>
             <div class="team team-right">
                 <span class="team-color" style="background-color: #3333ff;"></span>
-                <span class="team-name">IA</span>
+                <span class="team-name" id="score-team-right">IA</span>
             </div>
         </div>
         
@@ -169,7 +169,7 @@
                 <div class="settings-section">
                     <h3 class="settings-section-title">Caméra</h3>
 
-                    <div class="settings-row">
+                    <div class="settings-row settings-row-camera-mode">
                         <label class="settings-label">Vue par défaut</label>
                         <div class="settings-control settings-btn-group">
                             <button class="settings-option-btn active" data-cam="broadcast">Broadcast</button>
@@ -232,6 +232,49 @@
                     </div>
                 </div>
 
+                <!-- Section Touches Joueur 2 (1v1) -->
+                <div class="settings-section settings-section-p2">
+                    <h3 class="settings-section-title">Contrôles joueur 2</h3>
+                    <div class="settings-keybinds">
+                        <div class="settings-key-row">
+                            <span>Avancer</span>
+                            <button class="settings-keybind-btn" data-action-p2="forward" type="button">Z</button>
+                        </div>
+                        <div class="settings-key-row">
+                            <span>Reculer</span>
+                            <button class="settings-keybind-btn" data-action-p2="backward" type="button">S</button>
+                        </div>
+                        <div class="settings-key-row">
+                            <span>Gauche</span>
+                            <button class="settings-keybind-btn" data-action-p2="left" type="button">Q</button>
+                        </div>
+                        <div class="settings-key-row">
+                            <span>Droite</span>
+                            <button class="settings-keybind-btn" data-action-p2="right" type="button">D</button>
+                        </div>
+                        <div class="settings-key-row">
+                            <span>Sprint</span>
+                            <button class="settings-keybind-btn" data-action-p2="sprint" type="button">Shift</button>
+                        </div>
+                        <div class="settings-key-row">
+                            <span>Tir</span>
+                            <button class="settings-keybind-btn" data-action-p2="shoot" type="button">Space</button>
+                        </div>
+                        <div class="settings-key-row">
+                            <span>Tacle</span>
+                            <button class="settings-keybind-btn" data-action-p2="tackle" type="button">T</button>
+                        </div>
+                        <div class="settings-key-row">
+                            <span>Joueur gauche</span>
+                            <button class="settings-keybind-btn" data-action-p2="switchLeft" type="button">A</button>
+                        </div>
+                        <div class="settings-key-row">
+                            <span>Joueur droite</span>
+                            <button class="settings-keybind-btn" data-action-p2="switchRight" type="button">E</button>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="settings-section">
                     <h3 class="settings-section-title">Manette</h3>
                     <div class="settings-keybinds">
@@ -267,6 +310,7 @@
             <!-- Pied de page -->
             <div class="settings-footer">
                 <button id="settings-resume-btn" class="settings-resume-btn">Reprendre la partie</button>
+                <button id="settings-quit-btn" class="settings-quit-btn">Quitter</button>
             </div>
         </div>
     </div>
@@ -411,7 +455,6 @@
     <!-- UI -->
     <script src="js/ui/scoreboard.js"></script>
     <script src="js/ui/matchFlow.js"></script>
-    <script src="js/ui/preMatchIntro.js"></script>
     <script src="js/ui/goalReplay.js"></script>
     <script src="js/ui/mainMenu.js"></script>
 
@@ -419,7 +462,7 @@
     <script src="js/models/gameLogic.js"></script>
     <script src="js/models/restartLogic.js"></script>
     <script src="js/models/tackleLogic.js"></script>
-    <script src="js/script.js"></script>
+    <script src="js/script.js" type="module"></script>
     <script src="js/ui/settings.js"></script>
 </body>
 

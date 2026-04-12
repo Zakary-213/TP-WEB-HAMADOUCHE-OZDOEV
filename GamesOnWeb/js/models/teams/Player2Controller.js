@@ -74,6 +74,16 @@ class Player2Controller {
         return 25;
     }
 
+    getChargeState() {
+        return {
+            isCharging: this.isCharging,
+            chargeStart: this.chargeStart,
+            lastDirection: this.lastDirection,
+            playerFacing: this.playerFacing,
+            activePlayer: this.team ? this.team.activePlayer : null
+        };
+    }
+
     handleKeyDown(event) {
         // Empêche le scroll de la page avec les flèches / Entrée
         if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Enter","NumpadDecimal","Numpad4","Numpad6"].includes(event.code)) {

@@ -687,6 +687,47 @@
         log("Goal loop stopped");
     }
 
+    function stopAll() {
+        // Arrêter tous les sons Babylon
+        if (state.whistleSound && state.whistleSound.isPlaying) {
+            state.whistleSound.stop();
+        }
+        if (state.kickSound && state.kickSound.isPlaying) {
+            state.kickSound.stop();
+        }
+        if (state.goalSound && state.goalSound.isPlaying) {
+            state.goalSound.stop();
+        }
+
+        // Arrêter tous les HTMLAudio fallbacks
+        if (state.whistleHtmlAudio) {
+            try {
+                state.whistleHtmlAudio.pause();
+                state.whistleHtmlAudio.currentTime = 0;
+            } catch (e) {
+                log("Whistle HTMLAudio pause skipped", e);
+            }
+        }
+        if (state.kickHtmlAudio) {
+            try {
+                state.kickHtmlAudio.pause();
+                state.kickHtmlAudio.currentTime = 0;
+            } catch (e) {
+                log("Kick HTMLAudio pause skipped", e);
+            }
+        }
+        if (state.goalHtmlAudio) {
+            try {
+                state.goalHtmlAudio.pause();
+                state.goalHtmlAudio.currentTime = 0;
+            } catch (e) {
+                log("Goal HTMLAudio pause skipped", e);
+            }
+        }
+
+        log("All sounds stopped");
+    }
+
     function setVolume(value) {
         state.soundVolume = clamp01(value);
         applySoundVolumes();
@@ -901,6 +942,7 @@
         playKick,
         playGoalLoop,
         stopGoal,
+        stopAll,
         setVolume,
         setMusicVolume,
         debugPlayWhistle: playWhistle,

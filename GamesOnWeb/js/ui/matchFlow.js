@@ -27,6 +27,7 @@
 
         let stage = 0; // 0: phase 1 en cours, 1: pause mi-temps 1, 2: phase 2 en cours, 3: fin de match
         let halftimeCountdownInterval = null;
+        let halftimeResumeTimeout = null;
 
         function stopCountdown() {
             if (halftimeCountdownInterval) {
@@ -160,7 +161,7 @@
             startHalftimeCountdown();
             // overlay mi-temps est visible pendant la pause uniquement
 
-            window.setTimeout(function () {
+            halftimeResumeTimeout = window.setTimeout(function () {
                 // reprise du jeu (phase 2)
                 stage = 2;
 
@@ -225,12 +226,17 @@
                     matchEndResultEl.textContent = "Match nul";
                 }
 
-                matchEndScoreEl.textContent = `YOU ${youScore} - ${aiScore} IA`;
+                matchEndScoreEl.textContent = scoreboard && typeof scoreboard.getScorelineText === "function"
+                    ? scoreboard.getScorelineText()
+                    : `YOU ${youScore} - ${aiScore} IA`;
             }
         }
 
         return {
             update: function () {
+                // Vérifier que la scène est toujours active (évite les appels orphelins)
+                if (!window.gameScene) return;
+                
                 if (!scoreboard) return;
                 if (stage === 0 && scoreboard.matchTime >= halfSeconds) {
                     triggerHalftime1();
@@ -238,7 +244,15 @@
                     triggerEndMatch();
                 }
             },
-            getStage: function () { return stage; }
+            getStage: function () { return stage; },
+            cleanup: function () {
+                stopCountdown();
+                if (halftimeResumeTimeout) {
+                    clearTimeout(halftimeResumeTimeout);
+                    halftimeResumeTimeout = null;
+                }
+                hideHalftimeOverlay();
+            }
         };
     }
 
