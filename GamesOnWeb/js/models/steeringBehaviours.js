@@ -78,3 +78,49 @@ function resetSteeringVelocity(player) {
     initSteeringPlayer(player);
     player.steeringVelocity.set(0, 0, 0);
 }
+
+function arriveSteering(player, target, maxSpeed = null, slowRadius = 3, stopDistance = 0.2) {
+    if (!player || !target) {
+        return BABYLON.Vector3.Zero();
+    }
+
+    initSteeringPlayer(player);
+
+    const desired = target.subtract(player.position);
+    desired.y = 0;
+
+    const dist = desired.length();
+
+    if (dist < stopDistance) {
+        return BABYLON.Vector3.Zero();
+    }
+
+    if (dist < 0.0001) {
+        return BABYLON.Vector3.Zero();
+    }
+
+    desired.normalize();
+
+    const baseSpeed = maxSpeed ?? player.maxSteeringSpeed;
+
+    let desiredSpeed = baseSpeed;
+    if (dist < slowRadius) {
+        desiredSpeed = baseSpeed * (dist / slowRadius);
+        desiredSpeed = Math.max(desiredSpeed, 0.02);
+    }
+
+    desired.scaleInPlace(desiredSpeed);
+
+    const currentVelocity = player.steeringVelocity.clone();
+    currentVelocity.y = 0;
+
+    const steering = desired.subtract(currentVelocity);
+
+    const maxForce = player.maxSteeringForce;
+    if (steering.length() > maxForce) {
+        steering.normalize();
+        steering.scaleInPlace(maxForce);
+    }
+
+    return steering;
+}

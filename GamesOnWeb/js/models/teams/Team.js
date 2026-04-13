@@ -335,7 +335,7 @@ class Team {
         const dist = toTarget.length();
 
         const stopDistance = 0.35;
-        const slowRadius = 3.0;
+        const slowRadius = 2.2;
 
         if (dist < stopDistance) {
             resetSteeringVelocity(player);
@@ -348,16 +348,17 @@ class Team {
 
         const baseSpeed = speedOverride ?? 0.07;
 
-        let desiredSpeed = baseSpeed;
-        if (dist < slowRadius) {
-            desiredSpeed = baseSpeed * (dist / slowRadius);
-            desiredSpeed = Math.max(desiredSpeed, 0.02);
-        }
-
-        player.maxSteeringSpeed = desiredSpeed;
+        player.maxSteeringSpeed = baseSpeed;
         player.maxSteeringForce = 0.012;
 
-        const steering = seekSteering(player, target, desiredSpeed);
+        const steering = arriveSteering(
+            player,
+            target,
+            baseSpeed,
+            slowRadius,
+            stopDistance
+        );
+
         const velocity = applySteering(player, steering);
 
         if (velocity.lengthSquared() < 0.00001) {
