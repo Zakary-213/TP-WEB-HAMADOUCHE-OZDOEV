@@ -124,3 +124,62 @@ function arriveSteering(player, target, maxSpeed = null, slowRadius = 3, stopDis
 
     return steering;
 }
+
+function separationSteering(player, neighbors, desiredSeparation = 4.0, maxSpeed = null) {
+    if (!player || !neighbors || neighbors.length === 0) {
+        return BABYLON.Vector3.Zero();
+    }
+
+    initSteeringPlayer(player);
+
+    const sum = new BABYLON.Vector3(0, 0, 0);
+    let count = 0;
+
+    neighbors.forEach(other => {
+        if (!other || other === player || !other.position) return;
+
+        const diff = player.position.subtract(other.position);
+        diff.y = 0;
+
+        const dist = diff.length();
+
+        if (dist <= 0.0001) return;
+        if (dist >= desiredSeparation) return;
+
+        diff.normalize();
+
+        // plus c'est proche, plus ça repousse
+        diff.scaleInPlace(1 / dist);
+
+        sum.addInPlace(diff);
+        count++;
+    });
+
+    if (count === 0) {
+        return BABYLON.Vector3.Zero();
+    }
+
+    sum.scaleInPlace(1 / count);
+
+    if (sum.lengthSquared() < 0.0001) {
+        return BABYLON.Vector3.Zero();
+    }
+
+    sum.normalize();
+
+    const desiredSpeed = maxSpeed ?? player.maxSteeringSpeed;
+    sum.scaleInPlace(desiredSpeed);
+
+    const currentVelocity = player.steeringVelocity.clone();
+    currentVelocity.y = 0;
+
+    const steering = sum.subtract(currentVelocity);
+
+    const maxForce = player.maxSteeringForce;
+    if (steering.length() > maxForce) {
+        steering.normalize();
+        steering.scaleInPlace(maxForce);
+    }
+
+    return steering;
+}

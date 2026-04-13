@@ -351,13 +351,25 @@ class Team {
         player.maxSteeringSpeed = baseSpeed;
         player.maxSteeringForce = 0.012;
 
-        const steering = arriveSteering(
+        const arriveForce = arriveSteering(
             player,
             target,
             baseSpeed,
             slowRadius,
             stopDistance
         );
+
+        const neighbors = this.getSeparationNeighbors(player);
+
+        const separationForce = separationSteering(
+            player,
+            neighbors,
+            3.2,
+            baseSpeed
+        );
+
+        // on donne un peu plus de poids à l'objectif principal
+        const steering = arriveForce.add(separationForce.scale(0.65));
 
         const velocity = applySteering(player, steering);
 
@@ -636,5 +648,15 @@ class Team {
             0,
             Math.cos(time + player.homePosition.z) * amplitude
         );
+    }
+
+    getSeparationNeighbors(player) {
+        if (!player) return [];
+
+        return this.players.filter(other => {
+            if (!other || other === player) return false;
+            if (!other.position) return false;
+            return true;
+        });
     }
 }
