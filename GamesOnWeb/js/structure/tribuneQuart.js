@@ -4,7 +4,6 @@ class TribuneQuart extends Tribune {
 
 		// Quart de finale : un peu plus grand que les huitièmes,
 		// mais moins impressionnant que la demi-finale.
-		this.crowdDensity = 0.65; // un peu plus de monde qu'en huitième
 		this.numTiers = 3;        // un étage de plus que Huitième (2 -> 3)
 		this.rowsPerTier = 9;     // légèrement plus de rangées
 		this.tierGapHeight = 2.2; // un peu plus d'espace entre les niveaux
@@ -59,9 +58,6 @@ class TribuneQuart extends Tribune {
 
 		// Animation LED sur les panneaux pub.
 		this.startLEDAnimation();
-		if (this.crowd && typeof this.crowd.startAnimation === "function") {
-			this.crowd.startAnimation();
-		}
 
 		return this.stadiumRoot;
 	}

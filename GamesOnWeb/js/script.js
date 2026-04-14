@@ -620,8 +620,11 @@ const createScene = function (gameMode) {
         }
 
         myTeam.update(ball);
-        // Met à jour l'IA uniquement si son comportement est implémenté pour ce stade
-        if (opponentTeam && opponentTeam.aiImplemented) opponentTeam.update(ball);
+        // Met aussi à jour l'équipe adverse en 1v1 :
+        // pour PlayerTeam, cela anime les coéquipiers non contrôlés via la logique Team.update().
+        if (opponentTeam && typeof opponentTeam.update === "function") {
+            opponentTeam.update(ball);
+        }
 
         if (opponentTeam && opponentTeam.aiImplemented) {
             opponentTeam.players.forEach(bot => {

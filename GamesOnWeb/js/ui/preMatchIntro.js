@@ -294,8 +294,9 @@ export function launchPreMatchIntro(params) {
     const setIntroPlaying = params.setIntroPlaying;
     const onIntroComplete = params.onIntroComplete;
 
-    const tournamentIntroLabel = TOURNAMENT_INTRO_LABEL_BY_STAGE[tournamentStage]
-        || (mode === "versus" ? "MODE 1VS1" : "Huitieme de finale");
+    const tournamentIntroLabel = mode === "versus"
+        ? "MODE 1VS1"
+        : (TOURNAMENT_INTRO_LABEL_BY_STAGE[tournamentStage] || "Huitieme de finale");
 
     const finishIntro = () => {
         const activePlayer = typeof getActivePlayer === "function" ? getActivePlayer() : null;
