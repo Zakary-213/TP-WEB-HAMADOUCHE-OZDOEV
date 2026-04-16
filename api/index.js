@@ -3,8 +3,10 @@ dotenv.config();
 
 const express = require("express");
 const cors = require("cors");
-const path = require("path");
 const app = express();
+
+const connectDB = require("../backend/connectDB/connectDB");
+const path = require("path");
 const PORT = process.env.PORT || 4000;
 
 const ALLOWED_ORIGINS = new Set([
@@ -18,42 +20,68 @@ const ALLOWED_ORIGINS = new Set([
 
 const corsOptions = {
   origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
-    const isExactMatch = ALLOWED_ORIGINS.has(origin);
+    console.log(`🔍 Requête CORS reçue de l'origine : ${origin}`);
+
+    if (!origin || ALLOWED_ORIGINS.has(origin)) {
+      return callback(null, true);
+    }
+
     const isProjectPreview = /^https:\/\/tp-web-hamadouche-ozdoev-[a-z0-9-]+-zakarys-projects-853ed3d8\.vercel\.app$/i.test(origin);
-    if (isExactMatch || isProjectPreview) return callback(null, true);
+    if (isProjectPreview) {
+      return callback(null, true);
+    }
+
+    console.warn(`⚠️ Origine bloquée par CORS : ${origin}`);
     return callback(new Error("Not allowed by CORS"));
   },
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 };
 
-// ✅ 1. CORS en premier
+// Gestion globale des erreurs pour le débogage Railway
+process.on('uncaughtException', (err) => {
+  console.error('❌ ERREUR CRITIQUE (Exception non gérée) :');
+  console.error(err.stack);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ ERREUR CRITIQUE (Promesse non gérée) :');
+  console.error(reason);
+});
+
+console.log('🎬 Démarrage du serveur...');
+
+connectDB().then(() => {
+  console.log('📡 Base de données initialisée');
+}).catch(err => {
+  console.error('❌ Échec de l\'initialisation de la DB :', err);
+});
+
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // ✅ 2. Preflight OPTIONS
 
-// ✅ 3. Body parsers
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-
-// ✅ 4. Fichiers statiques
-app.use(express.static(path.join(__dirname, "..", "frontend")));
-
-// ✅ 5. Routes API
-app.use('/api/auth', require('./authRoutes/authRoutes'));
-
-// ✅ 6. Fallback HTML
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "..", "frontend", "index.html"));
 });
 
-// ✅ 7. MongoDB après le démarrage du serveur
-const connectDB = require("./connectDB/connectDB");
+// Route de test supplémentaire
+app.get("/api/ping", (req, res) => {
+  res.json({ pong: true, time: new Date().toISOString() });
+});
 
-if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-    connectDB();
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
+
+app.use(express.static(path.join(__dirname, "..", "frontend")));
+
+app.use('/api/auth', require('../backend/authRoutes/authRoutes'));
+
+// Démarrage du serveur si ce n'est pas sur Vercel (Vercel gère l'invocation lui-même)
+if (require.main === module || process.env.RAILWAY_STATIC_URL || process.env.PORT) {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Serveur en ligne sur le port ${PORT}`);
+    console.log(`🔗 URL: 0.0.0.0:${PORT}`);
+    console.log(`📡 Prêt à recevoir des requêtes`);
   });
 }
 
