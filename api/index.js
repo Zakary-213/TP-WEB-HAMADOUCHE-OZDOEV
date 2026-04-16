@@ -35,11 +35,35 @@ const corsOptions = {
   allowedHeaders: ["Content-Type", "Authorization"]
 };
 
-connectDB();
+// Gestion globale des erreurs pour le débogage Railway
+process.on('uncaughtException', (err) => {
+  console.error('❌ ERREUR CRITIQUE (Exception non gérée) :');
+  console.error(err.stack);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ ERREUR CRITIQUE (Promesse non gérée) :');
+  console.error(reason);
+});
+
+console.log('🎬 Démarrage du serveur...');
+
+connectDB().then(() => {
+  console.log('📡 Base de données initialisée');
+}).catch(err => {
+  console.error('❌ Échec de l\'initialisation de la DB :', err);
+});
+
 app.use(cors(corsOptions));
+// ... reste du code ...
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "..", "frontend", "index.html"));
+});
+
+// Route de test supplémentaire
+app.get("/api/ping", (req, res) => {
+  res.json({ pong: true, time: new Date().toISOString() });
 });
 
 app.use(express.json());
@@ -54,6 +78,7 @@ app.use('/api/auth', require('../backend/authRoutes/authRoutes'));
 if (require.main === module || process.env.RAILWAY_STATIC_URL || process.env.PORT) {
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Serveur en ligne sur le port ${PORT}`);
+    console.log(`🔗 URL: 0.0.0.0:${PORT}`);
     console.log(`📡 Prêt à recevoir des requêtes`);
   });
 }
