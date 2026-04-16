@@ -20,15 +20,18 @@ const ALLOWED_ORIGINS = new Set([
 
 const corsOptions = {
   origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
-
-    const isExactMatch = ALLOWED_ORIGINS.has(origin);
-    const isProjectPreview = /^https:\/\/tp-web-hamadouche-ozdoev-[a-z0-9-]+-zakarys-projects-853ed3d8\.vercel\.app$/i.test(origin);
-
-    if (isExactMatch || isProjectPreview) {
+    console.log(`🔍 Requête CORS reçue de l'origine : ${origin}`);
+    
+    if (!origin || ALLOWED_ORIGINS.has(origin)) {
       return callback(null, true);
     }
 
+    const isProjectPreview = /^https:\/\/tp-web-hamadouche-ozdoev-[a-z0-9-]+-zakarys-projects-853ed3d8\.vercel\.app$/i.test(origin);
+    if (isProjectPreview) {
+      return callback(null, true);
+    }
+
+    console.warn(`⚠️ Origine bloquée par CORS : ${origin}`);
     return callback(new Error("Not allowed by CORS"));
   },
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
@@ -55,7 +58,6 @@ connectDB().then(() => {
 });
 
 app.use(cors(corsOptions));
-// ... reste du code ...
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "..", "frontend", "index.html"));
