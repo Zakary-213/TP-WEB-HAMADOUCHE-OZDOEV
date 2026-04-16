@@ -1,0 +1,30 @@
+.games-nav {
+	margin-top: 20px;
+	text-align: center;
+}
+
+.games-nav h2 {
+	font-size: 1rem;
+	margin-bottom: 10px;
+}
+
+.games-nav-actions {
+	display: flex;
+	gap: 10px;
+	justify-content: center;
+	flex-wrap: wrap;
+}
+
+.game-link {
+	display: inline-block;
+	padding: 10px 14px;
+	border-radius: 8px;
+	text-decoration: none;
+	font-weight: 600;
+	color: #fff;
+	background: #1f2937;
+}
+
+.game-link:hover {
+	background: #111827;
+}

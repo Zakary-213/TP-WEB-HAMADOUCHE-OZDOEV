@@ -20,8 +20,6 @@ const ALLOWED_ORIGINS = new Set([
 
 const corsOptions = {
   origin: (origin, callback) => {
-    console.log(`🔍 Requête CORS reçue de l'origine : ${origin}`);
-
     if (!origin || ALLOWED_ORIGINS.has(origin)) {
       return callback(null, true);
     }
