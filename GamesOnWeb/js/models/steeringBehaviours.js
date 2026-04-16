@@ -183,3 +183,97 @@ function separationSteering(player, neighbors, desiredSeparation = 4.0, maxSpeed
 
     return steering;
 }
+
+function closestPointOnSegment(point, segmentStart, segmentEnd) {
+    const ab = segmentEnd.subtract(segmentStart);
+    const ap = point.subtract(segmentStart);
+
+    const abLenSq = ab.lengthSquared();
+    if (abLenSq < 0.0001) {
+        return segmentStart.clone();
+    }
+
+    let t = BABYLON.Vector3.Dot(ap, ab) / abLenSq;
+    t = BABYLON.Scalar.Clamp(t, 0, 1);
+
+    return segmentStart.add(ab.scale(t));
+}
+
+function computeAvoidanceWaypoint(player, target, obstacles, options = {}) {
+    if (!player || !target || !obstacles || obstacles.length === 0) {
+        return null;
+    }
+
+    const avoidRadius = options.avoidRadius ?? 7.0;
+    const corridorRadius = options.corridorRadius ?? 2.8;
+    const lateralOffset = options.lateralOffset ?? 4.0;
+    const forwardLook = options.forwardLook ?? 8.0;
+
+    let forward = target.subtract(player.position);
+    forward.y = 0;
+
+    if (forward.lengthSquared() < 0.0001) {
+        if (player.facingDirection && player.facingDirection.lengthSquared() > 0.0001) {
+            forward = player.facingDirection.clone();
+            forward.y = 0;
+        } else {
+            return null;
+        }
+    }
+
+    forward.normalize();
+
+    const segmentStart = player.position.clone();
+    const segmentEnd = player.position.add(forward.scale(forwardLook));
+
+    let mostThreatening = null;
+    let bestDist = Infinity;
+
+    obstacles.forEach(other => {
+        if (!other || !other.position || other === player) return;
+
+        const toObstacle = other.position.subtract(player.position);
+        toObstacle.y = 0;
+
+        const distToPlayer = toObstacle.length();
+        if (distToPlayer > avoidRadius) return;
+
+        const dirToObstacle = toObstacle.clone().normalize();
+        const forwardDot = BABYLON.Vector3.Dot(forward, dirToObstacle);
+
+        if (forwardDot <= 0.1) return;
+
+        const closest = closestPointOnSegment(other.position, segmentStart, segmentEnd);
+        const distToPath = BABYLON.Vector3.Distance(other.position, closest);
+
+        if (distToPath > corridorRadius) return;
+
+        if (distToPlayer < bestDist) {
+            bestDist = distToPlayer;
+            mostThreatening = other;
+        }
+    });
+
+    if (!mostThreatening) {
+        return null;
+    }
+
+    const toThreat = mostThreatening.position.subtract(player.position);
+    toThreat.y = 0;
+
+    if (toThreat.lengthSquared() < 0.0001) {
+        return null;
+    }
+
+    const left = new BABYLON.Vector3(-forward.z, 0, forward.x);
+    const sideDot = BABYLON.Vector3.Dot(left, toThreat.normalize());
+
+    const lateralDir = sideDot > 0 ? left.scale(-1) : left.clone();
+
+    const waypoint = mostThreatening.position
+        .add(lateralDir.scale(lateralOffset))
+        .add(forward.scale(1.5));
+
+    waypoint.y = 0;
+    return waypoint;
+}

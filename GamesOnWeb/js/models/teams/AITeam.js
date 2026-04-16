@@ -121,11 +121,35 @@ class AITeam extends Team {
 
         initSteeringPlayer(player);
 
-        const toTarget = target.subtract(player.position);
+        const maxSpeed = options.maxSpeed ?? 0.07;
+        const maxForce = options.maxForce ?? 0.02;
+        const stopDistance = options.stopDistance ?? 0.15;
+        const slowRadius = options.slowRadius ?? 2.8;
+
+        player.maxSteeringSpeed = maxSpeed;
+        player.maxSteeringForce = maxForce;
+
+        const useAvoid = options.useAvoid ?? false;
+
+        const opponents = useAvoid
+            ? this.getAvoidOpponents(player)
+            : [];
+
+        const avoidanceTarget = useAvoid
+            ? computeAvoidanceWaypoint(player, target, opponents, {
+                avoidRadius: options.avoidRadius ?? 8.0,
+                corridorRadius: options.corridorRadius ?? 2.8,
+                lateralOffset: options.lateralOffset ?? 4.5,
+                forwardLook: options.forwardLook ?? 8.0
+            })
+            : null;
+
+        const finalTarget = avoidanceTarget || target;
+
+        const toTarget = finalTarget.subtract(player.position);
         toTarget.y = 0;
         const dist = toTarget.length();
 
-        const stopDistance = options.stopDistance ?? 0.15;
         if (dist < stopDistance) {
             resetSteeringVelocity(player);
 
@@ -135,13 +159,14 @@ class AITeam extends Team {
             return;
         }
 
-        const maxSpeed = options.maxSpeed ?? 0.07;
-        const maxForce = options.maxForce ?? 0.02;
+        const steering = arriveSteering(
+            player,
+            finalTarget,
+            maxSpeed,
+            slowRadius,
+            stopDistance
+        );
 
-        player.maxSteeringSpeed = maxSpeed;
-        player.maxSteeringForce = maxForce;
-
-        const steering = seekSteering(player, target, maxSpeed);
         const velocity = applySteering(player, steering);
 
         if (velocity.lengthSquared() < 0.00001) {
@@ -158,7 +183,12 @@ class AITeam extends Team {
 
         moveDir.normalize();
 
-        const facingDirection = options.facingDirection || moveDir;
+        let facingDirection = moveDir;
+
+        if (!avoidanceTarget && options.facingDirection && options.facingDirection.lengthSquared() > 0.0001) {
+            facingDirection = options.facingDirection.clone();
+            facingDirection.y = 0;
+        }
 
         if (facingDirection && facingDirection.lengthSquared() > 0.0001) {
             this.setFacing(player, facingDirection);
@@ -176,7 +206,14 @@ class AITeam extends Team {
             maxSpeed: options.maxSpeed ?? 0.07,
             maxForce: options.maxForce ?? 0.028,
             stopDistance: options.stopDistance ?? 0.05,
-            facingDirection: options.facingDirection ?? null
+            slowRadius: options.slowRadius ?? 3.2,
+            facingDirection: options.facingDirection ?? null,
+
+            useAvoid: true,
+            avoidRadius: options.avoidRadius ?? 9.0,
+            corridorRadius: options.corridorRadius ?? 3.0,
+            lateralOffset: options.lateralOffset ?? 5.0,
+            forwardLook: options.forwardLook ?? 9.0
         });
     }
 

@@ -330,12 +330,33 @@ class Team {
 
         initSteeringPlayer(player);
 
-        const toTarget = target.subtract(player.position);
-        toTarget.y = 0;
-        const dist = toTarget.length();
-
+        const baseSpeed = speedOverride ?? 0.07;
         const stopDistance = 0.35;
         const slowRadius = 2.2;
+
+        player.maxSteeringSpeed = baseSpeed;
+        player.maxSteeringForce = 0.012;
+
+        const useAvoid = player.role !== "GK";
+
+        const opponents = useAvoid
+            ? this.getAvoidOpponents(player)
+            : [];
+
+        const avoidanceTarget = useAvoid
+            ? computeAvoidanceWaypoint(player, target, opponents, {
+                avoidRadius: 8.0,
+                corridorRadius: 2.8,
+                lateralOffset: 4.5,
+                forwardLook: 8.0
+            })
+            : null;
+
+        const finalTarget = avoidanceTarget || target;
+
+        const toTarget = finalTarget.subtract(player.position);
+        toTarget.y = 0;
+        const dist = toTarget.length();
 
         if (dist < stopDistance) {
             resetSteeringVelocity(player);
@@ -346,14 +367,9 @@ class Team {
             return;
         }
 
-        const baseSpeed = speedOverride ?? 0.07;
-
-        player.maxSteeringSpeed = baseSpeed;
-        player.maxSteeringForce = 0.012;
-
         const arriveForce = arriveSteering(
             player,
-            target,
+            finalTarget,
             baseSpeed,
             slowRadius,
             stopDistance
@@ -368,9 +384,7 @@ class Team {
             baseSpeed
         );
 
-        // on donne un peu plus de poids à l'objectif principal
         const steering = arriveForce.add(separationForce.scale(0.65));
-
         const velocity = applySteering(player, steering);
 
         if (velocity.lengthSquared() < 0.00001) {
@@ -387,7 +401,17 @@ class Team {
 
         moveDir.normalize();
 
-        player.facingDirection = moveDir.clone();
+        let facingDirection = moveDir;
+
+        if (!avoidanceTarget && player.facingDirection && player.facingDirection.lengthSquared() > 0.0001) {
+            facingDirection = moveDir;
+        }
+
+        player.facingDirection = facingDirection.clone();
+
+        if (player.model) {
+            player.model.rotation.y = Math.atan2(facingDirection.x, facingDirection.z);
+        }
 
         const moveSpeed = velocity.length();
         player.move(moveDir.x, moveDir.z, moveSpeed);
@@ -656,6 +680,21 @@ class Team {
         return this.players.filter(other => {
             if (!other || other === player) return false;
             if (!other.position) return false;
+            return true;
+        });
+    }
+
+    getAvoidOpponents(player) {
+        if (!player) return [];
+
+        if (!this.opponents || !Array.isArray(this.opponents)) {
+            return [];
+        }
+
+        return this.opponents.filter(other => {
+            if (!other || !other.position) return false;
+            if (other === player) return false;
+            if (other.role === "GK") return false;
             return true;
         });
     }
