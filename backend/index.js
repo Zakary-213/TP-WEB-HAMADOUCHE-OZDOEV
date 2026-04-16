@@ -7,7 +7,7 @@ const app = express();
 
 const connectDB = require("./connectDB/connectDB");
 const path = require("path");
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 4000;
 
 const ALLOWED_ORIGINS = new Set([
   "https://tp-web-hamadouche-ozdoev.vercel.app",
