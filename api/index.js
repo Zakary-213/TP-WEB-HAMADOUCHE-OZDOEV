@@ -50,7 +50,7 @@ app.use(express.static(path.join(__dirname, "..", "frontend")));
 
 app.use('/api/auth', require('../backend/authRoutes/authRoutes'));
 
-if (process.env.NODE_ENV !== 'production') {
+if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
