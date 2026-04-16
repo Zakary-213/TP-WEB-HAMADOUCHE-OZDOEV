@@ -309,6 +309,7 @@ class AITeamHuitieme extends AITeam {
 
         this.players.forEach(player => {
             if (!player || player === ballCarrier) return;
+            if (player.role === "GK") return;
 
             const support = player.homePosition.clone();
             support.x += (ballCarrier.position.x - player.homePosition.x) * 0.5;
