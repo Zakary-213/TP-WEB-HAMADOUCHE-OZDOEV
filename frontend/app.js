@@ -1,4 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
+
+    const logoutBtn = document.getElementById('logout-btn');
+
+    logoutBtn.addEventListener('click', () => {
+        localStorage.removeItem('tpweb_is_authenticated');
+        location.reload();
+    });
+
     const AUTH_STATE_KEY = 'tpweb_is_authenticated';
     const gameLinks = document.querySelectorAll('.game-link');
 
