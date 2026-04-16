@@ -1,7 +1,7 @@
 {
   "name": "tp-web",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "api/index.js",
   "scripts": {
     "build": "node scripts/generate-runtime-config.js",
     "start": "node api/index.js",
