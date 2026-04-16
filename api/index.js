@@ -50,9 +50,11 @@ app.use(express.static(path.join(__dirname, "..", "frontend")));
 
 app.use('/api/auth', require('../backend/authRoutes/authRoutes'));
 
-if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+// Démarrage du serveur si ce n'est pas sur Vercel (Vercel gère l'invocation lui-même)
+if (require.main === module || process.env.RAILWAY_STATIC_URL || process.env.PORT) {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Serveur en ligne sur le port ${PORT}`);
+    console.log(`📡 Prêt à recevoir des requêtes`);
   });
 }
 
