@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-    <link rel="stylesheet" href="/frontend/index.css">
+    <link rel="stylesheet" href="index.css">
 </head>
 <body>
 
@@ -25,7 +25,7 @@
                 </div>
                 <div class="form-group">
                     <label for="login-password">Mot de passe</label>
-                    <input type="password" id="login-password" placeholder="••••••••" required>
+                    <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" required>
                 </div>
                 <button type="submit" class="submit-btn" id="login-submit">Se connecter</button>
             </form>
@@ -42,7 +42,7 @@
                 </div>
                 <div class="form-group">
                     <label for="signup-password">Mot de passe</label>
-                    <input type="password" id="signup-password" placeholder="••••••••" required minlength="6">
+                    <input type="password" id="signup-password" placeholder="••••••••" autocomplete="new-password" required minlength="6">
                 </div>
                 <button type="submit" class="submit-btn" id="signup-submit">S'inscrire</button>
             </form>
@@ -51,7 +51,7 @@
         </div>
     </div>
     
-    <script src="/frontend/runtime-config.js"></script>
-    <script src="/frontend/app.js"></script>
+    <script src="runtime-config.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
