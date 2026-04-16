@@ -6,8 +6,16 @@
       "destination": "/backend/index.js"
     },
     {
-      "source": "/",
-      "destination": "/frontend/index.html"
+      "source": "/JeuCanvas/(.*)",
+      "destination": "/JeuCanvas/$1"
+    },
+    {
+      "source": "/GamesOnWeb/(.*)",
+      "destination": "/GamesOnWeb/$1"
+    },
+    {
+      "source": "/((?!api|JeuCanvas|GamesOnWeb).*)",
+      "destination": "/frontend/$1"
     }
   ]
 }
