@@ -1,4 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const apiBaseUrl = (window.__APP_CONFIG__ && window.__APP_CONFIG__.API_BASE_URL)
+        ? window.__APP_CONFIG__.API_BASE_URL.replace(/\/$/, '')
+        : '';
+
+    const toApiUrl = (path) => {
+        const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+        return `${apiBaseUrl}${normalizedPath}`;
+    };
+
     const loginToggle = document.getElementById('login-toggle');
     const signupToggle = document.getElementById('signup-toggle');
     const loginForm = document.getElementById('login-form');
@@ -30,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const password = document.getElementById('signup-password').value;
         console.log('username:', username, 'email:', email, 'password:', password);
         try {
-            const response = await fetch('/api/auth/signup', {
+            const response = await fetch(toApiUrl('/api/auth/signup'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, email, password })
@@ -57,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const password = document.getElementById('login-password').value;
 
         try {
-            const response = await fetch('/api/auth/login', {
+            const response = await fetch(toApiUrl('/api/auth/login'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
