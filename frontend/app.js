@@ -1,4 +1,22 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const AUTH_STATE_KEY = 'tpweb_is_authenticated';
+    const gameLinks = document.querySelectorAll('.game-link');
+
+    const setGamesLocked = (locked) => {
+        gameLinks.forEach((link) => {
+            link.classList.toggle('is-locked', locked);
+            link.setAttribute('aria-disabled', String(locked));
+
+            if (locked) {
+                link.setAttribute('tabindex', '-1');
+            } else {
+                link.removeAttribute('tabindex');
+            }
+        });
+    };
+
+    const isAuthenticated = () => localStorage.getItem(AUTH_STATE_KEY) === 'true';
+
     const apiBaseUrl = (window.__APP_CONFIG__ && window.__APP_CONFIG__.API_BASE_URL)
         ? window.__APP_CONFIG__.API_BASE_URL.replace(/\/$/, '')
         : '';
@@ -13,6 +31,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('login-form');
     const signupForm = document.getElementById('signup-form');
     const messageDiv = document.getElementById('message');
+
+    setGamesLocked(!isAuthenticated());
+
+    gameLinks.forEach((link) => {
+        link.addEventListener('click', (event) => {
+            if (!isAuthenticated()) {
+                event.preventDefault();
+                showMessage('Connecte-toi d\'abord pour acceder au jeu.', 'error');
+            }
+        });
+    });
 
     // Toggle between Login and Signup
     loginToggle.addEventListener('click', () => {
@@ -75,8 +104,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
 
             if (data.success) {
+                localStorage.setItem(AUTH_STATE_KEY, 'true');
                 showMessage(`Bienvenue ${data.data.username} ! Connexion réussie.`, 'success');
                 loginForm.reset();
+                setGamesLocked(false);
                 // Here you could redirect or update UI
             } else {
                 showMessage(data.message || 'Identifiants invalides', 'error');
@@ -97,3 +128,4 @@ document.addEventListener('DOMContentLoaded', () => {
         messageDiv.textContent = '';
     }
 });
+
