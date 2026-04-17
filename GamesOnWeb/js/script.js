@@ -4,7 +4,7 @@ import { checkGoalScored } from "./game/goalDetection.js";
 import { updateBallPhysics } from "./game/ballPhysics.js";
 import { updatePlayerMovement } from "./game/playerMovement.js";
 import { setupTeams } from "./game/teamSetup.js";
-import { getVersusScoreboardLabels } from "./utils/teamLabels.js";
+import { getVersusScoreboardLabels, getVersusTeamLabels } from "./utils/teamLabels.js";
 import { saveScoreToDB } from "./score/matchResult.js";
 
 const canvas = document.getElementById("renderCanvas");
@@ -179,6 +179,7 @@ const createScene = function (gameMode) {
     const teams = setupTeams(scene, mode, tournamentStage);
     const myTeam = teams.myTeam;
     const scoreboardLabels = mode === "versus" ? getVersusScoreboardLabels() : { left: "YOU", right: "IA" };
+    const versusTeamLabels = mode === "versus" ? getVersusTeamLabels() : null;
 
     if (window.gameScoreboard && typeof window.gameScoreboard.updateTeamLabels === "function") {
         window.gameScoreboard.updateTeamLabels(scoreboardLabels.left, scoreboardLabels.right);
@@ -427,8 +428,8 @@ const createScene = function (gameMode) {
             },
             getTeamLabels: function () {
                 return {
-                    left: scoreboardLabels?.left || 'YOU',
-                    right: scoreboardLabels?.right || 'IA'
+                    left: versusTeamLabels?.leftName || scoreboardLabels?.left || 'YOU',
+                    right: versusTeamLabels?.rightName || scoreboardLabels?.right || 'IA'
                 };
             }
         });

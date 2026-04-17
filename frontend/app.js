@@ -191,6 +191,31 @@ document.addEventListener('DOMContentLoaded', () => {
         return '';
     };
 
+    const expandTeamLabel = (label) => {
+        const raw = typeof label === 'string' ? label.trim() : '';
+        if (!raw) return 'Equipe';
+
+        const shortToFull = {
+            PA: 'PARIS',
+            LY: 'LYON',
+            MA: 'MARSEILLE',
+            BO: 'BORDEAUX',
+            LI: 'LILLE',
+            NA: 'NANTES',
+            TO: 'TOULOUSE',
+            RE: 'RENNES',
+            NI: 'NICE',
+            ST: 'STRASBOURG'
+        };
+
+        const upper = raw.toUpperCase();
+        if (shortToFull[upper]) {
+            return shortToFull[upper];
+        }
+
+        return upper;
+    };
+
     const deriveResultLabel = (result, myGoals, opponentGoals) => {
         const safeResult = typeof result === 'string' ? result.toLowerCase() : '';
 
@@ -267,8 +292,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const modeLabel = match?.mode || payload?.mode || 'inconnu';
                 const stageLabel = formatTournamentStage(payload.tournamentStage);
                 const isVersus = modeLabel === 'versus' || modeLabel === '1v1';
-                const leftTeamLabel = payload.teamLeftLabel || 'YOU';
-                const rightTeamLabel = payload.teamRightLabel || 'IA';
+                const leftTeamLabel = expandTeamLabel(payload.teamLeftLabel || 'YOU');
+                const rightTeamLabel = expandTeamLabel(payload.teamRightLabel || 'IA');
                 const myGoalsLabel = isVersus ? `Buts ${leftTeamLabel}` : 'Mes buts';
                 const opponentGoalsLabel = isVersus ? `Buts ${rightTeamLabel}` : 'Buts adverses';
 
