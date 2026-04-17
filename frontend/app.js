@@ -1,12 +1,16 @@
 document.addEventListener('DOMContentLoaded', () => {
 
     const logoutBtn = document.getElementById('logout-btn');
+    const canvasScoreEl = document.getElementById('canvas-score');
+    const canvasScoreCard = document.querySelector('.score.canvas');
 
     logoutBtn.addEventListener('click', () => {
         localStorage.removeItem('tpweb_is_authenticated');
         localStorage.removeItem('tpweb_user_id');
         localStorage.removeItem('tpweb_username');
-        location.reload();
+        setGamesLocked(true);
+        syncAuthUi();
+        showMessage('Déconnexion réussie.', 'success');
     });
 
 
@@ -42,9 +46,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('login-form');
     const signupForm = document.getElementById('signup-form');
     const messageDiv = document.getElementById('message');
-    const canvasScoreEl = document.getElementById('canvas-score');
+
+    const syncAuthUi = () => {
+        const loggedIn = isAuthenticated();
+
+        if (logoutBtn) {
+            logoutBtn.style.display = loggedIn ? 'block' : 'none';
+        }
+
+        if (canvasScoreCard) {
+            canvasScoreCard.style.display = loggedIn ? 'block' : 'none';
+        }
+
+        if (!loggedIn && canvasScoreEl) {
+            canvasScoreEl.textContent = '';
+        }
+    };
 
     setGamesLocked(!isAuthenticated());
+    syncAuthUi();
 
     gameLinks.forEach((link) => {
         link.addEventListener('click', (event) => {
@@ -83,14 +103,31 @@ document.addEventListener('DOMContentLoaded', () => {
     const renderCanvasBestScore = async () => {
         if (!canvasScoreEl) return;
 
+        if (!isAuthenticated()) {
+            canvasScoreEl.textContent = '';
+            return;
+        }
+
+        const userId = localStorage.getItem('tpweb_user_id');
+        if (!userId) {
+            canvasScoreEl.textContent = 'Aucun score pour ce compte.';
+            return;
+        }
+
         canvasScoreEl.textContent = 'Chargement...';
 
         try {
-            const response = await fetch(toApiUrl('/api/scores/top?game=canvas&mode=solo&limit=1'));
+            const query = new URLSearchParams({
+                game: 'canvas',
+                mode: 'solo',
+                limit: '1',
+                userId
+            });
+            const response = await fetch(toApiUrl(`/api/scores/top?${query.toString()}`));
             const result = await response.json();
 
             if (!result.success || !Array.isArray(result.data) || result.data.length === 0) {
-                canvasScoreEl.textContent = 'Aucun score pour le moment.';
+                canvasScoreEl.textContent = 'Aucun score pour ce compte.';
                 return;
             }
 
@@ -158,6 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 loginForm.reset();
                 setGamesLocked(false);
+                syncAuthUi();
                 renderCanvasBestScore();
                 // Here you could redirect or update UI
             } else {

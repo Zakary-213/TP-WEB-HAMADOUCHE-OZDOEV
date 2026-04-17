@@ -36,16 +36,23 @@ exports.scoreCanvas = async (req, res) => {
 // @access  Public
 exports.getTopScores = async (req, res) => {
     try {
-        const { game, mode } = req.query;
+        const { game, mode, userId } = req.query;
 
         if (!game || !mode) {
             return res.status(400).json({ success: false, message: 'Missing game or mode query param' });
         }
 
-        // Get top 10 scores, sorted by totalTime ascending (faster is better)
-        const scores = await Score.find({ game, mode })
+        const limit = Math.max(1, Math.min(parseInt(req.query.limit || '10', 10), 100));
+        const query = { game, mode };
+
+        if (userId) {
+            query.user = userId;
+        }
+
+        // Get top scores, sorted by totalTime ascending (faster is better)
+        const scores = await Score.find(query)
             .sort({ totalTime: 1 })
-            .limit(10)
+            .limit(limit)
             .populate('user', 'username');
 
         res.status(200).json({
