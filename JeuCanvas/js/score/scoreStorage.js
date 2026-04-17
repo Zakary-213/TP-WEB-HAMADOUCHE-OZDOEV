@@ -45,8 +45,19 @@ export async function saveScoreToDB(scoreData) {
  * @returns {Promise<Array>} La liste des scores.
  */
 export async function getTopScoresFromDB(mode) {
+    const userId = window.CANVAS_API.getUserId();
+
+    if (!userId) {
+        return [];
+    }
+
     try {
-        const url = window.CANVAS_API.toUrl(`/api/scores/top?game=canvas&mode=${mode}`);
+        const query = new URLSearchParams({
+            game: 'canvas',
+            mode,
+            userId
+        });
+        const url = window.CANVAS_API.toUrl(`/api/scores/top?${query.toString()}`);
         const response = await fetch(url);
         const result = await response.json();
         
