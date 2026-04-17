@@ -70,10 +70,19 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 
-app.use(express.static(path.join(__dirname, "..", "frontend")));
+// Middleware de log pour débugger les 404 sur Vercel
+app.use((req, res, next) => {
+  if (req.url.startsWith('/api')) {
+    console.log(`🔍 API Route hit: ${req.method} ${req.url}`);
+  }
+  next();
+});
 
 app.use(['/api/auth', '/auth'], require('../backend/authRoutes/authRoutes'));
 app.use(['/api/scores', '/scores'], require('../backend/authRoutes/scoreRoutes'));
+
+// On déplace le static APRÈS les routes API pour éviter qu'il n'intercepte les requêtes API
+app.use(express.static(path.join(__dirname, "..", "frontend")));
 
 
 // Démarrage du serveur si ce n'est pas sur Vercel (Vercel gère l'invocation lui-même)
