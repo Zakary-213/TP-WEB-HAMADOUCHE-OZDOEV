@@ -15,7 +15,8 @@ const ALLOWED_ORIGINS = new Set([
   "https://tp-web-hamadouche-ozdoev-a0fxz66z4-zakarys-projects-853ed3d8.vercel.app",
   "http://localhost:5000",
   "http://127.0.0.1:5000",
-  "http://127.0.0.1:5501"
+  "http://127.0.0.1:5501",
+  "http://127.0.0.1:5500"
 ]);
 
 const corsOptions = {
