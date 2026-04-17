@@ -38,6 +38,7 @@
 }
 */
 
+/* Partie 1 : Navbar*/
 * {
     margin: 0;
     padding: 0;
@@ -117,4 +118,26 @@ body {
 .registerButton:hover {
     filter: brightness(1.08);
     transform: translateY(-1px);
+}
+
+/* Partie 2 : Titre */
+.heroSection {
+    width: 100%;
+    background: #000000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-top: 42px;
+}
+
+.heroTitle {
+    margin: 0;
+    color: #F1F1F1;
+    font-family: "Bebas Neue", sans-serif;
+    font-weight: 400;
+    font-size: 83.29px;
+    line-height: 0.95;
+    letter-spacing: 0;
+    text-align: center;
+    text-transform: uppercase;
 }
