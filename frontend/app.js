@@ -42,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('login-form');
     const signupForm = document.getElementById('signup-form');
     const messageDiv = document.getElementById('message');
+    const canvasScoreEl = document.getElementById('canvas-score');
 
     setGamesLocked(!isAuthenticated());
 
@@ -70,6 +71,41 @@ document.addEventListener('DOMContentLoaded', () => {
         loginForm.classList.remove('active');
         clearMessage();
     });
+
+    const formatTimeMs = (ms) => {
+        const safeMs = Number(ms) || 0;
+        const totalSeconds = Math.floor(safeMs / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    };
+
+    const renderCanvasBestScore = async () => {
+        if (!canvasScoreEl) return;
+
+        canvasScoreEl.textContent = 'Chargement...';
+
+        try {
+            const response = await fetch(toApiUrl('/api/scores/top?game=canvas&mode=solo&limit=1'));
+            const result = await response.json();
+
+            if (!result.success || !Array.isArray(result.data) || result.data.length === 0) {
+                canvasScoreEl.textContent = 'Aucun score pour le moment.';
+                return;
+            }
+
+            const best = result.data[0];
+            const pseudo = best?.data?.pseudo || best?.user?.username || 'Inconnu';
+            const totalTime = formatTimeMs(best?.totalTime);
+            const totalMeteorites = Number(best?.totalMeteorites || 0);
+
+            canvasScoreEl.textContent = `${pseudo} - ${totalTime} - ${totalMeteorites} météorites`;
+        } catch (error) {
+            canvasScoreEl.textContent = 'Impossible de charger les scores.';
+        }
+    };
+
+    renderCanvasBestScore();
 
     // Handle Signup
     signupForm.addEventListener('submit', async (e) => {
@@ -122,6 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 loginForm.reset();
                 setGamesLocked(false);
+                renderCanvasBestScore();
                 // Here you could redirect or update UI
             } else {
                 showMessage(data.message || 'Identifiants invalides', 'error');
