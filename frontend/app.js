@@ -1,11 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
 
     const logoutBtn = document.getElementById('logout-btn');
+    /*
     const canvasScoreEl = document.getElementById('canvas-score');
     const canvasScoreCard = document.querySelector('.score.canvas');
     const gowScoreEl = document.getElementById('gow-score');
     const gowScoreCard = document.querySelector('.score.gamesonweb');
-
+    */
     logoutBtn.addEventListener('click', () => {
         localStorage.removeItem('tpweb_is_authenticated');
         localStorage.removeItem('tpweb_user_id');
@@ -17,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     const AUTH_STATE_KEY = 'tpweb_is_authenticated';
-    const gameLinks = document.querySelectorAll('.game-link');
+    const gameLinks = document.querySelectorAll('.gamePlayButton');
 
     const setGamesLocked = (locked) => {
         gameLinks.forEach((link) => {
@@ -56,6 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
             logoutBtn.style.display = loggedIn ? 'block' : 'none';
         }
 
+        /*
         if (canvasScoreCard) {
             canvasScoreCard.style.display = loggedIn ? 'block' : 'none';
         }
@@ -71,6 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!loggedIn && gowScoreEl) {
             gowScoreEl.textContent = '';
         }
+            */
     };
 
     setGamesLocked(!isAuthenticated());
@@ -102,6 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
         clearMessage();
     });
 
+    /*
     const formatTimeMs = (ms) => {
         const safeMs = Number(ms) || 0;
         const totalSeconds = Math.floor(safeMs / 1000);
@@ -308,7 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     renderCanvasScores();
     renderGamesOnWebScores();
-
+    */
     // Handle Signup
     signupForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -361,8 +365,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 loginForm.reset();
                 setGamesLocked(false);
                 syncAuthUi();
+                /*
                 renderCanvasScores();
                 renderGamesOnWebScores();
+                */
                 // Here you could redirect or update UI
             } else {
                 showMessage(data.message || 'Identifiants invalides', 'error');

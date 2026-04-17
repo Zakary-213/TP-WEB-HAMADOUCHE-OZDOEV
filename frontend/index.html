@@ -92,7 +92,12 @@
         </div>
 
         <div class="navButtonWrapper">
-            <a href="#" class="registerButton">Register</a>
+            <a href="#" class="registerButton" id="openSignupModal">Register</a>
+
+            <div class="navUserPanel" id="navUserPanel" style="display: none;">
+                <span class="navUserText" id="navUserText">Welcome</span>
+                <button id="logout-btn" class="navLogoutButton" type="button">Logout</button>
+            </div>
         </div>
     </nav>
 
@@ -168,7 +173,7 @@
                     <div class="screenDots" id="screenDots" aria-label="Choix de la vidéo"></div>
                 </div>
 
-                <button class="registerNowButton">REGISTER NOW</button>
+                <button class="registerNowButton" id="openRegisterNowModal" type="button">REGISTER NOW</button>
             </div>
         </div>
     </div>
@@ -185,11 +190,11 @@
                 <h3 class="gameCardTitle">Meteor Rush</h3>
 
                 <div class="gameCardImageWrapper">
-                    <img src="./assets/images/logo.png" alt="Last Horizon">
+                    <img src="./assets/images/logo.png" alt="Meteor Rush">
                     <div class="gameCardOverlay"></div>
                 </div>
 
-                <a href="#" class="gamePlayButton">
+                <a href="/JeuCanvas/index.html" class="gamePlayButton">
                     <span>Play Now</span>
                 </a>
             </article>
@@ -202,7 +207,7 @@
                     <div class="gameCardOverlay"></div>
                 </div>
 
-                <a href="#" class="gamePlayButton">
+                <a href="/GamesOnWeb/index.html" class="gamePlayButton">
                     <span>Play Now</span>
                 </a>
             </article>
@@ -226,7 +231,77 @@
         <div class="siteFooterLine"></div>
         <p class="siteFooterText">© Copyright 2026, All Rights Reserved by GamesOnWeb</p>
     </footer>
+
+    <!-- Modale d'authentification -->
+    <div class="authModalOverlay" id="authModalOverlay" aria-hidden="true">
+        <div class="authModal" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
+            <button class="authCloseButton" id="closeAuthModal" type="button" aria-label="Close">
+                <span>&times;</span>
+            </button>
+
+            <div class="authModalGlow"></div>
+
+            <div class="authModalLeft">
+                <p class="authEyebrow" id="authEyebrow">ENTER THE ARENA</p>
+                <h2 class="authModalTitle" id="authModalTitle">JOIN THE GAMES</h2>
+                <p class="authModalText" id="authModalText">
+                    Create your account, track your progress, save your scores and access the full GamesOnWeb experience.
+                </p>
+
+                <div class="authFeatureList">
+                    <div class="authFeatureItem">Secure account access</div>
+                    <div class="authFeatureItem">Track your scores</div>
+                    <div class="authFeatureItem">Unlock your games</div>
+                </div>
+            </div>
+
+            <div class="authModalRight">
+                <div class="form-toggle authTabs">
+                    <button class="toggle-btn active" id="signup-toggle" type="button">Sign Up</button>
+                    <button class="toggle-btn" id="login-toggle" type="button">Login</button>
+                </div>
+
+                <div class="authFormsArea">
+                    <form id="signup-form" class="auth-form active">
+                        <div class="form-group">
+                            <label for="signup-username">Username</label>
+                            <input type="text" id="signup-username" placeholder="Your username" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="signup-email">Email</label>
+                            <input type="email" id="signup-email" placeholder="your@email.com" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="signup-password">Password</label>
+                            <input type="password" id="signup-password" placeholder="••••••••" autocomplete="new-password" required minlength="6">
+                        </div>
+
+                        <button type="submit" class="submit-btn authSubmitBtn" id="signup-submit">Create Account</button>
+                    </form>
+
+                    <form id="login-form" class="auth-form">
+                        <div class="form-group">
+                            <label for="login-email">Email</label>
+                            <input type="email" id="login-email" placeholder="your@email.com" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="login-password">Password</label>
+                            <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" required>
+                        </div>
+
+                        <button type="submit" class="submit-btn authSubmitBtn" id="login-submit">Log In</button>
+                    </form>
+                </div>
+
+                <div id="message" class="message"></div>
+            </div>
+        </div>
+    </div>
     
+    <script src="login.js"></script>
     <script src="cardVideo.js"></script>
     <script src="runtime-config.js"></script>
     <script src="app.js"></script>
