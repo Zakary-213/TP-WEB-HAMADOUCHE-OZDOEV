@@ -143,6 +143,8 @@ body {
 }
 
 /* Partie 3 : Bannières */
+
+/* Partie 3A : Bannières */
 .bannerGroup {
     position: absolute;
     inset: 0;
@@ -190,4 +192,62 @@ body {
     object-fit: contain;
     display: block;
     flex-shrink: 0;
+}
+
+/* Partie 3B : Ecran central */
+.screenSection {
+    position: relative;
+    z-index: 3;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding-top: 15px;
+}
+
+.screenCard {
+    position: relative;
+    width: 1250px;
+    height: 750px;
+}
+
+/* Cadre orange */
+.screenFrame {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+    z-index: 2;
+    pointer-events: none;
+}
+
+/* Vidéo au-dessus du cadre orange si c'est ce que tu veux */
+.screenVideo {
+    position: absolute;
+    top: 55px;
+    left: 25px;
+    width: 1200px;
+    height: 550px;
+    object-fit: cover;
+    background: #000000;
+    display: block;
+    z-index: 3;
+}
+
+/* Bouton tout devant */
+.registerNowButton {
+    position: absolute;
+    left: 50%;
+    bottom: 65px;
+    transform: translateX(-50%);
+    border: none;
+    background: transparent;
+    color: #FFFFFF;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 40px;
+    line-height: 1;
+    letter-spacing: 1px;
+    cursor: pointer;
+    z-index: 4;
 }
