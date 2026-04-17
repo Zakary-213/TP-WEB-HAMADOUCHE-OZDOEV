@@ -59,7 +59,26 @@ export async function saveScoreToDB(scoreData) {
             body: JSON.stringify(payload)
         });
 
-        return await response.json();
+        const rawBody = await response.text();
+        let parsedBody = null;
+
+        if (rawBody) {
+            try {
+                parsedBody = JSON.parse(rawBody);
+            } catch (parseError) {
+                parsedBody = null;
+            }
+        }
+
+        if (!response.ok) {
+            return {
+                success: false,
+                status: response.status,
+                error: parsedBody?.message || parsedBody?.error || rawBody || `HTTP ${response.status}`
+            };
+        }
+
+        return parsedBody || { success: true };
     } catch (error) {
         console.error("Erreur lors de la sauvegarde du score sur le serveur:", error);
         return { success: false, error: error.message };
