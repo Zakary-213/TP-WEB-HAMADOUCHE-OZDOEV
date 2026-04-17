@@ -72,8 +72,8 @@ app.use(express.urlencoded({ extended: false }));
 
 app.use(express.static(path.join(__dirname, "..", "frontend")));
 
-app.use('/api/auth', require('../backend/authRoutes/authRoutes'));
-app.use('/api/scores', require('../backend/authRoutes/scoreRoutes'));
+app.use(['/api/auth', '/auth'], require('../backend/authRoutes/authRoutes'));
+app.use(['/api/scores', '/scores'], require('../backend/authRoutes/scoreRoutes'));
 
 
 // Démarrage du serveur si ce n'est pas sur Vercel (Vercel gère l'invocation lui-même)
