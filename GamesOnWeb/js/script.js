@@ -1072,7 +1072,7 @@ const createScene = function (gameMode) {
     });
 
     scene.onBeforeRenderObservable.add(() => {
-        if (!goalReplay.isPlaying()) {
+        if (goalReplay.isPlaying()) {
             // Le chrono est gelé pendant le replay du but.
             return;
         }
