@@ -1,125 +1,73 @@
 /**
  * @module scoreManager
- * @description Gère la logique métier du classement.
- * Responsable du tri des scores, du filtrage par mode et de la limitation du nombre d'entrées.
+ * @description Gère la logique métier du classement en communiquant avec l'API.
  */
 
-import { getAllScores, saveAllScores } from './scoreStorage.js';
+import { saveScoreToDB, getTopScoresFromDB } from './scoreStorage.js';
 import { createSoloScore, createDuoScore} from './scoreModels.js';
 
-/** @const {number} Nombre maximum de scores conservés par classement */
-const MAX_SCORES = 10;
+/** Caches locaux pour les scores récupérés de l'API */
+let cachedScores = {
+    solo: [],
+    duo: []
+};
 
 /**
- * Trie une liste de scores par ordre croissant de temps total (le plus rapide en premier).
- * @param {string} mode - Le mode de jeu ('solo' ou 'duo').
- * @param {Array} scores - La liste des scores à trier.
- * @returns {Array} La liste triée.
- */
-function sortScores(mode, scores) {
-    if (mode === 'solo' || mode === 'duo') {
-        return scores.sort((a, b) => a.totalTime - b.totalTime);
-    }
-    return scores;
-}
-
-/**
- * Limite la liste aux meilleures performances (Top 10).
- * @param {Array} scores - La liste complète des scores.
- * @returns {Array} La liste tronquée.
- */
-function limitScores(scores) {
-    return scores.slice(0, MAX_SCORES);
-}
-
-/**
- * Enregistre un nouveau score Solo.
- * Si le pseudo existe déjà, le score n'est mis à jour que s'il est meilleur que l'ancien.
+ * Enregistre un nouveau score Solo via l'API.
  * @param {Object} data - Les données brutes du score (pseudo, niveaux, temps).
  */
-export function addSoloScore(data) {
-    const allScores = getAllScores();
+export async function addSoloScore(data) {
     const newScore = createSoloScore(data);
-
-    // Recherche d'une entrée existante pour ce joueur
-    const existingIndex = allScores.solo.findIndex(
-        score => score.pseudo === newScore.pseudo
-    );
-
-    if (existingIndex !== -1) {
-        const existingScore = allScores.solo[existingIndex];
-
-        // Remplacement uniquement en cas d'amélioration (temps plus faible)
-        if (newScore.totalTime < existingScore.totalTime) {
-            allScores.solo[existingIndex] = newScore;
-        } else {
-            return;
-        }
-    } else {
-        // Ajout simple si c'est un nouveau joueur
-        allScores.solo.push(newScore);
+    newScore.mode = 'solo';
+    
+    const result = await saveScoreToDB(newScore);
+    if (result.success) {
+        // Optionnel : on pourrait re-fetcher ici pour mettre à jour le cache immédiatement
+        fetchScores('solo');
     }
-
-    // Réorganisation et limitation du classement
-    const sorted = sortScores('solo', allScores.solo);
-    allScores.solo = limitScores(sorted);
-
-    saveAllScores(allScores);
 }
 
 /**
- * Enregistre un nouveau score Duo.
+ * Enregistre un nouveau score Duo via l'API.
  * @param {Object} data - Les données brutes (joueurs, niveauxTime).
  */
-export function addDuoScore(data) {
-    const allScores = getAllScores();
+export async function addDuoScore(data) {
     const newScore = createDuoScore(data);
-
-    allScores.duo.push(newScore);
-
-    // Réorganisation et limitation
-    const sorted = sortScores('duo', allScores.duo);
-    allScores.duo = limitScores(sorted);
-
-    saveAllScores(allScores);
+    newScore.mode = 'duo';
+    
+    const result = await saveScoreToDB(newScore);
+    if (result.success) {
+        fetchScores('duo');
+    }
 }
 
 /**
- * Récupère le classement pour un mode spécifique.
+ * Déclenche la récupération des scores depuis le serveur et met à jour le cache.
+ * @param {string} mode - 'solo' ou 'duo'.
+ */
+export async function fetchScores(mode) {
+    const scores = await getTopScoresFromDB(mode);
+    cachedScores[mode] = scores;
+}
+
+/**
+ * Récupère le classement actuel (depuis le cache).
  * @param {string} mode - 'solo' ou 'duo'.
  * @returns {Array} La liste des scores filtrée.
  */
 export function getScores(mode) {
-    const allScores = getAllScores();
-    return allScores[mode] || [];
+    return cachedScores[mode] || [];
 }
 
 /**
- * Récupère l'intégralité du stockage (tous les modes).
- * @returns {Object}
+ * Version asynchrone pour forcer une mise à jour avant lecture si nécessaire.
  */
-export function getAll() {
-    return getAllScores();
+export async function getScoresAsync(mode) {
+    await fetchScores(mode);
+    return getScores(mode);
 }
 
-/**
- * Réinitialise les scores pour un mode de jeu spécifique.
- * @param {string} mode - Le mode à vider.
- */
-export function clearMode(mode) {
-    const allScores = getAllScores();
-    if (allScores[mode]) {
-        allScores[mode] = [];
-        saveAllScores(allScores);
-    }
-}
-
-/**
- * Supprime l'intégralité des données du classement.
- */
-export function clearAll() {
-    saveAllScores({
-        solo: [],
-        duo: []
-    });
-}
+// Les fonctions de suppression ne sont plus gérées en local par l'utilisateur
+export function clearMode(mode) {}
+export function clearAll() {}
+export function getAll() { return cachedScores; }

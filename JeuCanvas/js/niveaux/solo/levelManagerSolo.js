@@ -134,48 +134,62 @@ export default class LevelManager {
     }
 
     /**
-     * Gère la fin de la campagne : demande les pseudos et enregistre les scores.
+     * Gère la fin de la campagne : enregistre les scores via le ScoreManager.
      */
-    finalizeGame() {
-        // --- ENREGISTREMENT DUO ---
-        if (this.gameManager.player1DestroyedMeteorites !== undefined) {
-            const pseudo1 = prompt("Bravo ! Pseudo Joueur 1 :");
-            const pseudo2 = prompt("Pseudo Joueur 2 :");
+    async finalizeGame() {
+        const defaultUsername = window.CANVAS_API.getUsername();
+        const isAuthenticated = !!window.CANVAS_API.getUserId();
 
-            if (pseudo1?.trim() && pseudo2?.trim()) {
-                addDuoScore({
-                    joueur1: {
-                        pseudo: pseudo1.trim(),
-                        niveaux: this.completedLevelsData.map(lvl => ({
-                            niveau: lvl.niveau,
-                            meteorites: lvl.meteoritesJ1
-                        }))
-                    },
-                    joueur2: {
-                        pseudo: pseudo2.trim(),
-                        niveaux: this.completedLevelsData.map(lvl => ({
-                            niveau: lvl.niveau,
-                            meteorites: lvl.meteoritesJ2
-                        }))
-                    },
-                    niveauxTime: this.completedLevelsData.map(lvl => ({
-                        niveau: lvl.niveau,
-                        time: lvl.time
-                    }))
-                });
+        // --- ENREGISTREMENT DUO ---
+        if (this.gameManager.player1DestroyedMeteorites !== undefined || this.gameManager.constructor.name === 'GameManagerDuo') {
+            let pseudo1 = defaultUsername;
+            let pseudo2 = "Joueur 2";
+
+            // Si non connecté, on demande quand même (fallback comportemental)
+            if (!isAuthenticated) {
+                pseudo1 = prompt("Bravo ! Pseudo Joueur 1 :", defaultUsername) || "Joueur 1";
+                pseudo2 = prompt("Pseudo Joueur 2 :") || "Joueur 2";
+            } else {
+                // En duo sur le même PC, on peut éventuellement demander le nom du partenaire
+                pseudo2 = prompt("Bravo ! Entrez le pseudo du Joueur 2 :") || "Joueur 2";
             }
+
+            await addDuoScore({
+                joueur1: {
+                    pseudo: pseudo1,
+                    niveaux: this.completedLevelsData.map(lvl => ({
+                        niveau: lvl.niveau,
+                        meteorites: lvl.meteoritesJ1 || 0
+                    }))
+                },
+                joueur2: {
+                    pseudo: pseudo2,
+                    niveaux: this.completedLevelsData.map(lvl => ({
+                        niveau: lvl.niveau,
+                        meteorites: lvl.meteoritesJ2 || 0
+                    }))
+                },
+                niveauxTime: this.completedLevelsData.map(lvl => ({
+                    niveau: lvl.niveau,
+                    time: lvl.time
+                }))
+            });
         } 
         // --- ENREGISTREMENT SOLO ---
         else {
-            const pseudo = prompt("Bravo ! Entrez votre pseudo :");
-            if (pseudo?.trim()) {
-                addSoloScore({
-                    pseudo: pseudo.trim(),
-                    niveaux: this.completedLevelsData
-                });
+            let pseudo = defaultUsername;
+            if (!isAuthenticated) {
+                const askedPseudo = prompt("Bravo ! Entrez votre pseudo :", defaultUsername);
+                if (askedPseudo) pseudo = askedPseudo.trim();
             }
+
+            await addSoloScore({
+                pseudo: pseudo,
+                niveaux: this.completedLevelsData
+            });
         }
     }
+
 
     /**
      * Nettoie le plateau de jeu et passe à l'index de niveau suivant.

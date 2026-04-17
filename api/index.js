@@ -73,6 +73,8 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, "..", "frontend")));
 
 app.use('/api/auth', require('../backend/authRoutes/authRoutes'));
+app.use('/api/scores', require('../backend/authRoutes/scoreRoutes'));
+
 
 // Démarrage du serveur si ce n'est pas sur Vercel (Vercel gère l'invocation lui-même)
 if (require.main === module || process.env.RAILWAY_STATIC_URL || process.env.PORT) {

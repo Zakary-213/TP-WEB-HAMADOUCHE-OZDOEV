@@ -4,8 +4,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     logoutBtn.addEventListener('click', () => {
         localStorage.removeItem('tpweb_is_authenticated');
+        localStorage.removeItem('tpweb_user_id');
+        localStorage.removeItem('tpweb_username');
         location.reload();
     });
+
 
     const AUTH_STATE_KEY = 'tpweb_is_authenticated';
     const gameLinks = document.querySelectorAll('.game-link');
@@ -113,7 +116,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (data.success) {
                 localStorage.setItem(AUTH_STATE_KEY, 'true');
+                localStorage.setItem('tpweb_user_id', data.data.id);
+                localStorage.setItem('tpweb_username', data.data.username);
                 showMessage(`Bienvenue ${data.data.username} ! Connexion réussie.`, 'success');
+
                 loginForm.reset();
                 setGamesLocked(false);
                 // Here you could redirect or update UI

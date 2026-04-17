@@ -8,7 +8,8 @@
  * @module gameHud
  */
 
-import { getScores } from '../score/scoreManager.js';
+import { getScores, fetchScores } from '../score/scoreManager.js';
+
 
 
 /**
@@ -165,6 +166,8 @@ let scoreScrollOffset = 0; // Décalage vertical pour le scroll
 export function resetScoreView() {
     scoreMode = 'solo';
     scoreScrollOffset = 0;
+    fetchScores('solo');
+    fetchScores('duo');
 }
 
 
@@ -215,10 +218,12 @@ export function handleScoreScreenClick(canvas, event, setEtat, ETAT) {
     if (mouseY >= tabY - 20 && mouseY <= tabY + 10) {
         if (Math.abs(mouseX - soloX) < 50) {
             setScoreMode('solo');
+            fetchScores('solo');
             return;
         }
         if (Math.abs(mouseX - duoX) < 50) {
             setScoreMode('duo');
+            fetchScores('duo');
             return;
         }
     }
