@@ -219,6 +219,18 @@ const createScene = function (gameMode) {
     const HALF_TIME_SECONDS = 20;
     const HALF_TIME_PAUSE_SECONDS = 10;
 
+    const goalTimes = {
+        player: [],
+        opponent: []
+    };
+
+    const formatMatchClock = (totalSeconds) => {
+        const safeSeconds = Math.max(0, Math.floor(Number(totalSeconds) || 0));
+        const minutes = Math.floor(safeSeconds / 60);
+        const seconds = safeSeconds % 60;
+        return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    };
+
     let gameplayPaused = false;
     let preMatchIntroPlaying = true;
 
@@ -275,8 +287,10 @@ const createScene = function (gameMode) {
 
             if (playerScored) {
                 window.gameScoreboard.playerScored();
+                goalTimes.player.push(formatMatchClock(window.gameScoreboard?.matchTime));
             } else if (aiScored) {
                 window.gameScoreboard.aiScored();
+                goalTimes.opponent.push(formatMatchClock(window.gameScoreboard?.matchTime));
             }
 
             if (myTeam && myTeam.resetPositions) myTeam.resetPositions();
@@ -404,7 +418,13 @@ const createScene = function (gameMode) {
             onQuitMatch: function () {
                 quitGame();
             },
-            saveScoreToDB: saveScoreToDB
+            saveScoreToDB: saveScoreToDB,
+            getGoalTimeline: function () {
+                return {
+                    minuteButs: [...goalTimes.player],
+                    minuteButsAdversaire: [...goalTimes.opponent]
+                };
+            }
         });
         activeMatchFlow = matchFlow;
     }

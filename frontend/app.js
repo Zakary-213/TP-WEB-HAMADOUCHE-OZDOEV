@@ -162,10 +162,33 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         return minutes
-            .map((m) => Number(m))
-            .filter((m) => Number.isFinite(m))
-            .map((m) => `${Math.max(0, Math.floor(m))}'`)
+            .map((m) => {
+                if (typeof m === 'string' && /^\d{2}:\d{2}$/.test(m)) {
+                    return m;
+                }
+
+                const numeric = Number(m);
+                if (Number.isFinite(numeric)) {
+                    const safeSeconds = Math.max(0, Math.floor(numeric));
+                    const min = Math.floor(safeSeconds / 60);
+                    const sec = safeSeconds % 60;
+                    return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+                }
+
+                return null;
+            })
+            .filter(Boolean)
             .join(', ');
+    };
+
+    const formatTournamentStage = (stage) => {
+        const value = typeof stage === 'string' ? stage.toLowerCase() : '';
+
+        if (value === 'huitieme') return 'Huitieme de finale';
+        if (value === 'quart') return 'Quart de finale';
+        if (value === 'demi') return 'Demi-finale';
+        if (value === 'finale') return 'Finale';
+        return '';
     };
 
     const deriveResultLabel = (result, myGoals, opponentGoals) => {
@@ -242,9 +265,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const myGoalTimes = formatGoalMinutes(payload.minuteButs);
                 const opponentGoalTimes = formatGoalMinutes(payload.minuteButsAdversaire);
                 const modeLabel = match?.mode || payload?.mode || 'inconnu';
+                const stageLabel = formatTournamentStage(payload.tournamentStage);
 
                 const row = document.createElement('div');
-                row.textContent = `${index + 1}. [${modeLabel}] ${resultLabel} - ${myGoals} : ${opponentGoals} | Mes buts: ${myGoalTimes} | Buts adverses: ${opponentGoalTimes}`;
+                row.textContent = `${index + 1}. [${modeLabel}${stageLabel ? ` - ${stageLabel}` : ''}] ${resultLabel} - ${myGoals} : ${opponentGoals} | Mes buts: ${myGoalTimes} | Buts adverses: ${opponentGoalTimes}`;
                 gowScoreEl.appendChild(row);
             });
         } catch (error) {

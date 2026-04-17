@@ -20,7 +20,8 @@
             setActivePlayerFn,
             onContinueTournament,
             onQuitMatch,
-            saveScoreToDB
+            saveScoreToDB,
+            getGoalTimeline
         } = config || {};
 
         const scoreboard = window.gameScoreboard;
@@ -455,14 +456,18 @@
                 if (youScore > aiScore) finalResult = "win";
                 else if (aiScore > youScore) finalResult = "loss";
 
+                const timeline = typeof getGoalTimeline === "function"
+                    ? getGoalTimeline()
+                    : { minuteButs: [], minuteButsAdversaire: [] };
+
                 saveScoreToDB({
                     mode: mode || "versus",
                     totalButs: youScore,
                     totalButsAdversaire: aiScore,
                     result: finalResult,
-                    // Si le scoreboard ne traque pas les minutes, on peut envoyer des tableaux vides
-                    minuteButs: [], 
-                    minuteButsAdversaire: []
+                    tournamentStage: mode === "tournament" ? tournamentStage : null,
+                    minuteButs: Array.isArray(timeline.minuteButs) ? timeline.minuteButs : [],
+                    minuteButsAdversaire: Array.isArray(timeline.minuteButsAdversaire) ? timeline.minuteButsAdversaire : []
                 }).then(res => {
                     console.log("Score football sauvegardé:", res);
                 }).catch(err => {
