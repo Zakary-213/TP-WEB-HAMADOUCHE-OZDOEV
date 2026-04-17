@@ -22,10 +22,6 @@
                     <span class="main-menu-brand-title">Games On Web</span>
                     <span class="main-menu-brand-sub">Choisis ton mode</span>
                 </div>
-                <div class="main-menu-user">
-                    <span class="main-menu-user-tag">Profil</span>
-                    <span class="main-menu-user-name">Joueur 1</span>
-                </div>
             </div>
 
             <div class="main-menu-layout">
@@ -50,11 +46,21 @@
                 <div class="menu-preview" aria-hidden="true">
                     <div class="menu-preview-frame" data-preview="tournament">
                         <div class="menu-preview-label">Apercu tournoi</div>
-                        <video class="menu-preview-video" data-src="" muted loop playsinline></video>
+                        <div class="menu-preview-tournament-anim" aria-hidden="true">
+                            <div class="pre-match-tournament-line">
+                                <div class="pre-match-tournament-head">HUITIEME</div>
+                                <div class="pre-match-tournament-tail"><span>DE FINALE</span></div>
+                            </div>
+                        </div>
                     </div>
                     <div class="menu-preview-frame" data-preview="versus">
                         <div class="menu-preview-label">Apercu 1vs1</div>
-                        <video class="menu-preview-video" data-src="" muted loop playsinline></video>
+                        <div class="menu-preview-tournament-anim" aria-hidden="true">
+                            <div class="pre-match-tournament-line">
+                                <div class="pre-match-tournament-head">MODE</div>
+                                <div class="pre-match-tournament-tail"><span>1VS1</span></div>
+                            </div>
+                        </div>
                     </div>
                     <div class="menu-preview-frame menu-preview-frame--idle is-active" data-preview="idle">
                         <div class="menu-preview-label">Survole un mode pour afficher la video</div>
@@ -73,7 +79,7 @@
         <!-- Tableau des scores façon FIFA -->
         <div id="scoreboard-container">
             <div class="team team-left">
-                <span class="team-name">YOU</span>
+                <span class="team-name" id="score-team-left">YOU</span>
                 <span class="team-color" style="background-color: #ff3333;"></span>
             </div>
             <div class="score-display">
@@ -83,7 +89,7 @@
             </div>
             <div class="team team-right">
                 <span class="team-color" style="background-color: #3333ff;"></span>
-                <span class="team-name">IA</span>
+                <span class="team-name" id="score-team-right">IA</span>
             </div>
         </div>
         
@@ -95,6 +101,9 @@
     <div id="halftime-overlay">
         <div id="halftime-title">MI-TEMPS</div>
         <div id="halftime-reprise">Reprise dans <span id="halftime-countdown">10</span></div>
+        <div class="halftime-actions">
+            <button id="halftime-continue-btn" class="overlay-action-btn overlay-action-btn--yellow" type="button">Continuer</button>
+        </div>
     </div>
 
     <!-- Fin du match (affiché uniquement à la fin) -->
@@ -102,6 +111,10 @@
         <div id="match-end-title">FIN DU MATCH</div>
         <div id="match-end-result">Match terminé</div>
         <div id="match-end-score">YOU 0 - 0 IA</div>
+        <div class="match-end-actions">
+            <button id="match-end-continue-btn" class="overlay-action-btn overlay-action-btn--primary" type="button">Continuer</button>
+            <button id="match-end-quit-btn" class="overlay-action-btn overlay-action-btn--danger" type="button">Quitter la partie</button>
+        </div>
     </div>
 
     <!-- Intro d'avant-match (apparition style broadcast) -->
@@ -163,7 +176,7 @@
                 <div class="settings-section">
                     <h3 class="settings-section-title">Caméra</h3>
 
-                    <div class="settings-row">
+                    <div class="settings-row settings-row-camera-mode">
                         <label class="settings-label">Vue par défaut</label>
                         <div class="settings-control settings-btn-group">
                             <button class="settings-option-btn active" data-cam="broadcast">Broadcast</button>
@@ -226,6 +239,49 @@
                     </div>
                 </div>
 
+                <!-- Section Touches Joueur 2 (1v1) -->
+                <div class="settings-section settings-section-p2">
+                    <h3 class="settings-section-title">Contrôles joueur 2</h3>
+                    <div class="settings-keybinds">
+                        <div class="settings-key-row">
+                            <span>Avancer</span>
+                            <button class="settings-keybind-btn" data-action-p2="forward" type="button">Z</button>
+                        </div>
+                        <div class="settings-key-row">
+                            <span>Reculer</span>
+                            <button class="settings-keybind-btn" data-action-p2="backward" type="button">S</button>
+                        </div>
+                        <div class="settings-key-row">
+                            <span>Gauche</span>
+                            <button class="settings-keybind-btn" data-action-p2="left" type="button">Q</button>
+                        </div>
+                        <div class="settings-key-row">
+                            <span>Droite</span>
+                            <button class="settings-keybind-btn" data-action-p2="right" type="button">D</button>
+                        </div>
+                        <div class="settings-key-row">
+                            <span>Sprint</span>
+                            <button class="settings-keybind-btn" data-action-p2="sprint" type="button">Shift</button>
+                        </div>
+                        <div class="settings-key-row">
+                            <span>Tir</span>
+                            <button class="settings-keybind-btn" data-action-p2="shoot" type="button">Space</button>
+                        </div>
+                        <div class="settings-key-row">
+                            <span>Tacle</span>
+                            <button class="settings-keybind-btn" data-action-p2="tackle" type="button">T</button>
+                        </div>
+                        <div class="settings-key-row">
+                            <span>Joueur gauche</span>
+                            <button class="settings-keybind-btn" data-action-p2="switchLeft" type="button">A</button>
+                        </div>
+                        <div class="settings-key-row">
+                            <span>Joueur droite</span>
+                            <button class="settings-keybind-btn" data-action-p2="switchRight" type="button">E</button>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="settings-section">
                     <h3 class="settings-section-title">Manette</h3>
                     <div class="settings-keybinds">
@@ -261,9 +317,121 @@
             <!-- Pied de page -->
             <div class="settings-footer">
                 <button id="settings-resume-btn" class="settings-resume-btn">Reprendre la partie</button>
+                <button id="settings-quit-btn" class="settings-quit-btn">Quitter</button>
             </div>
         </div>
     </div>
+
+    <!-- Choix des touches Joueur 2 (mode 1v1) -->
+    <div id="versus-controls-overlay" class="settings-overlay" aria-hidden="true">
+        <div class="settings-panel" role="dialog" aria-label="Choisir les touches joueur 2">
+            <div class="settings-header">
+                <span class="settings-icon">🎮</span>
+                <h2 class="settings-title">Choisi les touches joueur 2</h2>
+                <button id="versus-controls-close-btn" class="settings-close" title="Fermer">✕</button>
+            </div>
+
+            <div class="settings-body">
+                <div class="settings-section">
+                    <h3 class="settings-section-title">Contrôles joueur 2</h3>
+                    <div class="settings-keybinds">
+                        <div class="settings-key-row"><span>Avancer</span><button class="settings-keybind-btn" data-action-p2="forward" type="button">Z</button></div>
+                        <div class="settings-key-row"><span>Reculer</span><button class="settings-keybind-btn" data-action-p2="backward" type="button">S</button></div>
+                        <div class="settings-key-row"><span>Gauche</span><button class="settings-keybind-btn" data-action-p2="left" type="button">Q</button></div>
+                        <div class="settings-key-row"><span>Droite</span><button class="settings-keybind-btn" data-action-p2="right" type="button">D</button></div>
+                        <div class="settings-key-row"><span>Sprint</span><button class="settings-keybind-btn" data-action-p2="sprint" type="button">Shift</button></div>
+                        <div class="settings-key-row"><span>Tir</span><button class="settings-keybind-btn" data-action-p2="shoot" type="button">Space</button></div>
+                        <div class="settings-key-row"><span>Tacle</span><button class="settings-keybind-btn" data-action-p2="tackle" type="button">T</button></div>
+                        <div class="settings-key-row"><span>Joueur gauche</span><button class="settings-keybind-btn" data-action-p2="switchLeft" type="button">A</button></div>
+                        <div class="settings-key-row"><span>Joueur droite</span><button class="settings-keybind-btn" data-action-p2="switchRight" type="button">E</button></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-footer">
+                <button id="versus-controls-confirm-btn" class="settings-resume-btn">Valider</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Choix du skin Joueurs (mode 1v1) -->
+    <div id="versus-skin-overlay" class="settings-overlay" aria-hidden="true">
+        <div class="bg-layer">
+            <div class="bg-lines"></div>
+            <div class="bg-scan"></div>
+        </div>
+        <div class="shell" role="dialog" aria-label="Choisir le skin joueur">
+            <header class="header">
+                <div class="header-logo">GAMES ON WEB</div>
+                <div class="header-mode" id="skinHeaderMode">Selection du skin joueur 1</div>
+                <div class="header-step" id="skinHeaderStep">ETAPE 2 / 3</div>
+                <button id="versus-skin-close-btn" class="header-close" title="Retour" type="button">✕</button>
+            </header>
+
+            <aside class="panel-left">
+                <div class="section-label">Choisir un skin</div>
+                <div class="skin-list" id="skinList"></div>
+            </aside>
+
+            <main class="panel-center">
+                <div class="player-card" id="playerCard" aria-live="polite">
+                    <div class="player-stage">
+                        <div class="player-stage-bg" id="stageBg"></div>
+                        <div class="player-stage-glow" id="stageGlow"></div>
+                        <div class="player-stage-scanline"></div>
+
+                        <div class="player-team-badge" id="skinPlayerBadge">P1</div>
+                        <div class="player-number" id="playerNum">7</div>
+
+                        <canvas id="versus-skin-canvas" class="versus-skin-canvas" aria-label="Apercu 3D du skin joueur 1"></canvas>
+
+
+                    </div>
+
+                    <div class="player-info">
+                        <div>
+                            <div class="player-name" id="playerName">HUITIEME</div>
+                            <div class="player-pos" id="playerPos">Milieu de terrain • Equipe B</div>
+
+                        </div>
+                        <div>
+                            <span class="unlock-pill" id="unlockPill">Disponible</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="skin-nav-row">
+                    <button id="versus-skin-prev-btn" class="skin-nav-btn" type="button" aria-label="Skin precedent">◀</button>
+                    <div class="skin-dots" id="versus-skin-indicators" aria-hidden="true"></div>
+                    <button id="versus-skin-next-btn" class="skin-nav-btn" type="button" aria-label="Skin suivant">▶</button>
+                </div>
+            </main>
+
+            <aside class="panel-right">
+
+
+                <div class="skin-desc">
+                    <div class="skin-desc-title">Description</div>
+                    <div class="skin-desc-text" id="skinDescText"></div>
+                </div>
+
+                <div class="actions">
+                    <button class="btn-primary" id="versus-skin-confirm-btn" type="button">Choisir ce skin</button>
+                    <button class="btn-secondary" id="versus-skin-back-btn" type="button">← Retour aux controles</button>
+                </div>
+            </aside>
+
+            <footer class="footer">
+                <div class="footer-hint"><span class="kbd">◀ ▶</span> Naviguer</div>
+                <div class="footer-hint"><span class="kbd">Entree</span> Confirmer</div>
+                <div class="footer-hint"><span class="kbd">Echap</span> Retour</div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Configuration & API Partagée -->
+    <script src="../runtime-config.js"></script>
+    <script src="../JeuCanvas/js/core/canvas-api.js"></script>
 
     <!-- Utility functions -->
     <script src="js/utils/collisionUtils.js"></script>
@@ -273,7 +441,6 @@
     <!-- Project Structure Scripts -->
     <script src="js/structure/environnement.js"></script>
     <script src="js/structure/field.js"></script>
-    <script src="js/structure/crowd.js"></script>
     <script src="js/structure/tribune.js"></script>
     <script src="js/structure/tribuneDemi.js"></script>
     <script src="js/structure/tribuneQuart.js"></script>
@@ -289,6 +456,7 @@
     <!-- Teams -->
     <script src="js/models/teams/Team.js"></script>
     <script src="js/models/teams/PlayerTeam.js"></script>
+    <script src="js/models/teams/Player2Controller.js"></script>
     <script src="js/models/teams/AITeam.js"></script>
     <script src="js/models/teams/AITeamHuitieme.js"></script>
     <script src="js/models/teams/AITeamQuart.js"></script>
@@ -298,7 +466,6 @@
     <!-- UI -->
     <script src="js/ui/scoreboard.js"></script>
     <script src="js/ui/matchFlow.js"></script>
-    <script src="js/ui/preMatchIntro.js"></script>
     <script src="js/ui/goalReplay.js"></script>
     <script src="js/ui/mainMenu.js"></script>
 
@@ -307,7 +474,7 @@
     <script src="js/models/gameLogic.js"></script>
     <script src="js/models/restartLogic.js"></script>
     <script src="js/models/tackleLogic.js"></script>
-    <script src="js/script.js"></script>
+    <script src="js/script.js" type="module"></script>
     <script src="js/ui/settings.js"></script>
 </body>
 

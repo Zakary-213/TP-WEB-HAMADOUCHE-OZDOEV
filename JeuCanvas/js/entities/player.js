@@ -24,8 +24,12 @@ export default class Player {
         /** @type {string|null} Identifiant du vaisseau actuellement sélectionné pour jouer */
         this.equippedShip = null;
 
+        /** @type {Promise<void>} Dernière synchronisation serveur en cours */
+        this.syncPromise = Promise.resolve();
+
         // Chargement automatique au démarrage
         this.load();
+        this.syncWithServer();
     }
 
     // --- Gestion de l'économie (Gold) ---
@@ -98,11 +102,13 @@ export default class Player {
      * Sauvegarde l'état actuel du joueur dans le stockage local du navigateur.
      */
     save() {
-        localStorage.setItem('playerData', JSON.stringify({
+        localStorage.setItem(this._getStorageKey(), JSON.stringify({
             gold: this.gold,
             ownedShips: this.ownedShips,
             equippedShip: this.equippedShip
         }));
+
+        this._saveToServer();
     }
 
     /**
@@ -110,7 +116,7 @@ export default class Player {
      * Initialise des valeurs par défaut si aucune sauvegarde n'est trouvée.
      */
     load() {
-        const data = JSON.parse(localStorage.getItem('playerData'));
+        const data = JSON.parse(localStorage.getItem(this._getStorageKey()));
         
         if (!data) {
             // Configuration initiale par défaut pour un nouveau joueur
@@ -125,5 +131,111 @@ export default class Player {
         this.gold = data.gold ?? 0;
         this.ownedShips = data.ownedShips ?? [TYPE_VAISSEAU.NORMAL];
         this.equippedShip = data.equippedShip ?? TYPE_VAISSEAU.NORMAL;
+
+        if (!this.ownedShips.includes(TYPE_VAISSEAU.NORMAL)) {
+            this.ownedShips.unshift(TYPE_VAISSEAU.NORMAL);
+        }
+
+        if (!this.ownedShips.includes(this.equippedShip)) {
+            this.equippedShip = TYPE_VAISSEAU.NORMAL;
+        }
+    }
+
+    /**
+     * Recharge les données locales puis synchronise avec la sauvegarde serveur.
+     * @returns {Promise<void>}
+     */
+    async syncWithServer() {
+        this.load();
+
+        const userId = this._getUserId();
+        if (!userId) {
+            this.syncPromise = Promise.resolve();
+            return;
+        }
+
+        this.syncPromise = this._loadFromServer();
+        await this.syncPromise;
+    }
+
+    _getUserId() {
+        if (!window.CANVAS_API || typeof window.CANVAS_API.getUserId !== 'function') {
+            return null;
+        }
+
+        return window.CANVAS_API.getUserId();
+    }
+
+    _getStorageKey() {
+        const userId = this._getUserId() || 'guest';
+        return `playerData_${userId}`;
+    }
+
+    async _loadFromServer() {
+        const userId = this._getUserId();
+        if (!userId) return;
+
+        try {
+            const query = new URLSearchParams({ userId });
+            const response = await fetch(window.CANVAS_API.toUrl(`/api/canvas-profile?${query.toString()}`));
+            const result = await response.json();
+
+            if (!result.success || !result.data) {
+                return;
+            }
+
+            const safeData = this._normalizeData(result.data);
+            this.gold = safeData.gold;
+            this.ownedShips = safeData.ownedShips;
+            this.equippedShip = safeData.equippedShip;
+
+            localStorage.setItem(this._getStorageKey(), JSON.stringify(safeData));
+        } catch (error) {
+            console.error('Erreur lors du chargement du profil Canvas:', error);
+        }
+    }
+
+    async _saveToServer() {
+        const userId = this._getUserId();
+        if (!userId) return;
+
+        const payload = {
+            userId,
+            gold: this.gold,
+            ownedShips: this.ownedShips,
+            equippedShip: this.equippedShip
+        };
+
+        try {
+            await fetch(window.CANVAS_API.toUrl('/api/canvas-profile'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+        } catch (error) {
+            console.error('Erreur lors de la sauvegarde du profil Canvas:', error);
+        }
+    }
+
+    _normalizeData(data) {
+        const safeOwnedShips = Array.isArray(data.ownedShips)
+            ? data.ownedShips.filter((shipId) => typeof shipId === 'string' && shipId.length > 0)
+            : [TYPE_VAISSEAU.NORMAL];
+
+        if (!safeOwnedShips.includes(TYPE_VAISSEAU.NORMAL)) {
+            safeOwnedShips.unshift(TYPE_VAISSEAU.NORMAL);
+        }
+
+        const safeEquipped = typeof data.equippedShip === 'string' && safeOwnedShips.includes(data.equippedShip)
+            ? data.equippedShip
+            : TYPE_VAISSEAU.NORMAL;
+
+        const safeGold = Number.isFinite(Number(data.gold)) ? Math.max(0, Number(data.gold)) : 0;
+
+        return {
+            gold: safeGold,
+            ownedShips: safeOwnedShips,
+            equippedShip: safeEquipped
+        };
     }
 }

@@ -420,41 +420,42 @@
                 return { moveX: moveX, moveZ: moveZ };
             }
 
-           if (scene.activeCamera === cameras.broadcastCamera) {
-    var cam = cameras.broadcastCamera;
+            if (scene.activeCamera === cameras.broadcastCamera) {
+                var cam = cameras.broadcastCamera;
 
-    // La broadcast camera est fixe (alpha = -PI/2, beta ~0.88)
-    // On calcule les axes directement depuis l'angle alpha de la caméra
-    var alpha = cam.alpha; // rotation horizontale
+                // Mapping "flèches directionnelles" écran pour la broadcast :
+                // - droite/gauche clavier => droite/gauche à l'écran
+                // - z/s clavier          => haut/bas à l'écran
+                var alpha = cam.alpha;
 
-    // Axe "avant" sur le terrain (vers le but adverse)
-    var forward = new BABYLON.Vector3(
-        Math.cos(alpha + Math.PI / 2),
-        0,
-        Math.sin(alpha + Math.PI / 2)
-    );
+                // Droite écran
+                var screenRight = new BABYLON.Vector3(
+                    Math.cos(alpha + Math.PI / 2),
+                    0,
+                    Math.sin(alpha + Math.PI / 2)
+                );
 
-    // Axe "droite" perpendiculaire
-    var right = new BABYLON.Vector3(
-        Math.cos(alpha),
-        0,
-        Math.sin(alpha)
-    );
+                // Haut écran (opposé au "right" local caméra)
+                var screenUp = new BABYLON.Vector3(
+                    -Math.cos(alpha),
+                    0,
+                    -Math.sin(alpha)
+                );
 
-    var moveVector = BABYLON.Vector3.Zero();
-    if (input.forward)  moveVector.addInPlace(forward);
-    if (input.backward) moveVector.subtractInPlace(forward);
-    if (input.right)    moveVector.addInPlace(right);
-    if (input.left)     moveVector.subtractInPlace(right);
+                var moveVector = BABYLON.Vector3.Zero();
+                if (input.right)    moveVector.addInPlace(screenRight);
+                if (input.left)     moveVector.subtractInPlace(screenRight);
+                if (input.forward)  moveVector.addInPlace(screenUp);
+                if (input.backward) moveVector.subtractInPlace(screenUp);
 
-    if (moveVector.lengthSquared() > 0) {
-        moveVector.normalize();
-        moveX = moveVector.x;
-        moveZ = moveVector.z;
-    }
+                if (moveVector.lengthSquared() > 0) {
+                    moveVector.normalize();
+                    moveX = moveVector.x;
+                    moveZ = moveVector.z;
+                }
 
-    return { moveX: moveX, moveZ: moveZ };
-}
+                return { moveX: moveX, moveZ: moveZ };
+            }
 
             if (scene.activeCamera === cameras.fpvCamera) {
                 var forward = cameras.fpvCamera.getForwardRay().direction.clone();

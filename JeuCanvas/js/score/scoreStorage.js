@@ -1,72 +1,99 @@
 /**
  * @module scoreStorage
- * @description Couche d'accès aux données pour le stockage local.
- * Gère la sérialisation/désérialisation JSON et la récupération après corruption des données.
+ * @description Couche d'accès aux données pour le stockage des scores via API.
  */
-
-/** @const {string} Clé utilisée pour le stockage dans le localStorage */
-const STORAGE_KEY = 'meteorite_scores';
 
 /**
- * Retourne la structure de données initiale pour les scores.
- * @returns {Object} Un objet contenant des tableaux vides pour chaque mode.
+ * Enregistre un nouveau score dans la base de données.
+ * @param {Object} scoreData - Les données du score à sauvegarder.
+ * @returns {Promise<Object>} La réponse du serveur.
  */
-function getDefaultStructure() {
-    return {
-        solo: [],
-        duo: [],
-        duel: []
+export async function saveScoreToDB(scoreData) {
+    const userId = window.CANVAS_API.getUserId();
+    
+    if (!userId) {
+        console.warn("Utilisateur non connecté, score non sauvegardé sur le serveur.");
+        return { success: false, message: "User not logged in" };
+    }
+
+    const payload = {
+        userId,
+        game: 'canvas',
+        mode: scoreData.mode,
+        totalTime: scoreData.totalTime,
+        totalMeteorites: scoreData.totalMeteorites,
+        data: scoreData // Full object with levels etc.
     };
-}
-
-/**
- * Récupère l'intégralité des scores stockés.
- * Inclut une validation de structure pour éviter les erreurs lors de la lecture.
- * @returns {Object} Les scores formatés ou la structure par défaut en cas d'absence/erreur.
- */
-export function getAllScores() {
-    const raw = localStorage.getItem(STORAGE_KEY);
-
-    // Si aucune donnée n'existe encore
-    if (!raw) {
-        return getDefaultStructure();
-    }
 
     try {
-        const parsed = JSON.parse(raw);
+        const response = await fetch(window.CANVAS_API.toUrl('/api/scores/scorecanvas'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
 
-        /**
-         * Sécurisation de la structure :
-         * On s'assure que chaque propriété est bien un tableau pour éviter les crashs
-         * lors de l'utilisation de méthodes comme .sort() ou .push() plus tard.
-         */
-        return {
-            solo: Array.isArray(parsed.solo) ? parsed.solo : [],
-            duo: Array.isArray(parsed.duo) ? parsed.duo : [],
-            duel: Array.isArray(parsed.duel) ? parsed.duel : []
-        };
+        return await response.json();
     } catch (error) {
-        // En cas de JSON malformé (édition manuelle du localStorage par exemple)
-        console.warn('Données de scores corrompues ou illisibles, réinitialisation du stockage.');
-        return getDefaultStructure();
+        console.error("Erreur lors de la sauvegarde du score sur le serveur:", error);
+        return { success: false, error: error.message };
     }
 }
 
 /**
- * Enregistre l'objet de scores complet dans le localStorage.
- * @param {Object} data - L'objet contenant les tableaux de scores solo, duo et duel.
+ * Récupère les top scores depuis le serveur.
+ * @param {string} mode - 'solo' ou 'duo'.
+ * @returns {Promise<Array>} La liste des scores.
  */
-export function saveAllScores(data) {
+export async function getTopScoresFromDB(mode) {
+    const userId = window.CANVAS_API.getUserId();
+
+    if (!userId) {
+        return [];
+    }
+
     try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    } catch (e) {
-        console.error("Erreur lors de la sauvegarde des scores (quota plein ?)", e);
+        const query = new URLSearchParams({
+            game: 'canvas',
+            mode,
+            userId
+        });
+        const url = window.CANVAS_API.toUrl(`/api/scores/top?${query.toString()}`);
+        const response = await fetch(url);
+        const result = await response.json();
+        
+        if (result.success) {
+            // Adapter le format API au format attendu par l'UI Canvas existante.
+            return result.data.map((s) => {
+                const payload = s.data || {};
+                const pseudo = payload.pseudo || (s.user ? s.user.username : 'Inconnu');
+
+                if (mode === 'duo') {
+                    return {
+                        joueurs: Array.isArray(payload.joueurs) ? payload.joueurs : [],
+                        niveaux: Array.isArray(payload.niveaux) ? payload.niveaux : [],
+                        totalTime: s.totalTime ?? payload.totalTime ?? 0,
+                        totalMeteorites: s.totalMeteorites ?? payload.totalMeteorites ?? 0,
+                        date: new Date(s.createdAt).getTime()
+                    };
+                }
+
+                return {
+                    pseudo,
+                    niveaux: Array.isArray(payload.niveaux) ? payload.niveaux : [],
+                    totalTime: s.totalTime ?? payload.totalTime ?? 0,
+                    totalMeteorites: s.totalMeteorites ?? payload.totalMeteorites ?? 0,
+                    date: new Date(s.createdAt).getTime()
+                };
+            });
+        }
+        return [];
+    } catch (error) {
+        console.error("Erreur lors de la récupération des scores:", error);
+        return [];
     }
 }
 
-/**
- * Supprime définitivement la clé des scores du stockage local.
- */
-export function clearAllScores() {
-    localStorage.removeItem(STORAGE_KEY);
-}
+// Les anciennes fonctions de localStorage sont supprimées ou vidées car l'utilisateur n'en veut plus.
+export function getAllScores() { return { solo: [], duo: [] }; }
+export function saveAllScores(data) {}
+export function clearAllScores() {}

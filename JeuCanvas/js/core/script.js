@@ -292,7 +292,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Bouton Boutique - Redirection vers page boutique
-    btnBoutique.addEventListener('click', () => {
+    btnBoutique.addEventListener('click', async () => {
+        await player.syncWithServer();
+
         // Ouvrir la boutique sans changer l'état du jeu
         if (shopOverlay) {
             shopOverlay.classList.add('active');

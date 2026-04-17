@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+
+    <div class="container">
+        <h1>Bienvenue dans le monde du jeux video</h1>
+        
+        <div id="auth-container" class="auth-card">
+            <div class="form-toggle">
+                <button class="toggle-btn active" id="login-toggle">Connexion</button>
+                <button class="toggle-btn" id="signup-toggle">Inscription</button>
+            </div>
+
+            <!-- Login Form -->
+            <form id="login-form" class="auth-form active">
+                <div class="form-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" placeholder="votre@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Mot de passe</label>
+                    <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" required>
+                </div>
+                <button type="submit" class="submit-btn" id="login-submit">Se connecter</button>
+            </form>
+
+            <!-- Signup Form -->
+            <form id="signup-form" class="auth-form">
+                <div class="form-group">
+                    <label for="signup-username">Nom d'utilisateur</label>
+                    <input type="text" id="signup-username" placeholder="Othman" required>
+                </div>
+                <div class="form-group">
+                    <label for="signup-email">Email</label>
+                    <input type="email" id="signup-email" placeholder="votre@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="signup-password">Mot de passe</label>
+                    <input type="password" id="signup-password" placeholder="••••••••" autocomplete="new-password" required minlength="6">
+                </div>
+                <button type="submit" class="submit-btn" id="signup-submit">S'inscrire</button>
+            </form>
+
+            <div id="message" class="message"></div>
+
+            <div class="games-nav" aria-label="Choix du jeu">
+                <h2>Choisir un jeu</h2>
+                <div class="games-nav-actions">
+                    <a class="game-link" href="/JeuCanvas/index.html">Canvas</a>
+                    <a class="game-link" href="/GamesOnWeb/index.html">GamesOnWeb</a>
+                </div>
+            </div>
+
+            <div class="logout">
+                <button id="logout-btn" class="submit-btn">Se déconnecter</button>
+            </div>
+
+            <div class="score canvas">
+                <h3>Scores Canvas</h3>
+                <div id="canvas-score"></div>
+            </div>
+
+            <div class="score gamesonweb">
+                <h3>Sauvegardes GamesOnWeb</h3>
+                <div id="gow-score"></div>
+            </div>
+
+        </div>
+    </div>
+    
+    <script src="runtime-config.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

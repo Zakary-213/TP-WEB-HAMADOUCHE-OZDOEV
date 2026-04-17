@@ -273,3 +273,67 @@
         return false;
     };
 })();
+
+const ENABLE_PRE_MATCH_INTRO = true;
+const PRE_MATCH_INTRO_DURATION_MS = 10000;
+const PRE_MATCH_INTRO_TURNS = 1; // 0.5 tour = 180°
+const TOURNAMENT_INTRO_LABEL_BY_STAGE = {
+    huitieme: "Huitieme de finale",
+    quart: "Quart de finale",
+    demi: "Demi-finale",
+    finale: "Finale"
+};
+
+export function launchPreMatchIntro(params) {
+    const scene = params.scene;
+    const cameras = params.cameras;
+    const mode = params.mode;
+    const tournamentStage = params.tournamentStage;
+    const cameraRuntime = params.cameraRuntime;
+    const getActivePlayer = params.getActivePlayer;
+    const setIntroPlaying = params.setIntroPlaying;
+    const onIntroComplete = params.onIntroComplete;
+
+    const tournamentIntroLabel = mode === "versus"
+        ? "MODE 1VS1"
+        : (TOURNAMENT_INTRO_LABEL_BY_STAGE[tournamentStage] || "Huitieme de finale");
+
+    const finishIntro = () => {
+        const activePlayer = typeof getActivePlayer === "function" ? getActivePlayer() : null;
+        if (cameraRuntime && typeof cameraRuntime.syncTargetToActivePlayer === "function") {
+            cameraRuntime.syncTargetToActivePlayer(activePlayer);
+        } else if (cameras && cameras.cameraTargetNode && activePlayer && activePlayer.position) {
+            cameras.cameraTargetNode.position.copyFrom(activePlayer.position);
+        }
+
+        if (typeof setIntroPlaying === "function") {
+            setIntroPlaying(false);
+        }
+        if (cameras) cameras.allowManualSwitch = true;
+
+        if (window.matchAudio && typeof window.matchAudio.playWhistle === "function") {
+            window.matchAudio.playWhistle();
+        }
+        if (window.gameScoreboard && typeof window.gameScoreboard.startTimer === "function") {
+            window.gameScoreboard.startTimer();
+        }
+        if (typeof onIntroComplete === "function") {
+            onIntroComplete();
+        }
+    };
+
+    if (typeof window.startPreMatchIntro === "function") {
+        window.startPreMatchIntro(scene, cameras, ENABLE_PRE_MATCH_INTRO, {
+            durationMs: PRE_MATCH_INTRO_DURATION_MS,
+            rotationTurns: PRE_MATCH_INTRO_TURNS,
+            tournamentLabel: tournamentIntroLabel,
+            fromBeta: 0.45,
+            toBeta: 0.75,
+            fromRadius: 220,
+            toRadius: 100,
+            onComplete: finishIntro
+        });
+    } else {
+        finishIntro();
+    }
+}

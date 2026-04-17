@@ -4,15 +4,32 @@ class Scoreboard {
     constructor() {
         this.playerScore = 0;
         this.aiScore = 0;
+        this.leftTeamLabel = "YOU";
+        this.rightTeamLabel = "IA";
         
         this.matchTime = 0;
         this.isMatchRunning = false;
 
         this.uiPlayer = document.getElementById("score-player");
         this.uiAi = document.getElementById("score-ai");
+        this.uiLeftTeam = document.getElementById("score-team-left");
+        this.uiRightTeam = document.getElementById("score-team-right");
         this.timerElement = document.getElementById("match-timer");
 
         this.updateScoreDisplay(0, 0);
+        this.updateTeamLabels(this.leftTeamLabel, this.rightTeamLabel);
+    }
+
+    updateTeamLabels(leftLabel, rightLabel) {
+        this.leftTeamLabel = leftLabel || "YOU";
+        this.rightTeamLabel = rightLabel || "IA";
+
+        if (this.uiLeftTeam) this.uiLeftTeam.innerText = this.leftTeamLabel;
+        if (this.uiRightTeam) this.uiRightTeam.innerText = this.rightTeamLabel;
+    }
+
+    getScorelineText() {
+        return `${this.leftTeamLabel} ${this.playerScore} - ${this.aiScore} ${this.rightTeamLabel}`;
     }
 
     updateScoreDisplay(p, a) {
@@ -76,6 +93,15 @@ class Scoreboard {
         const minutes = Math.floor(this.matchTime / 60);
         const seconds = Math.floor(this.matchTime % 60);
         this.timerElement.innerText = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    reset() {
+        this.playerScore = 0;
+        this.aiScore = 0;
+        this.matchTime = 0;
+        this.isMatchRunning = false;
+        this.updateScoreDisplay(0, 0);
+        this.updateTimerDisplay();
     }
 }
 

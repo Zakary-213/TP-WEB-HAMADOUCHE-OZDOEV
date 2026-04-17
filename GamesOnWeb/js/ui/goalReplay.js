@@ -49,11 +49,14 @@
                 document.body.appendChild(skipButton);
             }
 
-            skipButton.addEventListener("click", () => {
+            // Peut avoir ete masque via style.display="none" apres un quit.
+            skipButton.style.display = "";
+
+            skipButton.onclick = () => {
                 if (gameState === "replay" || gameState === "replayBanner") {
                     finalizeGoal();
                 }
-            });
+            };
         }
 
         function setSkipButtonVisible(visible) {

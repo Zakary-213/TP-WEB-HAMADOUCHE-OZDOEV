@@ -5,6 +5,7 @@
     "use strict";
 
     const STORAGE_KEY = "gow.keybinds.v1";
+    const STORAGE_KEY_P2 = "gow.keybinds.p2.v1";
     const GAMEPAD_STORAGE_KEY = "gow.gamepadbinds.v1";
     const DEFAULTS = {
         forward: "z",
@@ -17,6 +18,19 @@
         switchLeft: "a",
         switchRight: "e"
     };
+    // Touches par défaut du joueur 2 : flèches + touches dédiées
+    // Complètement séparées de celles du joueur 1 (ZQSD)
+    const DEFAULTS_P2 = {
+        forward: "ArrowUp",
+        backward: "ArrowDown",
+        left: "ArrowLeft",
+        right: "ArrowRight",
+        sprint: "RShift",
+        shoot: "Enter",
+        tackle: "NumpadDecimal",
+        switchLeft: "Numpad4",
+        switchRight: "Numpad6"
+    };
     const DEFAULT_GAMEPAD = {
         shoot: 0,
         sprint: 7,
@@ -27,6 +41,7 @@
     };
 
     let bindings = loadBindings();
+    let player2Bindings = loadPlayer2Bindings();
     let gamepadBindings = loadGamepadBindings();
 
     function loadBindings() {
@@ -43,6 +58,36 @@
     function saveBindings() {
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(bindings));
+        } catch (err) {
+            // ignore storage failures
+        }
+    }
+
+    function loadPlayer2Bindings() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY_P2);
+            if (!raw) return { ...DEFAULTS_P2 };
+            const parsed = JSON.parse(raw) || {};
+            // Migration : si les touches sauvegardées sont identiques aux anciens
+            // défauts J1 (forward=z, backward=s, left=q, right=d), on remet les
+            // nouveaux défauts J2 (touches fléchées) pour éviter les conflits.
+            const isOldP1Default =
+                (parsed.forward || "").toLowerCase() === "z" &&
+                (parsed.backward || "").toLowerCase() === "s" &&
+                (parsed.left || "").toLowerCase() === "q" &&
+                (parsed.right || "").toLowerCase() === "d";
+            if (isOldP1Default) {
+                return { ...DEFAULTS_P2 };
+            }
+            return { ...DEFAULTS_P2, ...parsed };
+        } catch (err) {
+            return { ...DEFAULTS_P2 };
+        }
+    }
+
+    function savePlayer2Bindings() {
+        try {
+            localStorage.setItem(STORAGE_KEY_P2, JSON.stringify(player2Bindings));
         } catch (err) {
             // ignore storage failures
         }
@@ -70,8 +115,14 @@
     function normalizeKeyValue(value) {
         if (!value) return null;
         if (value === "Shift") return "Shift";
+        if (value === "ShiftLeft" || value === "ShiftRight" || value === "LShift" || value === "RShift") {
+            return "Shift";
+        }
         if (value === "Space") return "Space";
+        if (/^Key[A-Z]$/.test(value)) return value[3].toLowerCase();
         if (value.length === 1) return value.toLowerCase();
+        // Touches spéciales multi-caractères : ArrowUp, Enter, RShift, NumpadDecimal…
+        // On les accepte telles quelles (la comparaison se fera via event.code)
         return value;
     }
 
@@ -103,6 +154,12 @@
             return { ok: false, reason: "duplicate", conflictAction };
         }
 
+        // Empêche de prendre une touche déjà utilisée par le joueur 2
+        const conflictP2 = findPlayer2Conflict(null, normalized);
+        if (conflictP2) {
+            return { ok: false, reason: "duplicate-p2", conflictAction: conflictP2 };
+        }
+
         bindings = { ...bindings, [action]: normalized };
         saveBindings();
         return { ok: true };
@@ -111,6 +168,47 @@
     function setBindings(next) {
         bindings = { ...DEFAULTS, ...(next || {}) };
         saveBindings();
+    }
+
+    function findPlayer2Conflict(action, value) {
+        const keys = Object.keys(player2Bindings);
+        for (let i = 0; i < keys.length; i += 1) {
+            const act = keys[i];
+            if (act === action) continue;
+            if (valuesEqual(player2Bindings[act], value)) return act;
+        }
+        return null;
+    }
+
+    function setPlayer2Binding(action, value) {
+        const normalized = normalizeKeyValue(value);
+        if (!normalized) {
+            return { ok: false, reason: "invalid" };
+        }
+
+        const conflictAction = findPlayer2Conflict(action, normalized);
+        if (conflictAction) {
+            return { ok: false, reason: "duplicate", conflictAction };
+        }
+
+        // Empêche de prendre une touche déjà utilisée par le joueur 1
+        const conflictP1 = findConflict(null, normalized);
+        if (conflictP1) {
+            return { ok: false, reason: "duplicate-p1", conflictAction: conflictP1 };
+        }
+
+        player2Bindings = { ...player2Bindings, [action]: normalized };
+        savePlayer2Bindings();
+        return { ok: true };
+    }
+
+    function setPlayer2Bindings(next) {
+        player2Bindings = { ...DEFAULTS_P2, ...(next || {}) };
+        savePlayer2Bindings();
+    }
+
+    function getPlayer2Bindings() {
+        return { ...player2Bindings };
     }
 
     function isValidGamepadButton(value) {
@@ -215,9 +313,13 @@
 
     window.inputBindings = {
         DEFAULTS,
+        DEFAULTS_P2,
         getBindings,
         setBindings,
         setBinding,
+        getPlayer2Bindings,
+        setPlayer2Bindings,
+        setPlayer2Binding,
         isActionKey,
         DEFAULT_GAMEPAD,
         getGamepadBindings,

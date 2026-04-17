@@ -92,6 +92,7 @@ class StadiumCrowd {
         const matrices  = new Float32Array(total * 16);
         const basePosY  = new Float32Array(total);   // Y de repos (sans saut)
         const posX      = new Float32Array(total);   // X pour la phase de vague
+        const posZ      = new Float32Array(total);   // Z fixe (ne dépend pas de la matrice animée)
 
         const tmp = new BABYLON.Matrix();
         let idx = 0;
@@ -104,6 +105,7 @@ class StadiumCrowd {
 
                 basePosY[idx] = restY;
                 posX[idx]     = x;
+                posZ[idx]     = row.z;
 
                 BABYLON.Matrix.TranslationToRef(x, restY, row.z, tmp);
                 tmp.copyToArray(matrices, idx * 16);
@@ -113,7 +115,7 @@ class StadiumCrowd {
 
         mesh.thinInstanceSetBuffer("matrix", matrices, 16);
 
-        this._stands.push({ mesh, matrices, basePosY, posX, count: total, seed });
+        this._stands.push({ mesh, matrices, basePosY, posX, posZ, count: total, seed });
     }
 
     // ─── Animation : vague de sauts ──────────────────────────────────────────
@@ -130,7 +132,7 @@ class StadiumCrowd {
         const tmp = new BABYLON.Matrix();
 
         for (const s of this._stands) {
-            const { mesh, matrices, basePosY, posX, count, seed } = s;
+            const { mesh, matrices, basePosY, posX, posZ, count, seed } = s;
             const JUMP_HEIGHT = 1.2;  // hauteur de saut en unités
             const JUMP_SPEED  = 2.2;  // vitesse de la vague
             const WAVE_FREQ   = 0.28; // fréquence spatiale (propagation)
@@ -141,11 +143,7 @@ class StadiumCrowd {
                 const bounce = Math.max(0, Math.sin(phase));
                 const y      = basePosY[i] + bounce * JUMP_HEIGHT;
 
-                BABYLON.Matrix.TranslationToRef(posX[i], y, 
-                    // récupère Z depuis la matrice de base (offset 14 = colonne 4, ligne 3)
-                    matrices[i * 16 + 14], 
-                    tmp
-                );
+                BABYLON.Matrix.TranslationToRef(posX[i], y, posZ[i], tmp);
                 tmp.copyToArray(matrices, i * 16);
             }
 

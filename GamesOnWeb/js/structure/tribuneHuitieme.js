@@ -2,7 +2,6 @@ class TribuneHuitieme extends Tribune {
 	constructor(scene) {
 		super(scene);
 		// Huitième de finale : stade plus modeste
-		this.crowdDensity = 0.4; // pas trop de supporters
 		this.numTiers = 2;      // un étage de moins
 		this.rowsPerTier = 8;   // moins de rangées
 		this.tierGapHeight = 2; // niveaux plus rapprochés
@@ -53,9 +52,8 @@ class TribuneHuitieme extends Tribune {
 		// Pas de grandes tours ni de grosses poutres rouges ici :
 		// le stade de huitième reste visuellement plus simple.
 
-		// On garde tout de même l'animation LED sur les panneaux pub.
+		// Animation LED sur les panneaux pub.
 		this.startLEDAnimation();
-		this.crowd.startAnimation(); // Mexican Wave — boules qui sautent
 
 		return this.stadiumRoot;
 	}
