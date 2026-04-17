@@ -2,7 +2,7 @@
 // Gestion "mi-temps 1 / mi-temps 2 -> fin du match"
 // Fait l'affichage et pilote pause/reprise via un callback.
 
-import { saveScoreToDB } from "../../../JeuCanvas/js/score/scoreStorage";
+// import { saveScoreToDB } from "../../../JeuCanvas/js/score/scoreStorage";
 
 (function () {
     function createMatchFlow(config) {
@@ -19,7 +19,8 @@ import { saveScoreToDB } from "../../../JeuCanvas/js/score/scoreStorage";
             basePlayer,
             setActivePlayerFn,
             onContinueTournament,
-            onQuitMatch
+            onQuitMatch,
+            saveScoreToDB
         } = config || {};
 
         const scoreboard = window.gameScoreboard;
@@ -69,8 +70,7 @@ import { saveScoreToDB } from "../../../JeuCanvas/js/score/scoreStorage";
             visibleButtons.forEach(function (btn, index) {
                 btn.classList.toggle("overlay-action-btn--selected", index === matchEndSelectedIndex);
             });
-
-            saveScoreToDB();
+            // saveScoreToDB(); // Erreur: cet appel était déplacé et manquait d'arguments
         }
 
         function moveMatchEndSelection(dir) {
@@ -446,6 +446,29 @@ import { saveScoreToDB } from "../../../JeuCanvas/js/score/scoreStorage";
 
             matchEndSelectedIndex = 0;
             updateMatchEndButtonSelection();
+
+            // Sauvegarde du score une seule fois à la fin du match
+            if (typeof saveScoreToDB === "function") {
+                const youScore = scoreboard?.playerScore ?? 0;
+                const aiScore = scoreboard?.aiScore ?? 0;
+                let finalResult = "draw";
+                if (youScore > aiScore) finalResult = "win";
+                else if (aiScore > youScore) finalResult = "loss";
+
+                saveScoreToDB({
+                    mode: mode || "versus",
+                    totalButs: youScore,
+                    totalButsAdversaire: aiScore,
+                    result: finalResult,
+                    // Si le scoreboard ne traque pas les minutes, on peut envoyer des tableaux vides
+                    minuteButs: [], 
+                    minuteButsAdversaire: []
+                }).then(res => {
+                    console.log("Score football sauvegardé:", res);
+                }).catch(err => {
+                    console.error("Erreur lors de la sauvegarde du score football:", err);
+                });
+            }
 
             startMatchEndGamepadPolling();
         }

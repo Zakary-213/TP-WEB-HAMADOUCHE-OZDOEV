@@ -5,6 +5,7 @@ import { updateBallPhysics } from "./game/ballPhysics.js";
 import { updatePlayerMovement } from "./game/playerMovement.js";
 import { setupTeams } from "./game/teamSetup.js";
 import { getVersusScoreboardLabels } from "./utils/teamLabels.js";
+import { saveScoreToDB } from "./score/matchResult.js";
 
 const canvas = document.getElementById("renderCanvas");
 const engine = new BABYLON.Engine(canvas, true);
@@ -402,7 +403,8 @@ const createScene = function (gameMode) {
             },
             onQuitMatch: function () {
                 quitGame();
-            }
+            },
+            saveScoreToDB: saveScoreToDB
         });
         activeMatchFlow = matchFlow;
     }
