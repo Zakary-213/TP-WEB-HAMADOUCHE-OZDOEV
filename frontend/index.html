@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="index.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
 </head>
 <body>
 
@@ -135,9 +136,37 @@
             <div class="screenCard">
                 <img class="screenFrame" src="./assets/images/ecran.png" alt="Cadre écran gaming">
 
-                <video class="screenVideo" autoplay muted loop playsinline>
-                    <source src="./assets/videos/rl.mp4" type="video/mp4">
-                </video>
+                <div class="screenMedia" id="screenMedia">
+                    <video class="screenVideo is-frozen" id="heroVideo" muted playsinline preload="metadata"></video>
+                    <div class="videoOverlay"></div>
+
+                    <div class="screenContent" id="screenContent">
+                        <p class="screenKicker" id="screenKicker">BOOSTING • COACHING • RANKED</p>
+
+                        <h2 class="screenHeading" id="screenHeading">
+                            DOMINATE THE LADDER<br>
+                            AND REACH YOUR<br>
+                            DESIRED RANK
+                        </h2>
+
+                        <p class="screenText" id="screenText">
+                            Fast, secure and premium boosting experience for competitive players.
+                            Choose your service and start climbing today.
+                        </p>
+
+                        <div class="screenActions">
+                            <a href="#" class="heroBtn heroBtnPrimary" id="playNowBtn">
+                                <span>Play Now</span>
+                            </a>
+
+                            <button type="button" class="heroBtn heroBtnGhost" id="watchTrailerBtn">
+                                <span>Watch Trailer</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="screenDots" id="screenDots" aria-label="Choix de la vidéo"></div>
+                </div>
 
                 <button class="registerNowButton">REGISTER NOW</button>
             </div>
@@ -145,7 +174,7 @@
     </div>
 
     
-    
+    <script src="cardVideo.js"></script>
     <script src="runtime-config.js"></script>
     <script src="app.js"></script>
 </body>

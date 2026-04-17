@@ -50,11 +50,14 @@ body {
     font-family: "Inter", sans-serif;
     color: #FFFFFF;
     background:
-        linear-gradient(90deg, rgba(255, 77, 0, 0.18) 0%, rgba(255, 77, 0, 0.02) 20%, rgba(0, 0, 0, 0) 35%, rgba(0, 140, 255, 0.02) 75%, rgba(0, 140, 255, 0.16) 100%),
-        linear-gradient(180deg, #0B0B0B 0%, #111111 50%, #0E0E0E 100%);
+        radial-gradient(circle at top left, rgba(238, 100, 42, 0.18) 0%, rgba(238, 100, 42, 0.04) 18%, transparent 38%),
+        radial-gradient(circle at top right, rgba(0, 140, 255, 0.14) 0%, rgba(0, 140, 255, 0.03) 20%, transparent 40%),
+        linear-gradient(180deg, #080808 0%, #0D0D0D 35%, #111111 65%, #090909 100%);
+    background-attachment: fixed;
     background-repeat: no-repeat;
     background-size: cover;
 }
+
 .navbar {
     width: 100%;
     height: 104px;
@@ -112,17 +115,24 @@ body {
     justify-content: center;
     text-decoration: none;
     color: #FFFFFF;
+    font-family: "Nunito", sans-serif;
     font-size: 12px;
-    font-weight: 700;
+    font-weight: 800;
     line-height: 1;
     background: linear-gradient(90deg, #C1260F 0%, #EE642A 100%);
     clip-path: polygon(0 0, 100% 0, 92% 100%, 0 100%);
-    transition: transform 0.2s ease, filter 0.2s ease;
+    transition: transform 0.25s ease, filter 0.25s ease, box-shadow 0.25s ease;
+    box-shadow: 0 0 0 rgba(238, 100, 42, 0);
 }
 
 .registerButton:hover {
-    filter: brightness(1.08);
-    transform: translateY(-1px);
+    filter: brightness(1.12);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 12px 28px rgba(238, 100, 42, 0.28);
+}
+
+.registerButton:active {
+    transform: translateY(0) scale(0.99);
 }
 
 /* Partie 2 : Titre */
@@ -215,7 +225,6 @@ body {
     height: 750px;
 }
 
-/* Cadre orange */
 .screenFrame {
     position: absolute;
     inset: 0;
@@ -227,20 +236,254 @@ body {
     pointer-events: none;
 }
 
-/* Vidéo au-dessus du cadre orange si c'est ce que tu veux */
-.screenVideo {
+.screenMedia {
     position: absolute;
     top: 55px;
     left: 25px;
     width: 1200px;
     height: 550px;
-    object-fit: cover;
-    background: #000000;
-    display: block;
+    overflow: hidden;
     z-index: 3;
+    background: #000;
 }
 
-/* Bouton tout devant */
+.screenVideo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transform: scale(1.03);
+    transition:
+        filter 0.7s ease,
+        transform 0.7s ease,
+        opacity 0.45s ease;
+}
+
+.screenVideo.is-frozen {
+    filter: grayscale(1) blur(3px) brightness(0.5);
+    transform: scale(1.05);
+}
+
+.screenVideo.is-playing {
+    filter: grayscale(0) blur(0) brightness(1);
+    transform: scale(1);
+}
+
+.videoOverlay {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    background:
+        linear-gradient(90deg, rgba(0, 0, 0, 0.82) 0%, rgba(0, 0, 0, 0.58) 34%, rgba(0, 0, 0, 0.2) 100%),
+        linear-gradient(180deg, rgba(0, 0, 0, 0.28) 0%, rgba(0, 0, 0, 0.36) 100%);
+    transition: opacity 0.35s ease;
+}
+
+.screenMedia.trailer-active .videoOverlay {
+    opacity: 0.08;
+}
+
+.screenContent {
+    position: absolute;
+    top: 50%;
+    left: 72px;
+    transform: translateY(-50%);
+    z-index: 5;
+    max-width: 560px;
+    opacity: 1;
+    transition:
+        opacity 0.45s ease,
+        transform 0.45s ease,
+        visibility 0.45s ease;
+}
+
+.screenContent.is-hidden {
+    opacity: 0;
+    transform: translateY(-50%) translateX(-20px);
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.screenKicker {
+    margin-bottom: 14px;
+    font-family: "Nunito", sans-serif;
+    font-weight: 800;
+    font-size: 14px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #EE642A;
+}
+
+.screenHeading {
+    margin: 0 0 16px;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 72px;
+    line-height: 0.92;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #FFFFFF;
+}
+
+.screenText {
+    margin: 0 0 28px;
+    font-family: "Nunito", sans-serif;
+    font-weight: 300;
+    font-size: 21px;
+    line-height: 1.46;
+    letter-spacing: -0.02em;
+    color: rgba(255, 255, 255, 0.9);
+    max-width: 500px;
+}
+
+.screenActions {
+    --join-cut: 22px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    flex-wrap: nowrap;
+    position: relative;
+    isolation: isolate;
+}
+
+.heroBtn {
+    position: relative;
+    height: 54px;
+    min-width: 184px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 30px;
+    font-family: "Nunito", sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    line-height: 1;
+    text-decoration: none;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease,
+        filter 0.25s ease,
+        background 0.25s ease,
+        opacity 0.25s ease;
+}
+
+.heroBtn span {
+    position: relative;
+    z-index: 2;
+}
+
+/* bouton gauche : diagonale parfaite vers le bas-gauche */
+.heroBtnPrimary {
+    z-index: 1;
+    border: none;
+    color: #FFFFFF;
+    padding-right: calc(30px + var(--join-cut));
+    background: linear-gradient(90deg, #d92f10 0%, #f35b1d 100%);
+    clip-path: polygon(
+        0 0,
+        100% 0,
+        calc(100% - var(--join-cut)) 100%,
+        0 100%
+    );
+    box-shadow: 0 12px 28px rgba(243, 91, 29, 0.22);
+}
+
+.heroBtnPrimary::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, #f04b1d 0%, #ff7431 100%);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.heroBtnPrimary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 36px rgba(243, 91, 29, 0.30);
+}
+
+.heroBtnPrimary:hover::after {
+    opacity: 1;
+}
+
+/* bouton droit : même ligne oblique, côté gauche */
+.heroBtnGhost {
+    z-index: 2;
+    margin-left: calc(var(--join-cut) * -1);
+    padding-left: calc(30px + var(--join-cut));
+    color: #F4F4F4;
+    background: rgba(0, 0, 0, 0.92);
+    border: 1px solid #f15a24;
+    clip-path: polygon(
+        var(--join-cut) 0,
+        100% 0,
+        100% 100%,
+        0 100%
+    );
+}
+
+.heroBtnGhost::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        90deg,
+        rgba(241, 90, 36, 0.16) 0%,
+        rgba(241, 90, 36, 0.03) 100%
+    );
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.heroBtnGhost:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 30px rgba(241, 90, 36, 0.14);
+}
+
+.heroBtnGhost:hover::before {
+    opacity: 1;
+}
+
+.screenDots {
+    position: absolute;
+    left: 50%;
+    bottom: 22px;
+    transform: translateX(-50%);
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.screenDot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.24);
+    cursor: pointer;
+    transition:
+        transform 0.22s ease,
+        background 0.22s ease,
+        border-color 0.22s ease,
+        box-shadow 0.22s ease;
+}
+
+.screenDot:hover {
+    transform: scale(1.15);
+    border-color: #f15a24;
+}
+
+.screenDot.active {
+    background: #f15a24;
+    border-color: #f15a24;
+    box-shadow: 0 0 16px rgba(241, 90, 36, 0.45);
+}
+
 .registerNowButton {
     position: absolute;
     left: 50%;
@@ -255,4 +498,59 @@ body {
     letter-spacing: 1px;
     cursor: pointer;
     z-index: 4;
+    transition:
+        transform 0.25s ease,
+        letter-spacing 0.25s ease,
+        text-shadow 0.25s ease,
+        filter 0.25s ease,
+        opacity 0.25s ease;
+}
+
+.registerNowButton:hover {
+    transform: translateX(-50%) translateY(-3px);
+    letter-spacing: 2px;
+    text-shadow:
+        0 0 12px rgba(255, 255, 255, 0.18),
+        0 0 28px rgba(0, 0, 0, 0.28);
+    filter: brightness(1.08);
+}
+
+.screenMedia.is-switching .screenVideo {
+    opacity: 0;
+    transform: scale(1.04);
+}
+
+.screenMedia.is-switching .screenContent {
+    opacity: 0;
+    transform: translateY(-50%) translateX(-34px);
+    visibility: hidden;
+}
+
+.screenVideo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transform: scale(1.03);
+    transition:
+        filter 0.9s ease,
+        transform 0.9s ease,
+        opacity 0.8s ease;
+}
+
+.screenContent {
+    position: absolute;
+    top: 50%;
+    left: 72px;
+    transform: translateY(-50%);
+    z-index: 5;
+    max-width: 560px;
+    opacity: 1;
+    visibility: visible;
+    transition:
+        opacity 0.8s ease,
+        transform 0.8s ease,
+        visibility 0.8s ease;
 }
