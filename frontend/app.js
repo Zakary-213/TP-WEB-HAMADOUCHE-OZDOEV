@@ -197,31 +197,54 @@ document.addEventListener('DOMContentLoaded', () => {
         gowScoreEl.textContent = 'Chargement...';
 
         try {
-            const query = new URLSearchParams({
-                game: 'gamesonweb',
-                mode: '1v1',
-                limit: '100',
-                userId
-            });
-            const response = await fetch(toApiUrl(`/api/scores/top?${query.toString()}`));
-            const result = await response.json();
+            const modes = ['tournament', 'versus', '1v1'];
+            const responses = await Promise.all(
+                modes.map(async (mode) => {
+                    const query = new URLSearchParams({
+                        game: 'gamesonweb',
+                        mode,
+                        limit: '100',
+                        userId
+                    });
 
-            if (!result.success || !Array.isArray(result.data) || result.data.length === 0) {
+                    const response = await fetch(toApiUrl(`/api/scores/top?${query.toString()}`));
+                    const result = await response.json();
+                    if (!result.success || !Array.isArray(result.data)) {
+                        return [];
+                    }
+
+                    return result.data;
+                })
+            );
+
+            const merged = responses.flat();
+            const uniqueById = Array.from(
+                new Map(merged.map((entry) => [entry?._id || `${entry?.createdAt}-${entry?.totalTime}`, entry])).values()
+            );
+
+            if (uniqueById.length === 0) {
                 gowScoreEl.textContent = 'Aucune sauvegarde pour ce compte.';
                 return;
             }
 
+            uniqueById.sort((a, b) => {
+                const aTime = new Date(a?.createdAt || 0).getTime();
+                const bTime = new Date(b?.createdAt || 0).getTime();
+                return bTime - aTime;
+            });
+
             gowScoreEl.replaceChildren();
-            result.data.forEach((match, index) => {
+            uniqueById.forEach((match, index) => {
                 const payload = match?.data || {};
                 const myGoals = Number(payload.totalButs || 0);
                 const opponentGoals = Number(payload.totalButsAdversaire || 0);
                 const resultLabel = deriveResultLabel(payload.result || payload.Résultat, myGoals, opponentGoals);
                 const myGoalTimes = formatGoalMinutes(payload.minuteButs);
                 const opponentGoalTimes = formatGoalMinutes(payload.minuteButsAdversaire);
+                const modeLabel = match?.mode || payload?.mode || 'inconnu';
 
                 const row = document.createElement('div');
-                row.textContent = `${index + 1}. ${resultLabel} - ${myGoals} : ${opponentGoals} | Mes buts: ${myGoalTimes} | Buts adverses: ${opponentGoalTimes}`;
+                row.textContent = `${index + 1}. [${modeLabel}] ${resultLabel} - ${myGoals} : ${opponentGoals} | Mes buts: ${myGoalTimes} | Buts adverses: ${opponentGoalTimes}`;
                 gowScoreEl.appendChild(row);
             });
         } catch (error) {
