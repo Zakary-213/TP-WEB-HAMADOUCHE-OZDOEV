@@ -293,12 +293,14 @@ export function drawScoreScreen(ctx, canvas) {
     // Calcul de la hauteur totale du contenu pour le scroll
     scores.forEach(score => {
         if (scoreMode === 'solo') {
+            const niveaux = Array.isArray(score.niveaux) ? score.niveaux : [];
             totalContentHeight += 25;
-            totalContentHeight += score.niveaux.length * lineHeight;
+            totalContentHeight += niveaux.length * lineHeight;
             totalContentHeight += 35;
         } else if (scoreMode === 'duo') {
+            const niveaux = Array.isArray(score.niveaux) ? score.niveaux : [];
             totalContentHeight += 25;
-            totalContentHeight += score.niveaux.length * (lineHeight * 2);
+            totalContentHeight += niveaux.length * (lineHeight * 2);
             totalContentHeight += lineHeight * 2;
             totalContentHeight += 20;
         }

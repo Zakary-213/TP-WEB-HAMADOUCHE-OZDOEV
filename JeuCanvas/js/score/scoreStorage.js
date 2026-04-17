@@ -51,14 +51,29 @@ export async function getTopScoresFromDB(mode) {
         const result = await response.json();
         
         if (result.success) {
-            // Adapter le format pour qu'il soit compatible avec l'UI existante
-            return result.data.map(s => ({
-                pseudo: s.user ? s.user.username : 'Inconnu',
-                totalTime: s.totalTime,
-                totalMeteorites: s.totalMeteorites,
-                date: new Date(s.createdAt).getTime(),
-                mode: s.mode
-            }));
+            // Adapter le format API au format attendu par l'UI Canvas existante.
+            return result.data.map((s) => {
+                const payload = s.data || {};
+                const pseudo = payload.pseudo || (s.user ? s.user.username : 'Inconnu');
+
+                if (mode === 'duo') {
+                    return {
+                        joueurs: Array.isArray(payload.joueurs) ? payload.joueurs : [],
+                        niveaux: Array.isArray(payload.niveaux) ? payload.niveaux : [],
+                        totalTime: s.totalTime ?? payload.totalTime ?? 0,
+                        totalMeteorites: s.totalMeteorites ?? payload.totalMeteorites ?? 0,
+                        date: new Date(s.createdAt).getTime()
+                    };
+                }
+
+                return {
+                    pseudo,
+                    niveaux: Array.isArray(payload.niveaux) ? payload.niveaux : [],
+                    totalTime: s.totalTime ?? payload.totalTime ?? 0,
+                    totalMeteorites: s.totalMeteorites ?? payload.totalMeteorites ?? 0,
+                    date: new Date(s.createdAt).getTime()
+                };
+            });
         }
         return [];
     } catch (error) {
