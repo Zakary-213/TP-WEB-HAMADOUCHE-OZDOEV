@@ -13,6 +13,8 @@ const ALLOWED_ORIGINS = new Set([
   "https://tp-web-hamadouche-ozdoev.vercel.app",
   "https://tp-web-hamadouche-ozdoev-git-dev-zakarys-projects-853ed3d8.vercel.app",
   "https://tp-web-hamadouche-ozdoev-a0fxz66z4-zakarys-projects-853ed3d8.vercel.app",
+  "http://localhost:4000",
+  "http://127.0.0.1:4000",
   "http://localhost:5000",
   "http://127.0.0.1:5000",
   "http://127.0.0.1:5501",
@@ -81,6 +83,11 @@ app.use((req, res, next) => {
 
 app.use(['/api/auth', '/auth'], require('../backend/authRoutes/authRoutes'));
 app.use(['/api/scores', '/scores'], require('../backend/authRoutes/scoreRoutes'));
+app.use(['/api/canvas-profile', '/canvas-profile'], require('../backend/authRoutes/canvasProfileRoutes'));
+
+// Expose game folders for local navigation from the frontend homepage.
+app.use('/GamesOnWeb', express.static(path.join(__dirname, '..', 'GamesOnWeb')));
+app.use('/JeuCanvas', express.static(path.join(__dirname, '..', 'JeuCanvas')));
 
 // On déplace le static APRÈS les routes API pour éviter qu'il n'intercepte les requêtes API
 app.use(express.static(path.join(__dirname, "..", "frontend")));

@@ -3,9 +3,12 @@
  * This script is loaded globally in JeuCanvas/index.html
  */
 (function() {
-    const apiBaseUrl = (window.__APP_CONFIG__ && window.__APP_CONFIG__.API_BASE_URL)
+    const configuredApiBaseUrl = (window.__APP_CONFIG__ && window.__APP_CONFIG__.API_BASE_URL)
         ? window.__APP_CONFIG__.API_BASE_URL.replace(/\/$/, '')
         : '';
+
+    const isLocalRuntime = ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
+    const apiBaseUrl = isLocalRuntime ? '' : configuredApiBaseUrl;
 
     window.CANVAS_API = {
         baseUrl: apiBaseUrl,

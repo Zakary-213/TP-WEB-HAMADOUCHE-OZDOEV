@@ -35,9 +35,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const isAuthenticated = () => localStorage.getItem(AUTH_STATE_KEY) === 'true';
 
-    const apiBaseUrl = (window.__APP_CONFIG__ && window.__APP_CONFIG__.API_BASE_URL)
+    const configuredApiBaseUrl = (window.__APP_CONFIG__ && window.__APP_CONFIG__.API_BASE_URL)
         ? window.__APP_CONFIG__.API_BASE_URL.replace(/\/$/, '')
         : '';
+
+    const isLocalRuntime = ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
+    const apiBaseUrl = isLocalRuntime ? '' : configuredApiBaseUrl;
 
     const toApiUrl = (path) => {
         const normalizedPath = path.startsWith('/') ? path : `/${path}`;
