@@ -100,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     };
 
-    const renderCanvasBestScore = async () => {
+    const renderCanvasScores = async () => {
         if (!canvasScoreEl) return;
 
         if (!isAuthenticated()) {
@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const query = new URLSearchParams({
                 game: 'canvas',
                 mode: 'solo',
-                limit: '1',
+                limit: '100',
                 userId
             });
             const response = await fetch(toApiUrl(`/api/scores/top?${query.toString()}`));
@@ -131,18 +131,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const best = result.data[0];
-            const pseudo = best?.data?.pseudo || best?.user?.username || 'Inconnu';
-            const totalTime = formatTimeMs(best?.totalTime);
-            const totalMeteorites = Number(best?.totalMeteorites || 0);
+            canvasScoreEl.replaceChildren();
+            result.data.forEach((score, index) => {
+                const pseudo = score?.data?.pseudo || score?.user?.username || 'Inconnu';
+                const totalTime = formatTimeMs(score?.totalTime);
+                const totalMeteorites = Number(score?.totalMeteorites || 0);
 
-            canvasScoreEl.textContent = `${pseudo} - ${totalTime} - ${totalMeteorites} météorites`;
+                const row = document.createElement('div');
+                row.textContent = `${index + 1}. ${pseudo} - ${totalTime} - ${totalMeteorites} météorites`;
+                canvasScoreEl.appendChild(row);
+            });
         } catch (error) {
             canvasScoreEl.textContent = 'Impossible de charger les scores.';
         }
     };
 
-    renderCanvasBestScore();
+    renderCanvasScores();
 
     // Handle Signup
     signupForm.addEventListener('submit', async (e) => {
@@ -196,7 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 loginForm.reset();
                 setGamesLocked(false);
                 syncAuthUi();
-                renderCanvasBestScore();
+                renderCanvasScores();
                 // Here you could redirect or update UI
             } else {
                 showMessage(data.message || 'Identifiants invalides', 'error');
