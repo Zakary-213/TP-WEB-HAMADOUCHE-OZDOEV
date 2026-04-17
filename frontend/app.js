@@ -266,9 +266,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const opponentGoalTimes = formatGoalMinutes(payload.minuteButsAdversaire);
                 const modeLabel = match?.mode || payload?.mode || 'inconnu';
                 const stageLabel = formatTournamentStage(payload.tournamentStage);
+                const isVersus = modeLabel === 'versus' || modeLabel === '1v1';
+                const leftTeamLabel = payload.teamLeftLabel || 'YOU';
+                const rightTeamLabel = payload.teamRightLabel || 'IA';
+                const myGoalsLabel = isVersus ? `Buts ${leftTeamLabel}` : 'Mes buts';
+                const opponentGoalsLabel = isVersus ? `Buts ${rightTeamLabel}` : 'Buts adverses';
 
                 const row = document.createElement('div');
-                row.textContent = `${index + 1}. [${modeLabel}${stageLabel ? ` - ${stageLabel}` : ''}] ${resultLabel} - ${myGoals} : ${opponentGoals} | Mes buts: ${myGoalTimes} | Buts adverses: ${opponentGoalTimes}`;
+                row.textContent = `${index + 1}. [${modeLabel}${stageLabel ? ` - ${stageLabel}` : ''}] ${resultLabel} - ${myGoals} : ${opponentGoals} | ${myGoalsLabel}: ${myGoalTimes} | ${opponentGoalsLabel}: ${opponentGoalTimes}`;
                 gowScoreEl.appendChild(row);
             });
         } catch (error) {

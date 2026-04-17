@@ -21,7 +21,8 @@
             onContinueTournament,
             onQuitMatch,
             saveScoreToDB,
-            getGoalTimeline
+            getGoalTimeline,
+            getTeamLabels
         } = config || {};
 
         const scoreboard = window.gameScoreboard;
@@ -459,6 +460,9 @@
                 const timeline = typeof getGoalTimeline === "function"
                     ? getGoalTimeline()
                     : { minuteButs: [], minuteButsAdversaire: [] };
+                const labels = typeof getTeamLabels === "function"
+                    ? getTeamLabels()
+                    : { left: 'YOU', right: 'IA' };
 
                 saveScoreToDB({
                     mode: mode || "versus",
@@ -466,6 +470,8 @@
                     totalButsAdversaire: aiScore,
                     result: finalResult,
                     tournamentStage: mode === "tournament" ? tournamentStage : null,
+                    teamLeftLabel: labels.left,
+                    teamRightLabel: labels.right,
                     minuteButs: Array.isArray(timeline.minuteButs) ? timeline.minuteButs : [],
                     minuteButsAdversaire: Array.isArray(timeline.minuteButsAdversaire) ? timeline.minuteButsAdversaire : []
                 }).then(res => {

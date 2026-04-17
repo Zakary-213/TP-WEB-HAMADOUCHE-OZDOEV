@@ -424,6 +424,12 @@ const createScene = function (gameMode) {
                     minuteButs: [...goalTimes.player],
                     minuteButsAdversaire: [...goalTimes.opponent]
                 };
+            },
+            getTeamLabels: function () {
+                return {
+                    left: scoreboardLabels?.left || 'YOU',
+                    right: scoreboardLabels?.right || 'IA'
+                };
             }
         });
         activeMatchFlow = matchFlow;
