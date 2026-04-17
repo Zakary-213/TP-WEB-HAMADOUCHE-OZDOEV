@@ -53,7 +53,7 @@ export async function saveScoreToDB(scoreData) {
 
 
      try {
-        const response = await fetch(toUrl('/api/scores/scorecanvas'), {
+        const response = await fetch(toUrl('/api/scores/scoregow'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)

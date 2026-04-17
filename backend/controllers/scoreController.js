@@ -1,5 +1,17 @@
 const Score = require('../models/Score');
 
+const createScoreRecord = async ({ userId, game, mode, totalTime, totalValue, data }) => {
+    return Score.create({
+        user: userId,
+        game,
+        mode,
+        totalTime,
+        // Le schema historique utilise ce champ pour une métrique totale.
+        totalMeteorites: totalValue,
+        data
+    });
+};
+
 // @desc    Save Canvas Score
 // @route   POST /api/scores/scorecanvas
 // @access  Private (should be, but here we'll handle based on body user)
@@ -11,12 +23,12 @@ exports.scoreCanvas = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Missing required fields' });
         }
 
-        const newScore = await Score.create({
-            user: userId,
+        const newScore = await createScoreRecord({
+            userId,
             game,
             mode,
             totalTime,
-            totalMeteorites,
+            totalValue: totalMeteorites,
             data
         });
 
@@ -27,6 +39,44 @@ exports.scoreCanvas = async (req, res) => {
         });
     } catch (error) {
         console.error('Error saving score:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+// @desc    Save GamesOnWeb Match Result
+// @route   POST /api/scores/scoregow
+// @access  Private (should be, but here we'll handle based on body user)
+exports.scoreGow = async (req, res) => {
+    try {
+        const {
+            userId,
+            game = 'gamesonweb',
+            mode = '1v1',
+            totalTime,
+            totalButs,
+            data
+        } = req.body;
+
+        if (!userId || totalTime === undefined) {
+            return res.status(400).json({ success: false, message: 'Missing required fields' });
+        }
+
+        const newScore = await createScoreRecord({
+            userId,
+            game,
+            mode,
+            totalTime,
+            totalValue: Number(totalButs || data?.totalButs || 0),
+            data: data || {}
+        });
+
+        res.status(201).json({
+            success: true,
+            message: 'GamesOnWeb score saved successfully',
+            data: newScore
+        });
+    } catch (error) {
+        console.error('Error saving gamesonweb score:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 };
