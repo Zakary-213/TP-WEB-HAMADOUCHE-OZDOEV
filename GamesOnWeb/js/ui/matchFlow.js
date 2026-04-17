@@ -2,6 +2,8 @@
 // Gestion "mi-temps 1 / mi-temps 2 -> fin du match"
 // Fait l'affichage et pilote pause/reprise via un callback.
 
+import { saveScoreToDB } from "../../../JeuCanvas/js/score/scoreStorage";
+
 (function () {
     function createMatchFlow(config) {
         const {
@@ -67,6 +69,8 @@
             visibleButtons.forEach(function (btn, index) {
                 btn.classList.toggle("overlay-action-btn--selected", index === matchEndSelectedIndex);
             });
+
+            saveScoreToDB();
         }
 
         function moveMatchEndSelection(dir) {

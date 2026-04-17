@@ -3,6 +3,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoutBtn = document.getElementById('logout-btn');
     const canvasScoreEl = document.getElementById('canvas-score');
     const canvasScoreCard = document.querySelector('.score.canvas');
+    const gowScoreEl = document.getElementById('gow-score');
+    const gowScoreCard = document.querySelector('.score.gamesonweb');
 
     logoutBtn.addEventListener('click', () => {
         localStorage.removeItem('tpweb_is_authenticated');
@@ -58,8 +60,16 @@ document.addEventListener('DOMContentLoaded', () => {
             canvasScoreCard.style.display = loggedIn ? 'block' : 'none';
         }
 
+        if (gowScoreCard) {
+            gowScoreCard.style.display = loggedIn ? 'block' : 'none';
+        }
+
         if (!loggedIn && canvasScoreEl) {
             canvasScoreEl.textContent = '';
+        }
+
+        if (!loggedIn && gowScoreEl) {
+            gowScoreEl.textContent = '';
         }
     };
 
@@ -146,7 +156,81 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    const formatGoalMinutes = (minutes) => {
+        if (!Array.isArray(minutes) || minutes.length === 0) {
+            return '-';
+        }
+
+        return minutes
+            .map((m) => Number(m))
+            .filter((m) => Number.isFinite(m))
+            .map((m) => `${Math.max(0, Math.floor(m))}'`)
+            .join(', ');
+    };
+
+    const deriveResultLabel = (result, myGoals, opponentGoals) => {
+        const safeResult = typeof result === 'string' ? result.toLowerCase() : '';
+
+        if (safeResult === 'win' || safeResult === 'victoire' || safeResult === 'gagne') return 'Victoire';
+        if (safeResult === 'loss' || safeResult === 'defaite' || safeResult === 'perdu') return 'Défaite';
+        if (safeResult === 'draw' || safeResult === 'nul') return 'Match nul';
+
+        if (myGoals > opponentGoals) return 'Victoire';
+        if (myGoals < opponentGoals) return 'Défaite';
+        return 'Match nul';
+    };
+
+    const renderGamesOnWebScores = async () => {
+        if (!gowScoreEl) return;
+
+        if (!isAuthenticated()) {
+            gowScoreEl.textContent = '';
+            return;
+        }
+
+        const userId = localStorage.getItem('tpweb_user_id');
+        if (!userId) {
+            gowScoreEl.textContent = 'Aucune sauvegarde pour ce compte.';
+            return;
+        }
+
+        gowScoreEl.textContent = 'Chargement...';
+
+        try {
+            const query = new URLSearchParams({
+                game: 'gamesonweb',
+                mode: '1v1',
+                limit: '100',
+                userId
+            });
+            const response = await fetch(toApiUrl(`/api/scores/top?${query.toString()}`));
+            const result = await response.json();
+
+            if (!result.success || !Array.isArray(result.data) || result.data.length === 0) {
+                gowScoreEl.textContent = 'Aucune sauvegarde pour ce compte.';
+                return;
+            }
+
+            gowScoreEl.replaceChildren();
+            result.data.forEach((match, index) => {
+                const payload = match?.data || {};
+                const myGoals = Number(payload.totalButs || 0);
+                const opponentGoals = Number(payload.totalButsAdversaire || 0);
+                const resultLabel = deriveResultLabel(payload.result || payload.Résultat, myGoals, opponentGoals);
+                const myGoalTimes = formatGoalMinutes(payload.minuteButs);
+                const opponentGoalTimes = formatGoalMinutes(payload.minuteButsAdversaire);
+
+                const row = document.createElement('div');
+                row.textContent = `${index + 1}. ${resultLabel} - ${myGoals} : ${opponentGoals} | Mes buts: ${myGoalTimes} | Buts adverses: ${opponentGoalTimes}`;
+                gowScoreEl.appendChild(row);
+            });
+        } catch (error) {
+            gowScoreEl.textContent = 'Impossible de charger les sauvegardes.';
+        }
+    };
+
     renderCanvasScores();
+    renderGamesOnWebScores();
 
     // Handle Signup
     signupForm.addEventListener('submit', async (e) => {
@@ -201,6 +285,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 setGamesLocked(false);
                 syncAuthUi();
                 renderCanvasScores();
+                renderGamesOnWebScores();
                 // Here you could redirect or update UI
             } else {
                 showMessage(data.message || 'Identifiants invalides', 'error');
