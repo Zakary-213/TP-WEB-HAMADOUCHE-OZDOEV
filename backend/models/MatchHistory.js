@@ -15,7 +15,7 @@ const scoreSchema = new mongoose.Schema({
         type: String,  // 'solo' or 'duo'
         required: true
     },
-    totalTime: {
+    totalButs: {
         type: Number,
         required: true
     },
