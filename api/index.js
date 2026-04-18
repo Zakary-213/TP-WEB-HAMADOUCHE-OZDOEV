@@ -92,7 +92,7 @@ app.use('/JeuCanvas', express.static(path.join(__dirname, '..', 'JeuCanvas')));
 // On déplace le static APRÈS les routes API pour éviter qu'il n'intercepte les requêtes API
 app.use(express.static(path.join(__dirname, "..", "frontend")));
 // Permettre l'accès via /rules/... (ex: /rules/canvas.html)
-app.use('/rules', express.static(path.join(__dirname, '..', 'frontend')));
+app.use('/', express.static(path.join(__dirname, '..', 'frontend')));
 
 
 // Démarrage du serveur si ce n'est pas sur Vercel (Vercel gère l'invocation lui-même)
