@@ -1,39 +1,152 @@
+/* ========================================================
+   CANVAS — PAGE RÈGLES
+   Cohérent avec index.css (navbar, couleurs, boutons)
+   ======================================================== */
+
+/* ───────── HERO ───────── */
 .rulesHero {
-    text-align: center;
-    margin-top: 80px;
+    position: relative;
+    width: 100%;
+    padding: 60px 20px 80px;
+    overflow: hidden;
+    z-index: 2;
 }
 
-.rulesHero h1 {
-    font-family: "Bebas Neue";
-    font-size: 90px;
-    background: linear-gradient(90deg, #EE642A, #008cff);
+.rulesHeroInner {
+    position: relative;
+    z-index: 3;
+    max-width: 980px;
+    margin: 0 auto;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 26px;
+}
+
+.rulesEyebrow {
+    margin: 0;
+    font-family: "Nunito", sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: #EE642A;
+}
+
+.rulesHeroTitle {
+    margin: 0;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 128px;
+    line-height: 0.88;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    color: #FFFFFF;
+}
+
+.gradientText {
+    background: linear-gradient(90deg, #EE642A 0%, #F35B1D 45%, #008CFF 100%);
     -webkit-background-clip: text;
+    background-clip: text;
     color: transparent;
 }
 
-.rulesHero p {
-    font-family: "Nunito";
-    opacity: 0.6;
+.rulesHeroSubtitle {
+    margin: 0;
+    max-width: 720px;
+    font-family: "Nunito", sans-serif;
+    font-size: 18px;
+    font-weight: 300;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.78);
 }
 
+.rulesHeroActions {
+    --join-cut: 22px;
+    display: inline-flex;
+    align-items: center;
+    margin-top: 10px;
+    isolation: isolate;
+}
+
+/* Stats bar */
+.rulesHeroStats {
+    display: inline-flex;
+    align-items: center;
+    gap: 34px;
+    margin-top: 22px;
+    padding: 18px 34px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.rulesStat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.rulesStatValue {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 38px;
+    line-height: 1;
+    color: #FFFFFF;
+    letter-spacing: 0.03em;
+}
+
+.rulesStatLabel {
+    font-family: "Nunito", sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.rulesStatDivider {
+    width: 1px;
+    height: 38px;
+    background: linear-gradient(180deg, transparent, rgba(238, 100, 42, 0.35), transparent);
+}
+
+.rulesHeroBackdrop {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse at 20% 30%, rgba(238, 100, 42, 0.18) 0%, transparent 45%),
+        radial-gradient(ellipse at 80% 70%, rgba(0, 140, 255, 0.12) 0%, transparent 45%);
+}
+
+/* ───────── SECTION RÈGLES ───────── */
 .rulesSection {
-    max-width: 1200px;
-    margin: 120px auto;
+    position: relative;
+    z-index: 3;
+    max-width: 1250px;
+    margin: 40px auto 120px;
+    padding: 0 20px;
     display: flex;
     flex-direction: column;
     gap: 140px;
 }
 
-/* GRID */
+/* ───────── LIGNE RÈGLE ───────── */
 .ruleRow {
+    position: relative;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 80px;
+    gap: 90px;
     align-items: center;
 
     opacity: 0;
-    transform: translateY(80px);
-    transition: all 0.8s ease;
+    transform: translateY(60px);
+    transition:
+        opacity 0.9s cubic-bezier(.2,.9,.2,1),
+        transform 0.9s cubic-bezier(.2,.9,.2,1);
 }
 
 .ruleRow.visible {
@@ -41,102 +154,199 @@
     transform: translateY(0);
 }
 
-.ruleRow.reverse {
-    direction: rtl;
-}
+.ruleRow.reverse .ruleImageWrapper { order: 2; }
+.ruleRow.reverse .ruleContent { order: 1; }
 
-.ruleRow.reverse .ruleContent {
-    direction: ltr;
-}
-
-/* IMAGE */
+/* ───────── IMAGE ───────── */
 .ruleImageWrapper {
     position: relative;
-    border-radius: 16px;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    border-radius: 14px;
     overflow: hidden;
+    background: #0b0b0b;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.38);
+    transition: transform 0.45s ease, box-shadow 0.45s ease;
 }
 
-/* GRID overlay */
+/* Variante : image complète visible (contain au lieu de cover) */
+.ruleImageWrapper--contain {
+    aspect-ratio: 16 / 11;
+    background:
+        radial-gradient(ellipse at center, rgba(238, 100, 42, 0.08) 0%, transparent 70%),
+        #060606;
+}
+
+.ruleImageWrapper--contain img {
+    object-fit: contain !important;
+    padding: 20px;
+    filter: brightness(1) saturate(1) !important;
+}
+
+.ruleImageWrapper--contain:hover img {
+    transform: scale(1.03) !important;
+}
+
+.ruleRow.visible .ruleImageWrapper:hover {
+    transform: translateY(-6px);
+    box-shadow:
+        0 30px 60px rgba(0, 0, 0, 0.5),
+        0 0 24px rgba(238, 100, 42, 0.16);
+}
+
 .ruleImageWrapper::before {
     content: "";
     position: absolute;
     inset: 0;
-    background-image:
-        linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px);
-    background-size: 40px 40px;
-    z-index: 2;
+    padding: 2px;
+    border-radius: 14px;
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.92) 0%,
+        rgba(255, 255, 255, 0.55) 18%,
+        rgba(255, 255, 255, 0.12) 44%,
+        rgba(238, 100, 42, 0.24) 70%,
+        rgba(238, 100, 42, 0.95) 100%
+    );
+    -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 3;
 }
 
-/* BORDER */
-.ruleImageWrapper::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: 16px;
-    border: 2px solid rgba(255,255,255,0.1);
-}
-
-/* IMAGE */
 .ruleImageWrapper img {
     width: 100%;
+    height: 100%;
+    object-fit: cover;
     display: block;
-    border-radius: 16px;
-
-    filter: brightness(0.85);
-    transition: transform 0.4s ease;
+    position: relative;
+    z-index: 1;
+    filter: brightness(0.88) saturate(1.05);
+    transition: transform 0.6s ease, filter 0.4s ease;
 }
 
 .ruleImageWrapper:hover img {
-    transform: scale(1.05);
+    transform: scale(1.06);
+    filter: brightness(1) saturate(1.12);
 }
 
-/* TEXT */
+.ruleImageOverlay {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    background:
+        linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.35) 100%),
+        linear-gradient(90deg, rgba(238, 100, 42, 0.08) 0%, transparent 40%, rgba(0, 140, 255, 0.08) 100%);
+    opacity: 0.85;
+    transition: opacity 0.4s ease;
+}
+
+.ruleImageWrapper--contain .ruleImageOverlay {
+    opacity: 0.25;
+}
+
+.ruleImageWrapper:hover .ruleImageOverlay {
+    opacity: 0.55;
+}
+
+.ruleImageIndex {
+    position: absolute;
+    top: 16px;
+    left: 18px;
+    z-index: 4;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 34px;
+    line-height: 1;
+    color: #FFFFFF;
+    letter-spacing: 0.05em;
+    padding: 6px 12px;
+    background: rgba(0, 0, 0, 0.55);
+    border: 1px solid rgba(238, 100, 42, 0.5);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+/* ───────── CONTENU TEXTE ───────── */
 .ruleContent {
     position: relative;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 18px;
+    padding-left: 24px;
 }
 
 .ruleContent::before {
     content: "";
     position: absolute;
-    left: -20px;
-    top: 10px;
-    width: 4px;
-    height: 60px;
-    background: linear-gradient(#EE642A, transparent);
+    left: 0;
+    top: 6px;
+    width: 3px;
+    height: 72px;
+    background: linear-gradient(180deg, #EE642A 0%, rgba(238, 100, 42, 0) 100%);
 }
 
 .ruleTag {
-    font-family: "Nunito";
+    font-family: "Nunito", sans-serif;
     font-size: 12px;
-    letter-spacing: 0.2em;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
     color: #EE642A;
 }
 
 .ruleTitle {
-    font-family: "Bebas Neue";
-    font-size: 72px;
+    margin: 0;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 74px;
+    line-height: 0.92;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #FFFFFF;
 }
 
 .ruleDescription {
-    font-family: "Nunito";
-    font-size: 18px;
-    color: rgba(255,255,255,0.8);
+    margin: 0;
+    font-family: "Nunito", sans-serif;
+    font-size: 17px;
+    font-weight: 300;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.82);
+    max-width: 520px;
 }
 
-/* LIST */
+.ruleDescription strong {
+    color: #FFFFFF;
+    font-weight: 700;
+}
+
+/* ───────── LISTE SIMPLE ───────── */
 .ruleList {
     list-style: none;
     padding: 0;
+    margin: 8px 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
 .ruleList li {
     position: relative;
-    padding-left: 20px;
-    margin-bottom: 10px;
+    padding-left: 22px;
+    font-family: "Nunito", sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.88);
+}
+
+.ruleList li strong {
+    color: #EE642A;
+    font-weight: 800;
+    letter-spacing: 0.02em;
 }
 
 .ruleList li::before {
@@ -146,6 +356,383 @@
     top: 8px;
     width: 8px;
     height: 8px;
-    background: #EE642A;
+    background: linear-gradient(90deg, #d92f10 0%, #f35b1d 100%);
     transform: rotate(45deg);
+    box-shadow: 0 0 12px rgba(241, 90, 36, 0.32);
+}
+
+/* ───────── LISTE AVEC ICÔNES ───────── */
+.ruleListIcons {
+    list-style: none;
+    padding: 0;
+    margin: 8px 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.ruleListIcons li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-family: "Nunito", sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.88);
+}
+
+.ruleListIcons li strong {
+    color: #EE642A;
+    font-weight: 800;
+    margin-right: 2px;
+}
+
+.ruleIcon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    font-size: 18px;
+    background: rgba(238, 100, 42, 0.08);
+    border: 1px solid rgba(238, 100, 42, 0.28);
+    border-radius: 6px;
+}
+
+/* ───────── TOUCHES CLAVIER ───────── */
+.ruleKeys {
+    display: flex;
+    gap: 46px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+    align-items: flex-end; /* aligne les groupes par le bas */
+}
+
+.ruleKeyGroup {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Pavé directionnel : grid 3 colonnes fixes — la ↑ sera forcée au milieu */
+.ruleKeyRow {
+    display: grid;
+    grid-template-columns: repeat(3, 46px);
+    gap: 6px;
+    justify-content: center;
+}
+
+/* Quand une rangée n'a qu'une seule touche → elle va en colonne 2 (milieu) */
+.ruleKeyRow > .ruleKey:only-child {
+    grid-column: 2;
+}
+
+/* Exception : la touche longue (ENTRÉE) doit s'étaler sur les 3 colonnes */
+.ruleKeyRow > .ruleKeyLong:only-child {
+    grid-column: 1 / -1;
+}
+
+.ruleKey {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 46px;
+    height: 46px;
+    padding: 0 12px;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 22px;
+    color: #FFFFFF;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+    border: 1px solid rgba(238, 100, 42, 0.45);
+    border-bottom-width: 3px;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        0 4px 14px rgba(238, 100, 42, 0.18);
+}
+
+.ruleKeyLong {
+    min-width: 124px;
+    font-size: 18px;
+    letter-spacing: 0.12em;
+    width: 100%;
+}
+
+.ruleKeyLabel {
+    margin-top: 4px;
+    font-family: "Nunito", sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* ======================================================================
+   SECTION MÉTÉORITES + GADGETS (2 colonnes)
+   ====================================================================== */
+.rulesDuo {
+    position: relative;
+    z-index: 3;
+    max-width: 1250px;
+    margin: 0 auto 100px;
+    padding: 0 20px;
+}
+
+.rulesDuoHeader {
+    text-align: center;
+    max-width: 760px;
+    margin: 0 auto 60px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.rulesDuoEyebrow {
+    margin: 0;
+    font-family: "Nunito", sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    color: #EE642A;
+}
+
+.rulesDuoTitle {
+    margin: 0;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 72px;
+    line-height: 0.95;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #FFFFFF;
+}
+
+.rulesDuoSubtitle {
+    margin: 0;
+    font-family: "Nunito", sans-serif;
+    font-size: 17px;
+    font-weight: 300;
+    line-height: 1.55;
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.rulesDuoGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    align-items: stretch;
+}
+
+.duoCard {
+    position: relative;
+    padding: 40px 36px;
+    background:
+        radial-gradient(circle at top right, rgba(241, 90, 36, 0.08) 0%, transparent 45%),
+        linear-gradient(180deg, rgba(16, 16, 16, 0.85) 0%, rgba(9, 9, 9, 0.95) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+    transition: transform 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+}
+
+.duoCard::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #EE642A 0%, rgba(238, 100, 42, 0) 80%);
+}
+
+.duoCard--threat::before {
+    background: linear-gradient(90deg, #EE642A 0%, rgba(238, 100, 42, 0) 80%);
+}
+
+.duoCard--boost::before {
+    background: linear-gradient(90deg, rgba(0, 140, 255, 0) 20%, #008CFF 100%);
+}
+
+.duoCard:hover {
+    transform: translateY(-4px);
+    border-color: rgba(238, 100, 42, 0.25);
+    box-shadow:
+        0 24px 48px rgba(0, 0, 0, 0.35),
+        0 0 28px rgba(238, 100, 42, 0.10);
+}
+
+.duoCardHeader {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 22px;
+}
+
+.duoCardBadge {
+    align-self: flex-start;
+    font-family: "Nunito", sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: #EE642A;
+    padding: 6px 10px;
+    background: rgba(238, 100, 42, 0.08);
+    border: 1px solid rgba(238, 100, 42, 0.3);
+}
+
+.duoCard--boost .duoCardBadge {
+    color: #6bb7ff;
+    background: rgba(0, 140, 255, 0.08);
+    border-color: rgba(0, 140, 255, 0.3);
+}
+
+.duoCardTitle {
+    margin: 0;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 52px;
+    line-height: 0.95;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #FFFFFF;
+}
+
+.duoCardText {
+    margin: 0;
+    font-family: "Nunito", sans-serif;
+    font-size: 15px;
+    font-weight: 300;
+    line-height: 1.55;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+/* Accent couleur gadgets */
+.duoCard--boost .ruleIcon {
+    background: rgba(0, 140, 255, 0.08);
+    border-color: rgba(0, 140, 255, 0.3);
+}
+
+.duoCard--boost .ruleListIcons li strong {
+    color: #6bb7ff;
+}
+
+/* ───────── CTA FINAL ───────── */
+.rulesCta {
+    position: relative;
+    z-index: 3;
+    max-width: 1100px;
+    margin: 0 auto 100px;
+    padding: 0 20px;
+}
+
+.rulesCtaInner {
+    position: relative;
+    padding: 64px 40px;
+    text-align: center;
+    background:
+        radial-gradient(circle at top left, rgba(241, 90, 36, 0.14) 0%, transparent 38%),
+        radial-gradient(circle at bottom right, rgba(0, 140, 255, 0.10) 0%, transparent 40%),
+        linear-gradient(180deg, rgba(16, 16, 16, 0.85) 0%, rgba(9, 9, 9, 0.95) 100%);
+    border: 1px solid rgba(238, 100, 42, 0.22);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.rulesCtaInner::before {
+    content: "";
+    position: absolute;
+    top: -120px;
+    left: -120px;
+    width: 360px;
+    height: 360px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(238, 100, 42, 0.22) 0%, transparent 70%);
+    filter: blur(14px);
+    pointer-events: none;
+}
+
+.rulesCtaTitle {
+    margin: 0;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 72px;
+    line-height: 0.92;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #FFFFFF;
+}
+
+.rulesCtaText {
+    margin: 0 0 14px;
+    max-width: 580px;
+    font-family: "Nunito", sans-serif;
+    font-size: 17px;
+    font-weight: 300;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+/* FIX : Bouton CTA centré (annule la diagonale asymétrique du heroBtnPrimary) */
+.rulesCtaBtn {
+    margin-top: 6px;
+    padding: 0 44px !important;
+    clip-path: polygon(18px 0, 100% 0, calc(100% - 18px) 100%, 0 100%) !important;
+    min-width: 260px;
+}
+
+.rulesCtaBtn span {
+    margin: 0 auto;
+}
+
+/* ───────── RESPONSIVE ───────── */
+@media (max-width: 980px) {
+    .rulesHeroTitle { font-size: 84px; }
+
+    .ruleRow,
+    .ruleRow.reverse {
+        grid-template-columns: 1fr;
+        gap: 40px;
+    }
+
+    .ruleRow.reverse .ruleImageWrapper,
+    .ruleRow.reverse .ruleContent {
+        order: initial;
+    }
+
+    .ruleTitle { font-size: 56px; }
+    .rulesCtaTitle { font-size: 52px; }
+    .rulesDuoTitle { font-size: 52px; }
+    .duoCardTitle { font-size: 42px; }
+
+    .rulesSection { gap: 90px; }
+
+    .rulesDuoGrid {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+
+    .rulesHeroStats {
+        gap: 18px;
+        padding: 14px 20px;
+    }
+
+    .rulesStatValue { font-size: 30px; }
+}
+
+@media (max-width: 620px) {
+    .rulesHeroTitle { font-size: 64px; }
+    .ruleTitle { font-size: 46px; }
+    .rulesCtaInner { padding: 40px 20px; }
+    .duoCard { padding: 32px 24px; }
+
+    .rulesHeroActions {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+        max-width: 320px;
+    }
 }

@@ -3,129 +3,280 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Canvas - Règles</title>
+    <title>Meteorite Canvas — Règles</title>
 
-    <!-- TON CSS GLOBAL -->
     <link rel="stylesheet" href="../index.css">
-
-    <!-- CSS PAGE -->
     <link rel="stylesheet" href="./canvas.css">
 
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter&family=Nunito&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;600;800&family=Nunito:wght@300;400;600;800&display=swap" rel="stylesheet">
 </head>
-
 <body>
 
-<!-- NAVBAR IDENTIQUE -->
+<!-- ───────────── NAVBAR ───────────── -->
 <nav class="navbar">
     <div class="navLogo">
-        <img src="/assets/images/logo.png">
+        <img src="/assets/images/logo.png" alt="Logo">
     </div>
 
     <div class="navLinks">
         <a href="/" class="navLink">Accueil</a>
+        <a href="/canvas.html" class="navLink active">Canvas</a>
         <a href="#" class="navLink">GamesOnWeb</a>
-        <a href="#" class="navLink">Dom</a>
         <a href="#" class="navLink">Scores</a>
     </div>
 
     <div class="navButtonWrapper">
         <div class="navAuthButtons">
-            <a href="#" class="navAuthBtn registerButton">Register</a>
-            <a href="#" class="navAuthBtn loginButton">Login</a>
+            <a href="/#register" class="navAuthBtn registerButton">Register</a>
+            <a href="/#login" class="navAuthBtn loginButton">Login</a>
         </div>
     </div>
 </nav>
 
-<!-- HERO -->
+<!-- ───────────── HERO ───────────── -->
 <section class="rulesHero">
-    <h1>METEORITE CANVAS</h1>
-    <p>Maîtrise le jeu et domine le classement</p>
+    <div class="rulesHeroInner">
+        <p class="rulesEyebrow">GAME • RULES • STRATEGY</p>
+
+        <h1 class="rulesHeroTitle">
+            METEORITE<br>
+            <span class="gradientText">CANVAS</span>
+        </h1>
+
+        <p class="rulesHeroSubtitle">
+            Bienvenue dans Meteorite Canvas, un shoot'em up arcade nerveux où tu dois survivre à une avalanche de météorites.
+            Choisis ton mode de jeu, pilote ton vaisseau, récupère des gadgets et grimpe au classement mondial.
+            Cette page regroupe toutes les règles dont tu as besoin pour maîtriser le jeu de A à Z.
+        </p>
+
+        <div class="rulesHeroActions">
+            <a href="/JeuCanvas/index.html" class="heroBtn heroBtnPrimary">
+                <span>Jouer maintenant</span>
+            </a>
+            <a href="#rulesContent" class="heroBtn heroBtnGhost">
+                <span>Voir les règles</span>
+            </a>
+        </div>
+
+        <div class="rulesHeroStats">
+            <div class="rulesStat">
+                <span class="rulesStatValue">03</span>
+                <span class="rulesStatLabel">Modes</span>
+            </div>
+            <div class="rulesStatDivider"></div>
+            <div class="rulesStat">
+                <span class="rulesStatValue">04</span>
+                <span class="rulesStatLabel">Vaisseaux</span>
+            </div>
+            <div class="rulesStatDivider"></div>
+            <div class="rulesStat">
+                <span class="rulesStatValue">03</span>
+                <span class="rulesStatLabel">Vies</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="rulesHeroBackdrop" aria-hidden="true"></div>
 </section>
 
-<!-- CONTENU -->
-<section class="rulesSection">
+<!-- ───────────── RÈGLES ───────────── -->
+<section class="rulesSection" id="rulesContent">
 
-    <div class="ruleRow">
-        <div class="ruleImageWrapper">
-            <img src="/assets/images/canvas1.png">
+    <!-- Règle 01 — MODES DE JEU (canvas1.png) -->
+    <article class="ruleRow" data-index="01">
+        <div class="ruleImageWrapper ruleImageWrapper--contain">
+            <div class="ruleImageIndex">01</div>
+            <img src="/assets/images/canvas1.png" alt="Modes de jeu">
+            <div class="ruleImageOverlay"></div>
         </div>
 
         <div class="ruleContent">
             <span class="ruleTag">Gameplay</span>
-            <h2 class="ruleTitle">OBJECTIF</h2>
+            <h2 class="ruleTitle">Modes de jeu</h2>
             <p class="ruleDescription">
-                Survis le plus longtemps possible face aux météorites.
+                Meteorite Canvas te propose trois modes complémentaires selon que tu veuilles jouer seul, à deux ou
+                t'affronter entre amis. Chaque mode possède ses propres règles, son propre rythme et ses propres défis.
+                À toi de trouver celui qui te correspond le mieux.
             </p>
 
             <ul class="ruleList">
-                <li>Évite les obstacles</li>
-                <li>Tire pour survivre</li>
-                <li>Fais le meilleur score</li>
+                <li><strong>Solo</strong> — 3 vies pour enchaîner 3 niveaux : survivre 1 minute, détruire 30 météorites, puis vaincre un vaisseau ennemi.</li>
+                <li><strong>Duo</strong> — Deux joueurs sur le même clavier, touches dédiées, paramètres doublés.</li>
+                <li><strong>Duel</strong> — Affrontement 1 vs 1, premier à 3 points avec gadgets activables.</li>
             </ul>
         </div>
-    </div>
+    </article>
 
-    <div class="ruleRow reverse">
-        <div class="ruleImageWrapper">
-            <img src="/assets/images/canvas2.png">
-        </div>
-
-        <div class="ruleContent">
-            <span class="ruleTag">Controls</span>
-            <h2 class="ruleTitle">CONTRÔLES</h2>
-            <p class="ruleDescription">
-                Contrôle ton vaisseau avec précision.
-            </p>
-
-            <ul class="ruleList">
-                <li>↑ ↓ ← → pour bouger</li>
-                <li>Entrée pour tirer</li>
-            </ul>
-        </div>
-    </div>
-
-    <div class="ruleRow">
-        <div class="ruleImageWrapper">
-            <img src="/assets/images/canvas3.png">
+    <!-- Règle 02 — HANGAR / VAISSEAUX (canvas2.png) -->
+    <article class="ruleRow reverse" data-index="02">
+        <div class="ruleImageWrapper ruleImageWrapper--contain">
+            <div class="ruleImageIndex">02</div>
+            <img src="/assets/images/canvas2.png" alt="Hangar et vaisseaux">
+            <div class="ruleImageOverlay"></div>
         </div>
 
         <div class="ruleContent">
             <span class="ruleTag">Hangar</span>
-            <h2 class="ruleTitle">VAISSEAUX</h2>
+            <h2 class="ruleTitle">Vaisseaux</h2>
             <p class="ruleDescription">
-                Débloque des vaisseaux uniques.
+                Le hangar te permet de choisir et d'équiper le vaisseau qui correspond à ton style de jeu.
+                Chaque modèle possède un comportement de tir unique qui change radicalement la manière d'aborder une partie.
+                Débloque-les au fil de ta progression pour varier les stratégies.
             </p>
 
-            <ul class="ruleList">
-                <li>Différentes stats</li>
-                <li>Design unique</li>
+            <ul class="ruleListIcons">
+                <li><span class="ruleIcon">🚀</span> <strong>Classique</strong> — vaisseau de base, équilibré et fiable.</li>
+                <li><span class="ruleIcon">💥</span> <strong>Split</strong> — tirs qui se divisent à l'impact pour nettoyer l'écran.</li>
+                <li><span class="ruleIcon">📡</span> <strong>Spread</strong> — tir double pour couvrir une zone plus large.</li>
+                <li><span class="ruleIcon">🎯</span> <strong>Ricochet</strong> — balles qui rebondissent sur le canvas, idéales pour les zones difficiles.</li>
             </ul>
         </div>
-    </div>
+    </article>
 
-    <div class="ruleRow reverse">
-        <div class="ruleImageWrapper">
-            <img src="/assets/images/canvas4.png">
+    <!-- Règle 03 — CLASSEMENT (canvas3.png) -->
+    <article class="ruleRow" data-index="03">
+        <div class="ruleImageWrapper ruleImageWrapper--contain">
+            <div class="ruleImageIndex">03</div>
+            <img src="/assets/images/canvas3.png" alt="Classement">
+            <div class="ruleImageOverlay"></div>
         </div>
 
         <div class="ruleContent">
             <span class="ruleTag">Ranking</span>
-            <h2 class="ruleTitle">CLASSEMENT</h2>
+            <h2 class="ruleTitle">Classement</h2>
             <p class="ruleDescription">
-                Compare ton score avec les autres.
+                Mesure-toi aux meilleurs pilotes de la communauté. Chaque partie terminée contribue à ton score et
+                te positionne dans le leaderboard mondial mis à jour en temps réel. Que tu joues en Solo ou en Duo,
+                ton rang reflète ta progression et ta constance. À toi de viser le top.
             </p>
 
             <ul class="ruleList">
-                <li>Solo / Duo</li>
-                <li>Top joueurs</li>
+                <li><strong>Solo & Duo</strong> — classements séparés pour chaque mode.</li>
+                <li><strong>Leaderboard mondial</strong> — compare ton score à tous les joueurs.</li>
+                <li><strong>Mises à jour live</strong> — ton rang évolue dès la fin de partie.</li>
             </ul>
         </div>
-    </div>
+    </article>
+
+    <!-- Règle 04 — CONTRÔLES (canvas4.png — image avec les touches) -->
+    <article class="ruleRow reverse" data-index="04">
+        <div class="ruleImageWrapper ruleImageWrapper--contain">
+            <div class="ruleImageIndex">04</div>
+            <img src="/assets/images/canvas4.png" alt="Écran de contrôles">
+            <div class="ruleImageOverlay"></div>
+        </div>
+
+        <div class="ruleContent">
+            <span class="ruleTag">Controls</span>
+            <h2 class="ruleTitle">Contrôles</h2>
+            <p class="ruleDescription">
+                Le pilotage repose sur des commandes simples et instinctives pensées pour que tu te concentres
+                sur l'essentiel : l'action. Les flèches directionnelles gèrent le déplacement dans les quatre directions,
+                tandis que la touche Entrée déclenche tes tirs. En mode Duo, le joueur 2 dispose de ses propres touches
+                dédiées pour que chacun garde une ergonomie confortable. Tous les contrôles sont visualisables et
+                personnalisables depuis le menu Réglages du jeu.
+            </p>
+
+            <div class="ruleKeys">
+                <div class="ruleKeyGroup">
+                    <div class="ruleKeyRow">
+                        <span class="ruleKey">↑</span>
+                    </div>
+                    <div class="ruleKeyRow">
+                        <span class="ruleKey">←</span>
+                        <span class="ruleKey">↓</span>
+                        <span class="ruleKey">→</span>
+                    </div>
+                    <span class="ruleKeyLabel">Déplacement</span>
+                </div>
+
+                <div class="ruleKeyGroup">
+                    <div class="ruleKeyRow">
+                        <span class="ruleKey ruleKeyLong">ENTRÉE</span>
+                    </div>
+                    <span class="ruleKeyLabel">Tirer</span>
+                </div>
+            </div>
+        </div>
+    </article>
 
 </section>
 
-<script src="./canvas.js"></script>
+<!-- ───────────── MÉTÉORITES + GADGETS (deux colonnes) ───────────── -->
+<section class="rulesDuo">
+    <div class="rulesDuoHeader">
+        <p class="rulesDuoEyebrow">OBJECTS • THREATS</p>
+        <h2 class="rulesDuoTitle">Ce qui peuple le <span class="gradientText">canvas</span></h2>
+        <p class="rulesDuoSubtitle">
+            Deux forces s'affrontent à l'écran : les météorites qui te barrent la route, et les gadgets qui te sauvent la mise.
+        </p>
+    </div>
 
+    <div class="rulesDuoGrid">
+
+        <!-- Météorites (gauche) -->
+        <article class="duoCard duoCard--threat">
+            <div class="duoCardHeader">
+                <span class="duoCardBadge">Threats</span>
+                <h3 class="duoCardTitle">Météorites</h3>
+                <p class="duoCardText">
+                    Toutes les météorites ne se valent pas. Certaines se détruisent d'un seul tir, d'autres exigent
+                    stratégie et sang-froid. Apprends à les reconnaître pour anticiper leurs comportements.
+                </p>
+            </div>
+
+            <ul class="ruleListIcons">
+                <li><span class="ruleIcon">🔹</span> <strong>Normale</strong> — se détruit en un seul tir.</li>
+                <li><span class="ruleIcon">💣</span> <strong>Dynamite</strong> — explose après un certain temps, mieux vaut s'éloigner.</li>
+                <li><span class="ruleIcon">🧩</span> <strong>Éclats</strong> — se divise en deux petites météorites.</li>
+                <li><span class="ruleIcon">🛸</span> <strong>Lancer</strong> — drone qui suit ton vaisseau avant de s'arrêter.</li>
+                <li><span class="ruleIcon">🧱</span> <strong>Costaud</strong> — encaisse 5 tirs avant d'exploser.</li>
+                <li><span class="ruleIcon">☁️</span> <strong>Nuage</strong> — explose et bloque la visibilité un moment.</li>
+            </ul>
+        </article>
+
+        <!-- Gadgets (droite) -->
+        <article class="duoCard duoCard--boost">
+            <div class="duoCardHeader">
+                <span class="duoCardBadge">Power-ups</span>
+                <h3 class="duoCardTitle">Gadgets</h3>
+                <p class="duoCardText">
+                    Au cours de la partie, des gadgets apparaissent aléatoirement pour t'offrir un avantage décisif.
+                    Récupère-les vite : ils peuvent inverser le cours d'un niveau ou te sauver d'une situation désespérée.
+                </p>
+            </div>
+
+            <ul class="ruleListIcons">
+                <li><span class="ruleIcon">⚡</span> <strong>Éclair</strong> — vitesse accrue pendant 10 secondes.</li>
+                <li><span class="ruleIcon">🛡️</span> <strong>Bouclier</strong> — absorbe jusqu'à 2 impacts.</li>
+                <li><span class="ruleIcon">💎</span> <strong>Miroir</strong> — téléportation aléatoire instantanée.</li>
+                <li><span class="ruleIcon">🔫</span> <strong>Rafale</strong> — cadence de tir doublée pendant 10 secondes.</li>
+                <li><span class="ruleIcon">❤️</span> <strong>Cœur</strong> — rend 1 vie perdue.</li>
+            </ul>
+        </article>
+
+    </div>
+</section>
+
+<!-- ───────────── CTA FINAL ───────────── -->
+<section class="rulesCta">
+    <div class="rulesCtaInner">
+        <h2 class="rulesCtaTitle">PRÊT À DÉCOLLER ?</h2>
+        <p class="rulesCtaText">
+            Les règles sont à toi. Les météorites attendent. À toi de jouer.
+        </p>
+        <a href="/JeuCanvas/index.html" class="heroBtn heroBtnPrimary rulesCtaBtn">
+            <span>Lancer le jeu</span>
+        </a>
+    </div>
+</section>
+
+<!-- ───────────── FOOTER ───────────── -->
+<footer class="siteFooter">
+    <div class="siteFooterLine"></div>
+    <p class="siteFooterText">© Copyright 2026, All Rights Reserved by GamesOnWeb</p>
+</footer>
+
+<script src="./canvas.js"></script>
 </body>
 </html>

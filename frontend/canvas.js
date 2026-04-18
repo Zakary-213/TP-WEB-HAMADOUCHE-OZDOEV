@@ -1,14 +1,39 @@
-const rows = document.querySelectorAll(".ruleRow");
+/* ========================================================
+   CANVAS — Animations au scroll
+   ======================================================== */
 
-function reveal() {
-    rows.forEach(row => {
-        const rect = row.getBoundingClientRect();
+(() => {
+    const rows = document.querySelectorAll(".ruleRow");
+    if (!rows.length) return;
 
-        if (rect.top < window.innerHeight - 100) {
-            row.classList.add("visible");
-        }
-    });
-}
+    if ("IntersectionObserver" in window) {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add("visible");
+                        observer.unobserve(entry.target);
+                    }
+                });
+            },
+            {
+                threshold: 0.15,
+                rootMargin: "0px 0px -80px 0px",
+            }
+        );
 
-window.addEventListener("scroll", reveal);
-window.addEventListener("load", reveal);
+        rows.forEach((row) => observer.observe(row));
+    } else {
+        const reveal = () => {
+            rows.forEach((row) => {
+                const rect = row.getBoundingClientRect();
+                if (rect.top < window.innerHeight - 100) {
+                    row.classList.add("visible");
+                }
+            });
+        };
+        window.addEventListener("scroll", reveal, { passive: true });
+        window.addEventListener("load", reveal);
+        reveal();
+    }
+})();
