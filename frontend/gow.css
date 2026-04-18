@@ -71,9 +71,9 @@
 }
 
 .gowHeroActions {
+    --join-cut: 22px;
     display: inline-flex;
     align-items: center;
-    gap: 14px;
     margin-top: 10px;
     isolation: isolate;
 }
