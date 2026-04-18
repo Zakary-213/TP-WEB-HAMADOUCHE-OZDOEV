@@ -142,12 +142,130 @@ function selectHints(path, difficulty) {
     }));
 }
 
+function randomChoice(array) {
+    return array[Math.floor(Math.random() * array.length)];
+}
+
+function toRowCol(index) {
+    return {
+        row: Math.floor(index / GRID_SIZE),
+        col: index % GRID_SIZE,
+    };
+}
+
+function getDirection(fromIdx, toIdx) {
+    const from = toRowCol(fromIdx);
+    const to = toRowCol(toIdx);
+
+    if (to.row === from.row - 1 && to.col === from.col) return 'up';
+    if (to.row === from.row + 1 && to.col === from.col) return 'down';
+    if (to.col === from.col - 1 && to.row === from.row) return 'left';
+    if (to.col === from.col + 1 && to.row === from.row) return 'right';
+    return null;
+}
+
+function createBlockedSideObstacle(solutionPath) {
+    if (solutionPath.length < 2) return null;
+
+    const sideNames = ['top', 'right', 'bottom', 'left'];
+    const candidates = [];
+
+    for (let pos = 0; pos < solutionPath.length; pos++) {
+        const cell = solutionPath[pos];
+        const prev = pos > 0 ? solutionPath[pos - 1] : null;
+        const next = pos < solutionPath.length - 1 ? solutionPath[pos + 1] : null;
+
+        const usedSides = new Set();
+
+        if (prev !== null) {
+            const enterSide = getDirection(cell, prev);
+            if (enterSide) usedSides.add(enterSide);
+        }
+
+        if (next !== null) {
+            const exitSide = getDirection(cell, next);
+            if (exitSide) usedSides.add(exitSide);
+        }
+
+        const allowedSides = sideNames.filter((side) => !usedSides.has(side));
+        if (allowedSides.length === 0) continue;
+
+        candidates.push({
+            index: cell,
+            side: randomChoice(allowedSides),
+        });
+    }
+
+    if (candidates.length === 0) return null;
+    return randomChoice(candidates);
+}
+
+function applyHardObstacles(rawPath) {
+    let solutionPath = [...rawPath];
+    const obstacles = [];
+
+    let includeBlockedCell = Math.random() < 0.65;
+    let includeBlockedSide = Math.random() < 0.65;
+
+    // En difficile il doit y avoir au moins un obstacle.
+    if (!includeBlockedCell && !includeBlockedSide) {
+        if (Math.random() < 0.5) includeBlockedCell = true;
+        else includeBlockedSide = true;
+    }
+
+    if (includeBlockedCell && solutionPath.length > 2) {
+        const cutStart = Math.random() < 0.5;
+        const blockedIndex = cutStart ? solutionPath[0] : solutionPath[solutionPath.length - 1];
+
+        obstacles.push({
+            type: 'blocked-cell',
+            index: blockedIndex,
+        });
+
+        solutionPath = cutStart ? solutionPath.slice(1) : solutionPath.slice(0, -1);
+    }
+
+    if (includeBlockedSide) {
+        const blockedSide = createBlockedSideObstacle(solutionPath);
+        if (blockedSide) {
+            obstacles.push({
+                type: 'blocked-side',
+                index: blockedSide.index,
+                side: blockedSide.side,
+            });
+        }
+    }
+
+    if (obstacles.length === 0 && solutionPath.length > 2) {
+        const blockedSide = createBlockedSideObstacle(solutionPath);
+        if (blockedSide) {
+            obstacles.push({
+                type: 'blocked-side',
+                index: blockedSide.index,
+                side: blockedSide.side,
+            });
+        }
+    }
+
+    return { solutionPath, obstacles };
+}
+
 /* ---------- Génération complète ---------- */
 function generatePuzzle(difficulty = 'medium') {
-    const solutionPath = generateHamiltonianPath();
+    const rawPath = generateHamiltonianPath();
+
+    let solutionPath = rawPath;
+    let obstacles = [];
+
+    if (difficulty === 'hard') {
+        const hardSetup = applyHardObstacles(rawPath);
+        solutionPath = hardSetup.solutionPath;
+        obstacles = hardSetup.obstacles;
+    }
+
     const numbers = selectHints(solutionPath, difficulty);
 
-    return { solutionPath, numbers };
+    return { solutionPath, numbers, obstacles };
 }
 
 /* ---------- Interface Web Worker ---------- */

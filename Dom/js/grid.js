@@ -56,7 +56,7 @@ export function initGrid(gridEl) {
  * @param {(a:number, b:number) => boolean} isAdjacent
  */
 export function renderGrid(cellsElements, gameState, uiState, isAdjacent) {
-    const { path, numbers } = gameState;
+    const { path, numbers, obstacles = [] } = gameState;
     const { hintTargetIndex } = uiState;
     const pathLen = path.length;
     const headIdx = pathLen > 0 ? path[pathLen - 1] : -1;
@@ -71,6 +71,20 @@ export function renderGrid(cellsElements, gameState, uiState, isAdjacent) {
         cellEl.classList.toggle('path-head', index === headIdx);
         // Case conseillée par le bouton indice
         cellEl.classList.toggle('hint-target', index === hintTargetIndex);
+
+        // Nettoyage puis application des styles obstacle.
+        cellEl.classList.remove(
+            'obstacle-blocked-cell',
+            'obstacle-side-top',
+            'obstacle-side-right',
+            'obstacle-side-bottom',
+            'obstacle-side-left'
+        );
+        obstacles.forEach((obstacle) => {
+            if (obstacle.appliesToCell(index)) {
+                obstacle.applyToCell(cellEl);
+            }
+        });
 
         // ── Valeur / badge hint ──
         const puzzleNum = numbers.find((n) => n.index === index);

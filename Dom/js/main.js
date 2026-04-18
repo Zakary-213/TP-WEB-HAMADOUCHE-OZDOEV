@@ -6,9 +6,10 @@
 import { GRID_SIZE } from './config.js';
 import { gameState, uiState } from './state.js';
 import { createTimer } from './timer.js';
-import { isAdjacent, handleCellInteraction, hasWon } from './logic.js';
+import { isAdjacent, handleCellInteraction, hasWonAgainstTarget } from './logic.js';
 import { initGrid, renderGrid, bindGridPointerEvents } from './grid.js';
 import { createPuzzleWorker } from './worker-client.js';
+import { createObstacles } from './obstacles/factory.js';
 
 /* ---------- Éléments DOM ---------- */
 const gridEl         = document.getElementById('grid');
@@ -42,7 +43,7 @@ const timer = createTimer(onTimerTick);
 function render() {
     renderGrid(cellsElements, gameState, uiState, isAdjacent);
 
-    if (hasWon(gameState.path)) {
+    if (hasWonAgainstTarget(gameState.path, gameState.solutionPath.length)) {
         timer.stop();
         // Afficher l'overlay de victoire avec les stats
         winTimeEl.textContent  = formatTime(gameState.elapsedSeconds);
@@ -79,6 +80,7 @@ const puzzleWorker = createPuzzleWorker(
     (result) => {
         gameState.solutionPath = result.solutionPath;
         gameState.numbers      = result.numbers ?? [];
+        gameState.obstacles    = createObstacles(result.obstacles ?? []);
         gameState.difficulty   = difficultyEl.value;
 
         // Afficher la valeur maximale (= taille du chemin solution)

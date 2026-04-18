@@ -33,6 +33,14 @@ function getExpectedNextNumber(path, numbers) {
     return next;
 }
 
+function isBlockedCell(obstacles, index) {
+    return obstacles.some((obstacle) => obstacle.blocksCell(index));
+}
+
+function isBlockedEdge(obstacles, fromIdx, toIdx) {
+    return obstacles.some((obstacle) => obstacle.blocksEdge(fromIdx, toIdx, GRID_SIZE));
+}
+
 /* ---------- Interaction utilisateur ---------- */
 /**
  * Gère le clic / survol sur une cellule et met à jour gameState.path.
@@ -43,15 +51,34 @@ function getExpectedNextNumber(path, numbers) {
  * @param {() => void} startTimerIfNeeded
  */
 export function handleCellInteraction(index, gameState, uiState, startTimerIfNeeded) {
-    const { path, numbers } = gameState;
+    const { path, numbers, obstacles = [] } = gameState;
     const cellNumber = findNumberAtIndex(numbers, index);
 
     // ── Clic sur la case numérotée "1" : (re)démarre le tracé ──
     if (cellNumber === 1) {
+        if (isBlockedCell(obstacles, index)) return;
         gameState.path = [index];
         uiState.isDrawing = true;
         startTimerIfNeeded();
         return;
+    }
+
+    // ── Reprise après relâchement : cliquer sur la tête ou une case adjacente ──
+    if (!uiState.isDrawing && path.length > 0) {
+        const headIdx = path[path.length - 1];
+
+        if (index === headIdx) {
+            uiState.isDrawing = true;
+            startTimerIfNeeded();
+            return;
+        }
+
+        if (isAdjacent(headIdx, index)) {
+            if (isBlockedCell(obstacles, index)) return;
+            if (isBlockedEdge(obstacles, headIdx, index)) return;
+            uiState.isDrawing = true;
+            startTimerIfNeeded();
+        }
     }
 
     // ── Pas en train de dessiner ou chemin vide ──
@@ -82,6 +109,12 @@ export function handleCellInteraction(index, gameState, uiState, startTimerIfNee
     // ── Doit être adjacent ──
     if (!isAdjacent(lastIdx, index)) return;
 
+    // ── Cellule totalement bloquée ──
+    if (isBlockedCell(obstacles, index)) return;
+
+    // ── Côté bloqué (barrière sur un bord de case) ──
+    if (isBlockedEdge(obstacles, lastIdx, index)) return;
+
     // ── Respect de l'ordre des numéros fixes ──
     const expected = getExpectedNextNumber(path, numbers);
     if (cellNumber !== null && cellNumber !== expected) return;
@@ -93,4 +126,8 @@ export function handleCellInteraction(index, gameState, uiState, startTimerIfNee
 /* ---------- Condition de victoire ---------- */
 export function hasWon(path) {
     return path.length === TOTAL_CELLS;
+}
+
+export function hasWonAgainstTarget(path, targetLength) {
+    return path.length === targetLength;
 }

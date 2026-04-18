@@ -22,7 +22,7 @@
     --li-text:      #dff6ff;
     --li-muted:     #8ca9c4;
 
-    --cell-size:    54px;
+    --cell-size:    62px;
     --gap:          3px;
     --radius-card:  14px;
     --shadow:       0 10px 40px rgba(0,0,0,0.45);
@@ -185,7 +185,7 @@ html, body {
 #grid-container {
     background: var(--li-surface);
     border-radius: var(--radius-card);
-    padding: 16px;
+    padding: 22px;
     box-shadow: var(--shadow);
     border: 1px solid #2d4f7d;
 }
@@ -221,6 +221,62 @@ html, body {
 
 .cell:hover {
     background: #172b48;
+}
+
+.cell.obstacle-blocked-cell {
+    background:
+        repeating-linear-gradient(45deg, #1f2a3f 0 8px, #10192a 8px 16px);
+    border: 1px solid #6e7c96;
+    cursor: not-allowed;
+}
+
+.cell.obstacle-blocked-cell::before {
+    content: '';
+    position: absolute;
+    inset: 11px;
+    border-radius: 8px;
+    border: 2px solid #9aa9c3;
+    opacity: 0.7;
+}
+
+.cell.obstacle-side-top::after,
+.cell.obstacle-side-right::after,
+.cell.obstacle-side-bottom::after,
+.cell.obstacle-side-left::after {
+    content: '';
+    position: absolute;
+    border-radius: 3px;
+    background: #ff7a59;
+    box-shadow: 0 0 10px #ff7a5999;
+    z-index: 4;
+}
+
+.cell.obstacle-side-top::after {
+    top: 2px;
+    left: 8px;
+    right: 8px;
+    height: 6px;
+}
+
+.cell.obstacle-side-right::after {
+    right: 2px;
+    top: 8px;
+    bottom: 8px;
+    width: 6px;
+}
+
+.cell.obstacle-side-bottom::after {
+    bottom: 2px;
+    left: 8px;
+    right: 8px;
+    height: 6px;
+}
+
+.cell.obstacle-side-left::after {
+    left: 2px;
+    top: 8px;
+    bottom: 8px;
+    width: 6px;
 }
 
 /* Number label */
@@ -515,7 +571,11 @@ html, body {
 /* ---------- Responsive ---------- */
 @media (max-width: 420px) {
     :root {
-        --cell-size: 46px;
+        --cell-size: 50px;
+    }
+
+    #grid-container {
+        padding: 14px;
     }
 
     .app-header {

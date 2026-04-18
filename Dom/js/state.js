@@ -11,6 +11,8 @@ export const gameState = {
     numbers: [],
     /** Chemin solution (fourni par le worker, non montré au joueur). */
     solutionPath: [],
+    /** Obstacles instanciés via héritage (classe mère Obstacle + classes filles). */
+    obstacles: [],
     /** Secondes écoulées depuis le début. */
     elapsedSeconds: 0,
     /** Difficulté courante. */
