@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.removeItem('tpweb_username');
         setGamesLocked(true);
         syncAuthUi();
-        showMessage('Déconnexion réussie.', 'success');
+        window.location.reload();
     });
 
 
@@ -381,9 +381,26 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
 
             if (data.success) {
-                showMessage('Inscription réussie ! Vous pouvez vous connecter.', 'success');
-                signupForm.reset();
-                setTimeout(() => loginToggle.click(), 2000);
+                localStorage.setItem(AUTH_STATE_KEY, 'true');
+                localStorage.setItem('tpweb_user_id', data.data.id);
+                localStorage.setItem('tpweb_username', data.data.username);
+                showMessage(`Bienvenue ${data.data.username} !`, 'success');
+
+                loginForm.reset();
+                setGamesLocked(false);
+
+                const loadingOverlay = document.getElementById('authLoadingOverlay');
+                if (loadingOverlay) loadingOverlay.classList.add('is-active');
+
+                setTimeout(() => {
+                    if (loadingOverlay) loadingOverlay.classList.remove('is-active');
+                    window.authModalController?.closeModal();
+                    syncAuthUi();
+
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 150);
+                }, 3000);
             } else {
                 showMessage(data.message || 'Erreur lors de l\'inscription', 'error');
             }
@@ -423,6 +440,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (loadingOverlay) loadingOverlay.classList.remove('is-active');
                     window.authModalController?.closeModal();
                     syncAuthUi();
+
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 150);
                 }, 3000);
             } else {
                 showMessage(data.message || 'Identifiants invalides', 'error');
