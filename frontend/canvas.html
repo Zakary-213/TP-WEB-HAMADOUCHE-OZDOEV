@@ -28,8 +28,13 @@
 
     <div class="navButtonWrapper">
         <div class="navAuthButtons">
-            <a href="/#register" class="navAuthBtn registerButton">S'inscrire</a>
-            <a href="/#login" class="navAuthBtn loginButton">Se connecter</a>
+            <a href="#" class="navAuthBtn registerButton" id="openSignupModal">S'inscrire</a>
+            <a href="#" class="navAuthBtn loginButton" id="openLoginModal">Se connecter</a>
+        </div>
+
+        <div class="navUserPanel" id="navUserPanel" style="display: none;">
+            <span class="navUserText" id="navUserText">Welcome</span>
+            <button id="logout-btn" class="navLogoutButton" type="button">Se déconnecter</button>
         </div>
     </div>
 </nav>
@@ -51,7 +56,7 @@
         </p>
 
         <div class="rulesHeroActions">
-            <a href="/JeuCanvas/index.html" class="heroBtn heroBtnPrimary">
+            <a href="/JeuCanvas/index.html" class="heroBtn heroBtnPrimary requiresAuthPlay">
                 <span>Jouer maintenant</span>
             </a>
             <a href="#rulesContent" class="heroBtn heroBtnGhost">
@@ -266,7 +271,7 @@
         <p class="rulesCtaText">
             Les règles sont à toi. Les météorites attendent. À toi de jouer.
         </p>
-        <a href="/JeuCanvas/index.html" class="heroBtn heroBtnPrimary rulesCtaBtn">
+        <a href="/JeuCanvas/index.html" class="heroBtn heroBtnPrimary rulesCtaBtn requiresAuthPlay">
             <span>Lancer le jeu</span>
         </a>
     </div>
@@ -278,6 +283,83 @@
     <p class="siteFooterText">© Copyright 2026 — Tous droits réservés par Akramat OZDOEV &amp; Zakary HAMADOUCHE</p>
 </footer>
 
+<div class="authModalOverlay" id="authModalOverlay" aria-hidden="true">
+    <div class="authModal" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
+
+        <div class="authLoadingOverlay" id="authLoadingOverlay" aria-hidden="true">
+            <div class="authSpinner"></div>
+            <p class="authLoadingText">Connexion en cours…</p>
+        </div>
+
+        <button class="authCloseButton" id="closeAuthModal" type="button" aria-label="Close">
+            <span>&times;</span>
+        </button>
+
+        <div class="authModalGlow"></div>
+
+        <div class="authModalLeft">
+            <p class="authEyebrow" id="authEyebrow">ENTRE DANS L'ARÈNE</p>
+            <h2 class="authModalTitle" id="authModalTitle">REJOINS LES JEUX</h2>
+            <p class="authModalText" id="authModalText">
+                Crée ton compte, suis ta progression, sauvegarde tes scores et accède à l'expérience GamesOnWeb complète.
+            </p>
+
+            <div class="authFeatureList">
+                <div class="authFeatureItem">Accès sécurisé</div>
+                <div class="authFeatureItem">Suis tes scores</div>
+                <div class="authFeatureItem">Débloque tes jeux</div>
+            </div>
+        </div>
+
+        <div class="authModalRight">
+            <div class="form-toggle authTabs">
+                <button class="toggle-btn active" id="signup-toggle" type="button">S'inscrire</button>
+                <button class="toggle-btn" id="login-toggle" type="button">Connexion</button>
+            </div>
+
+            <div class="authFormsArea">
+                <form id="signup-form" class="auth-form active">
+                    <div class="form-group">
+                        <label for="signup-username">Nom d'utilisateur</label>
+                        <input type="text" id="signup-username" placeholder="Ton pseudo" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="signup-email">E-mail</label>
+                        <input type="email" id="signup-email" placeholder="ton@email.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="signup-password">Mot de passe</label>
+                        <input type="password" id="signup-password" placeholder="••••••••" autocomplete="new-password" required minlength="6">
+                    </div>
+
+                    <button type="submit" class="submit-btn authSubmitBtn" id="signup-submit">Créer un compte</button>
+                </form>
+
+                <form id="login-form" class="auth-form">
+                    <div class="form-group">
+                        <label for="login-email">E-mail</label>
+                        <input type="email" id="login-email" placeholder="ton@email.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="login-password">Mot de passe</label>
+                        <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" required>
+                    </div>
+
+                    <button type="submit" class="submit-btn authSubmitBtn" id="login-submit">Se connecter</button>
+                </form>
+            </div>
+
+            <div id="message" class="message"></div>
+        </div>
+    </div>
+</div>
+
+<script src="../runtime-config.js"></script>
+<script src="../login.js"></script>
+<script src="../app.js"></script>
 <script src="./canvas.js"></script>
 </body>
 </html>

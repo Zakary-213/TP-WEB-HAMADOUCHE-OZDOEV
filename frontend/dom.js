@@ -1,7 +1,4 @@
-/* ========================================================
-   NEON ZIP — Animations au scroll
-   ======================================================== */
-(() => {
+document.addEventListener("DOMContentLoaded", () => {
     const rows = document.querySelectorAll(".domRow");
     if (!rows.length) return;
 
@@ -20,6 +17,7 @@
                 rootMargin: "0px 0px -80px 0px",
             }
         );
+
         rows.forEach((row) => observer.observe(row));
     } else {
         const reveal = () => {
@@ -30,8 +28,9 @@
                 }
             });
         };
+
         window.addEventListener("scroll", reveal, { passive: true });
         window.addEventListener("load", reveal);
         reveal();
     }
-})();
+});

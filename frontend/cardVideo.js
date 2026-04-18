@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
             playHref: "/GamesOnWeb/index.html"
         },
         {
-            video: "./assets/videos/dom.mp4",
+            video: "./assets/videos/test2.mp4",
             kicker: "PUZZLE • LOGIQUE • NÉON",
             heading: "TRACE TON CHEMIN<br>ET BATS<br>LE CHRONO",
             text: "Relie les chiffres dans l'ordre, couvre toute la grille et crée tes propres puzzles dans Neon Zip.",

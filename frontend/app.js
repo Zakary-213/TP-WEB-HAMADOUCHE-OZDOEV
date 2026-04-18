@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     const AUTH_STATE_KEY = 'tpweb_is_authenticated';
-    const gameLinks = document.querySelectorAll('.gamePlayButton, #playNowBtn, #awardsMoreBtn');
+    const gameLinks = document.querySelectorAll('.gamePlayButton, #playNowBtn, #awardsMoreBtn, .requiresAuthPlay');
     const openLoginModalBtn = document.getElementById('openLoginModal');
     const registerNowBtn = document.getElementById('openRegisterNowModal');
     const featuredGamesSection = document.querySelector('.featuredGamesSection');
