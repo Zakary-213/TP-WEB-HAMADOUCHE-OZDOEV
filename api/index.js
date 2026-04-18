@@ -64,6 +64,10 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "..", "frontend", "index.html"));
 });
 
+app.get('/rules/canvas.html', (req, res) => {
+  res.redirect('/canvas.html');
+});
+
 // Route de test supplémentaire
 app.get("/api/ping", (req, res) => {
   res.json({ pong: true, time: new Date().toISOString() });
