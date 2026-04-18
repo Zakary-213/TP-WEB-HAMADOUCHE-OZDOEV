@@ -3,12 +3,12 @@
  * Orchestre l'UI, le timer, la logique et le worker.
  */
 
-import { getGridSize, setGridSize } from './config.js';
-import { gameState, uiState } from './state.js';
-import { createTimer } from './timer.js';
-import { isAdjacent, handleCellInteraction, hasWonAgainstTarget } from './logic.js';
-import { initGrid, renderGrid, bindGridPointerEvents } from './grid.js';
-import { createPuzzleWorker } from './worker-client.js';
+import { getGridSize, setGridSize } from './core/config.js';
+import { gameState, uiState } from './core/state.js';
+import { createTimer } from './game/timer.js';
+import { isAdjacent, handleCellInteraction, hasWonAgainstTarget } from './game/logic.js';
+import { initGrid, renderGrid, bindGridPointerEvents } from './ui/grid.js';
+import { createPuzzleWorker } from './worker/worker-client.js';
 import { createObstacles } from './obstacles/factory.js';
 
 /* ---------- Éléments DOM ---------- */
