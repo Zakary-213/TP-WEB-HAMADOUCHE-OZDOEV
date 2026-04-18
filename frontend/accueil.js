@@ -13,11 +13,8 @@ document.addEventListener("DOMContentLoaded", () => {
         ["./assets/images/logo.png","./assets/images/logo.png","./assets/images/logo.png","./assets/images/logo.png"]
     ];
 
-    function spawnCards(images) {
-        button.classList.remove("is-visible");
-
+    function spawnCards(images, onAllLoaded) {
         let loadedCount = 0;
-
         cards.forEach((card, i) => {
             const img = card.querySelector("img");
 
@@ -32,15 +29,34 @@ document.addEventListener("DOMContentLoaded", () => {
                 const markLoaded = () => {
                     loadedCount++;
                     if (loadedCount >= images.length) {
-                        setTimeout(() => button.classList.add("is-visible"), 300);
+                        if (typeof onAllLoaded === 'function') onAllLoaded();
+                        else setTimeout(() => button.classList.add("is-visible"), 300);
                     }
                 };
 
                 img.onload = () => {
                     setTimeout(() => {
                         card.classList.add("is-loaded");
+                        let finished = false;
+                        const onTrans = (ev) => {
+                            if (ev.target !== img) return;
+                            if (ev.propertyName !== 'opacity' && ev.propertyName !== 'transform') return;
+                            if (finished) return;
+                            finished = true;
+                            img.removeEventListener('transitionend', onTrans);
+                            clearTimeout(fallback);
+                            markLoaded();
+                        };
+
+                        const fallback = setTimeout(() => {
+                            if (finished) return;
+                            finished = true;
+                            img.removeEventListener('transitionend', onTrans);
+                            markLoaded();
+                        }, 1200);
+
+                        img.addEventListener('transitionend', onTrans);
                     }, 100);
-                    markLoaded();
                 };
 
                 img.onerror = (e) => {
@@ -50,7 +66,10 @@ document.addEventListener("DOMContentLoaded", () => {
                         img.src = withoutDot;
                         return;
                     }
-                    markLoaded();
+                    setTimeout(() => {
+                        card.classList.add('is-loaded');
+                        markLoaded();
+                    }, 120);
                 };
 
                 img.src = withoutDot;
@@ -63,6 +82,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const direction = newIndex > currentIndex ? "left" : "right";
 
+        button.classList.remove("is-visible");
+
         grid.classList.add(direction === "left" ? "is-left" : "is-right");
 
         setTimeout(() => {
@@ -71,10 +92,25 @@ document.addEventListener("DOMContentLoaded", () => {
                 card.classList.remove("is-loaded");
             });
 
-            button.classList.remove("is-visible");
+            let imagesLoaded = false;
+            let transitionDone = false;
 
-            spawnCards(gamesData[newIndex]);
+            const onAllLoaded = () => {
+                imagesLoaded = true;
+                if (transitionDone) button.classList.add("is-visible");
+            };
 
+            const onTransitionBack = (e) => {
+                if (e.target !== grid) return;
+                if (e.propertyName !== 'transform' && e.propertyName !== 'opacity') return;
+                grid.removeEventListener('transitionend', onTransitionBack);
+                transitionDone = true;
+                if (imagesLoaded) button.classList.add("is-visible");
+            };
+
+            spawnCards(gamesData[newIndex], onAllLoaded);
+
+            grid.addEventListener('transitionend', onTransitionBack);
             grid.classList.remove("is-left", "is-right");
 
         }, 600);
@@ -89,5 +125,5 @@ document.addEventListener("DOMContentLoaded", () => {
         tab.addEventListener("click", () => switchGame(index));
     });
 
-    spawnCards(gamesData[0]);
+    spawnCards(gamesData[0], () => button.classList.add('is-visible'));
 });
