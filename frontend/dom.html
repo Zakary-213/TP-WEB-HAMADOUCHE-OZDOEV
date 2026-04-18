@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DOM — Règles & Présentation</title>
+    <title>Neon Zip — Règles</title>
 
     <link rel="stylesheet" href="../index.css">
     <link rel="stylesheet" href="./dom.css">
@@ -12,15 +12,20 @@
 </head>
 <body>
 
+<!-- ───────────── NAVBAR ───────────── -->
 <nav class="navbar">
-    <div class="navLogo"><img src="/assets/images/logo.png" alt="Logo"></div>
+    <div class="navLogo">
+        <img src="/assets/images/logo.png" alt="Logo">
+    </div>
+
     <div class="navLinks">
         <a href="/" class="navLink">Accueil</a>
         <a href="/canvas.html" class="navLink">Canvas</a>
         <a href="/gow.html" class="navLink">GamesOnWeb</a>
-        <a href="#" class="navLink active">Dom</a>
+        <a href="/dom.html" class="navLink">Dom</a>
         <a href="#" class="navLink">Scores</a>
     </div>
+
     <div class="navButtonWrapper">
         <div class="navAuthButtons">
             <a href="/#register" class="navAuthBtn registerButton">S'inscrire</a>
@@ -29,134 +34,351 @@
     </div>
 </nav>
 
+<!-- ───────────── HERO ───────────── -->
 <section class="domHero">
     <div class="domHeroInner">
-        <p class="domEyebrow">DOM • DÉMOS • EXEMPLES</p>
-        <h1 class="domHeroTitle">DOM<br><span class="domGradientText">PROJECTS</span></h1>
-        <p class="domHeroSubtitle">Collection de petites démos et composants DOM, réalisés pour illustrer des motifs d'interface, des interactions et des micro-jeux. Images et textes sont associés pour rester cohérents et présentables.</p>
+        <p class="domEyebrow">PUZZLE • LOGIQUE • NÉON</p>
+
+        <h1 class="domHeroTitle">
+            NEON <span class="domGradientText">ZIP</span>
+        </h1>
+        <p class="domHeroKicker">Puzzle Arena</p>
+
+        <p class="domHeroSubtitle">
+            Trace un chemin continu qui passe par <strong>toutes les cases</strong> de la grille, en reliant les chiffres
+            dans l'ordre, de 1 à N. Un tracé, une solution, une logique à débloquer. Joue les puzzles proposés, crée les tiens,
+            et défie le chrono pour te hisser au sommet.
+        </p>
+
         <div class="domHeroActions">
-            <a href="#domContent" class="heroBtn heroBtnGhost"><span>Voir la page</span></a>
+            <a href="/Dom/index.html" class="heroBtn heroBtnPrimary">
+                <span>Jouer maintenant</span>
+            </a>
+            <a href="#domContent" class="heroBtn heroBtnGhost">
+                <span>Voir les règles</span>
+            </a>
+        </div>
+
+        <div class="domHeroStats">
+            <div class="domStat">
+                <span class="domStatValue">03</span>
+                <span class="domStatLabel">Difficultés</span>
+            </div>
+            <div class="domStatDivider"></div>
+            <div class="domStat">
+                <span class="domStatValue">04</span>
+                <span class="domStatLabel">Tailles</span>
+            </div>
+            <div class="domStatDivider"></div>
+            <div class="domStat">
+                <span class="domStatValue">∞</span>
+                <span class="domStatLabel">Puzzles</span>
+            </div>
+            <div class="domStatDivider"></div>
+            <div class="domStat">
+                <span class="domStatValue">01</span>
+                <span class="domStatLabel">Éditeur</span>
+            </div>
         </div>
     </div>
+
     <div class="domHeroBackdrop" aria-hidden="true"></div>
 </section>
 
+<!-- ───────────── RÈGLES ───────────── -->
 <section class="domSection" id="domContent">
 
+    <!-- Règle 01 — MENU PRINCIPAL -->
     <article class="domRow" data-index="01">
         <div class="domImageWrapper">
             <div class="domImageIndex">01</div>
-            <img src="/assets/images/dom1.png" alt="Aperçu composant 1">
+            <img src="/assets/images/dom1.png" alt="Menu principal Neon Zip">
             <div class="domImageOverlay"></div>
         </div>
 
         <div class="domContent">
-            <span class="domTag">Composant</span>
-            <h2 class="domTitle">Cartes interactives</h2>
-            <p class="domDescription">Cartes réactives et accessibles, conçues pour présenter une information synthétique avec un visuel fort. Les images illustrent l'usage et la mise en page.</p>
+            <span class="domTag">Menu</span>
+            <h2 class="domTitle">Trois portes, une arène</h2>
+            <p class="domDescription">
+                Depuis le menu principal, choisis ton entrée dans l'arène. Que tu veuilles <strong>résoudre</strong>,
+                <strong>créer</strong> ou <strong>comparer</strong>, tout part d'ici. Chaque option ouvre une expérience
+                différente, pensée pour un moment de jeu précis.
+            </p>
+
             <ul class="domList">
-                <li><strong>Image</strong> — illustration contextualisée.</li>
-                <li><strong>Titre</strong> — mise en avant du contenu.</li>
-                <li><strong>CTA</strong> — actions claires et accessibles.</li>
+                <li><strong>Jouer</strong> — Lance une partie classique, génère un puzzle aléatoire à la difficulté de ton choix.</li>
+                <li><strong>Scores</strong> — Consulte ton historique et tes meilleurs temps filtrés par mode.</li>
+                <li><strong>Concepteur</strong> — Ouvre l'éditeur de niveau pour créer tes propres puzzles de A à Z.</li>
             </ul>
         </div>
     </article>
 
+    <!-- Règle 02 — LE PUZZLE (gameplay expliqué avec dom1 résolu) -->
     <article class="domRow reverse" data-index="02">
         <div class="domImageWrapper">
             <div class="domImageIndex">02</div>
-            <img src="/assets/images/dom2.png" alt="Aperçu composant 2">
+            <img src="/assets/images/dom2.png" alt="Puzzle résolu avec chemin néon">
             <div class="domImageOverlay"></div>
         </div>
 
         <div class="domContent">
-            <span class="domTag">Layout</span>
-            <h2 class="domTitle">Grille responsive</h2>
-            <p class="domDescription">Système de grille fluide pour s'adapter à toutes les tailles d'écran. Les images restent nettes et cohérentes avec le contenu textuel associé.</p>
-            <div class="domChips">
-                <span class="domChip">Responsive</span>
-                <span class="domChip">Accessible</span>
-                <span class="domChip">Performant</span>
+            <span class="domTag">Gameplay</span>
+            <h2 class="domTitle">Une règle, mille chemins</h2>
+            <p class="domDescription">
+                Le principe est simple à énoncer, redoutable à résoudre. Tu dois tracer <strong>un seul trait continu</strong>
+                qui passe obligatoirement par toutes les cases de la grille, en respectant l'ordre des chiffres :
+                tu pars du 1, tu passes par le 2, le 3, et ainsi de suite jusqu'au dernier numéro. Aucune case ne doit rester vide.
+            </p>
+
+            <ul class="domList">
+                <li><strong>Chemin continu</strong> — Pas de saut, pas de diagonale, uniquement haut/bas/gauche/droite.</li>
+                <li><strong>Ordre imposé</strong> — Les chiffres doivent être traversés dans leur ordre numérique.</li>
+                <li><strong>Couverture totale</strong> — Toutes les cases de la grille doivent être visitées exactement une fois.</li>
+                <li><strong>Tracé fluide</strong> — Clique-glisse ou tape-glisse pour dessiner le chemin d'un seul mouvement.</li>
+            </ul>
+        </div>
+    </article>
+
+    <!-- Règle 03 — DIFFICULTÉS (dom3 facile) -->
+    <article class="domRow" data-index="03">
+        <div class="domImageWrapper">
+            <div class="domImageIndex">03</div>
+            <img src="/assets/images/dom3.png" alt="Difficulté facile - grille 4x4">
+            <div class="domImageOverlay"></div>
+        </div>
+
+        <div class="domContent">
+            <span class="domTag">Difficulté</span>
+            <h2 class="domTitle">Trois paliers, ta cadence</h2>
+            <p class="domDescription">
+                Neon Zip s'adapte à ton niveau. Sélectionne la difficulté depuis le menu déroulant en haut à droite
+                de la grille, et le générateur te servira des puzzles calibrés. Plus la grille est grande, plus les chemins
+                possibles se multiplient, et plus tes neurones chauffent.
+            </p>
+
+            <div class="domDifficulties">
+                <div class="domDiffCard domDiffCard--easy">
+                    <span class="domDiffBadge">Facile</span>
+                    <span class="domDiffGrid">6 × 6</span>
+                    <span class="domDiffDesc">Peu de pièges. Idéal pour s'échauffer.</span>
+                </div>
+                <div class="domDiffCard domDiffCard--medium">
+                    <span class="domDiffBadge">Moyen</span>
+                    <span class="domDiffGrid">6 × 6</span>
+                    <span class="domDiffDesc">La courbe d'apprentissage. Le rythme s'installe.</span>
+                </div>
+                <div class="domDiffCard domDiffCard--hard">
+                    <span class="domDiffBadge">Difficile</span>
+                    <span class="domDiffGrid">6 × 6</span>
+                    <span class="domDiffDesc">Cases bloquées, chiffres dispersés.</span>
+                </div>
             </div>
         </div>
     </article>
 
-    <article class="domRow" data-index="03">
+    <!-- Règle 04 — INDICES / ASSISTANCE (dom8 avec case jaune d'indice) -->
+    <article class="domRow reverse" data-index="04">
         <div class="domImageWrapper">
-            <div class="domImageIndex">03</div>
-            <img src="/assets/images/dom3.png" alt="Aperçu composant 3">
+            <div class="domImageIndex">04</div>
+            <img src="/assets/images/dom8.png" alt="Indice affiché">
             <div class="domImageOverlay"></div>
         </div>
 
         <div class="domContent">
-            <span class="domTag">Animation</span>
-            <h2 class="domTitle">Micro-interactions</h2>
-            <p class="domDescription">Animations subtiles, transitions et retours visuels soigneusement calibrés pour améliorer la lisibilité et la sensation d'interface.</p>
-            <ul class="domList">
-                <li><strong>Hover</strong> — retours tactiles doux.</li>
-                <li><strong>Focus</strong> — visibilité pour navigation clavier.</li>
+            <span class="domTag">Assistance</span>
+            <h2 class="domTitle">Bloqué ? Un indice</h2>
+            <p class="domDescription">
+                Tout le monde finit par rencontrer un puzzle qui résiste. Pas de panique : trois boutons sous la grille
+                t'accompagnent à chaque instant. Reprends zéro, change de puzzle, ou demande un coup de pouce —
+                Neon Zip te guide sans te mâcher le travail.
+            </p>
+
+            <ul class="domListIcons">
+                <li><span class="domIcon domIcon--restart">↻</span> <strong>Recommencer</strong> — Remet le tracé à zéro sur le puzzle actuel.</li>
+                <li><span class="domIcon domIcon--new">⚡</span> <strong>Nouveau puzzle</strong> — Génère une grille inédite à la même difficulté.</li>
+                <li><span class="domIcon domIcon--hint">💡</span> <strong>Indice</strong> — Affiche le premier déplacement conseillé en surlignant la case à visiter.</li>
             </ul>
         </div>
     </article>
 
-    <article class="domRow reverse" data-index="04">
-        <div class="domImageWrapper">
-            <div class="domImageIndex">04</div>
-            <img src="/assets/images/dom4.png" alt="Aperçu composant 4">
+    <!-- Règle 05 — VICTOIRE (dom5 Bravo) -->
+    <article class="domRow" data-index="05">
+        <div class="domImageWrapper domImageWrapper--small">
+            <div class="domImageIndex">05</div>
+            <img src="/assets/images/dom5.png" alt="Écran de victoire">
             <div class="domImageOverlay"></div>
         </div>
 
         <div class="domContent">
-            <span class="domTag">Démonstration</span>
-            <h2 class="domTitle">Widgets & contrôles</h2>
-            <p class="domDescription">Une collection de widgets prêts à l'emploi : boutons, contrôles, listes et modaux. Chaque visuel est choisi pour rester fidèle au texte descriptif.</p>
+            <span class="domTag">Victoire</span>
+            <h2 class="domTitle">Bravo, et après ?</h2>
+            <p class="domDescription">
+                Dès que ton tracé couvre toutes les cases dans le bon ordre, la grille s'illumine et l'écran de victoire
+                apparaît. Ton <strong>temps</strong> est enregistré avec la difficulté pour alimenter ton classement.
+                Tu choisis ensuite où tu veux aller ensuite.
+            </p>
+
+            <ul class="domList">
+                <li><strong>Nouveau puzzle</strong> — Enchaîne avec une grille fraîche à la même difficulté.</li>
+                <li><strong>Rejouer</strong> — Retente le même puzzle pour améliorer ton chrono.</li>
+                <li><strong>Quitter</strong> — Retour au menu principal, ton score est déjà sauvegardé.</li>
+            </ul>
         </div>
     </article>
 
 </section>
 
-<section class="domGallery">
-    <div class="domGalleryHeader">
-        <p class="domSectionEyebrow">GALLERY • DESIGNERS</p>
-        <h2 class="domSectionTitle">Contributeurs & Ressources</h2>
+<!-- ───────────── CONCEPTEUR DE NIVEAU (2 cartes) ───────────── -->
+<section class="domDuo">
+    <div class="domDuoHeader">
+        <p class="domSectionEyebrow">BUILD • YOUR • OWN</p>
+        <h2 class="domSectionTitle">Le <span class="domGradientText">concepteur</span> de niveau</h2>
+        <p class="domSectionSubtitle">
+            Passe de l'autre côté de la grille. Conçois tes propres puzzles, teste-les, défie tes amis avec tes créations.
+        </p>
     </div>
 
-    <div class="domGalleryGrid">
-        <article class="domCard">
-            <img src="/assets/images/dom5.png" alt="Extrait 5">
-        </article>
-        <article class="domCard">
-            <img src="/assets/images/dom6.png" alt="Extrait 6">
-        </article>
-        <article class="domCard">
-            <img src="/assets/images/dom7.png" alt="Extrait 7">
-        </article>
-        <article class="domCard">
-            <img src="/assets/images/dom8.png" alt="Extrait 8">
-        </article>
-        <article class="domCard">
-            <img src="/assets/images/dom9.png" alt="Extrait 9">
-        </article>
-    </div>
+    <div class="domDuoGrid">
 
-    <div class="domDesigners">
-        <div class="designer">
-            <img src="/assets/images/domConcepteur1.png" alt="Concepteur 1">
-            <div class="designerInfo"><strong>Zakary</strong><span>Lead UI</span></div>
+        <!-- Étape 1 : choisir la taille -->
+        <article class="domDuoCard domDuoCard--step1">
+            <div class="domDuoStep">Étape 01</div>
+
+            <div class="domDuoImage">
+                <img src="/assets/images/domConcepteur1.png" alt="Concepteur : choix de la taille">
+            </div>
+
+            <h3 class="domDuoCardTitle">Choisis ta grille</h3>
+            <p class="domDuoCardText">
+                Commence par définir les dimensions de ton puzzle. Du petit format nerveux au grand terrain stratégique,
+                quatre tailles sont disponibles pour construire l'expérience que tu imagines.
+            </p>
+
+            <ul class="domListIcons">
+                <li><span class="domSizeChip">4×4</span> <strong>Petit</strong> — Puzzles rapides, parfaits pour débuter.</li>
+                <li><span class="domSizeChip">6×6</span> <strong>Standard</strong> — Le bon équilibre réflexion / rythme.</li>
+                <li><span class="domSizeChip">8×8</span> <strong>Avancé</strong> — Des tracés plus élaborés, plus de chiffres.</li>
+                <li><span class="domSizeChip">10×10</span> <strong>Expert</strong> — Le format hardcore pour cerveaux aguerris.</li>
+            </ul>
+        </article>
+
+        <!-- Étape 2 : placer les chiffres -->
+        <article class="domDuoCard domDuoCard--step2">
+            <div class="domDuoStep">Étape 02</div>
+
+            <div class="domDuoImage">
+                <img src="/assets/images/domConcepteur2.png" alt="Concepteur : placement des chiffres">
+            </div>
+
+            <h3 class="domDuoCardTitle">Place les chiffres</h3>
+            <p class="domDuoCardText">
+                Glisse les chiffres sur la grille pour définir les points de passage obligés. Tu peux en poser jusqu'à
+                dix, dans l'ordre que tu veux. Une fois le placement terminé, valide ton niveau et lance-toi le défi
+                de le résoudre.
+            </p>
+
+            <ul class="domListIcons">
+                <li><span class="domIcon domIcon--drag">✋</span> <strong>Glisser-déposer</strong> — Attrape un chiffre et place-le où tu veux.</li>
+                <li><span class="domIcon domIcon--edit">✎</span> <strong>Jusqu'à 10 chiffres</strong> — La limite à ne pas dépasser par grille.</li>
+                <li><span class="domIcon domIcon--check">✓</span> <strong>Validation</strong> — Bouton Valider pour lancer ton propre puzzle.</li>
+                <li><span class="domIcon domIcon--exit">⎋</span> <strong>Quitter le concepteur</strong> — Retour au menu à tout moment.</li>
+            </ul>
+        </article>
+
+    </div>
+</section>
+
+<!-- ───────────── SCORES / CLASSEMENT ───────────── -->
+<section class="domScores">
+    <div class="domScoresInner">
+        <div class="domScoresLeft">
+            <p class="domSectionEyebrow">HALL • OF • FAME</p>
+            <h2 class="domSectionTitle">Tes meilleurs <span class="domGradientText">scores</span></h2>
+            <p class="domScoresText">
+                Chaque puzzle résolu enregistre ton temps, la difficulté et le mode. Consulte l'historique de tes
+                performances et filtre par mode pour voir où tu brilles le plus. Plus tu joues, plus ton tableau s'étoffe.
+            </p>
+
+            <ul class="domList">
+                <li><strong>Filtres par mode</strong> — Solo, Concepteur, tous modes confondus.</li>
+                <li><strong>Tri par chrono</strong> — Retrouve tes meilleurs temps en un clic.</li>
+                <li><strong>Grille &amp; taille</strong> — Le détail exact de chaque partie enregistrée.</li>
+                <li><strong>Sauvegarde utilisateur</strong> — Tes scores suivent ton compte connecté.</li>
+            </ul>
         </div>
-        <div class="designer">
-            <img src="/assets/images/domConcepteur2.png" alt="Concepteur 2">
-            <div class="designerInfo"><strong>Akram</strong><span>Frontend</span></div>
+
+        <div class="domScoresRight">
+            <div class="domScoresPanel">
+                <div class="domScoresPanelHeader">
+                    <span class="domScoresPanelTitle">Meilleurs Scores</span>
+                    <div class="domScoresFilters">
+                        <span class="domScoresFilter active">Tous</span>
+                        <span class="domScoresFilter">Solo</span>
+                        <span class="domScoresFilter">Concepteur</span>
+                    </div>
+                </div>
+
+                <div class="domScoresTable">
+                    <div class="domScoresHead">
+                        <span>Mode</span>
+                        <span>Grille</span>
+                        <span>Taille</span>
+                        <span>Chrono</span>
+                        <span>Difficulté</span>
+                    </div>
+
+                    <div class="domScoresRow">
+                        <span class="domScoresMode">Solo</span>
+                        <span>Classique</span>
+                        <span>6×6</span>
+                        <span class="domScoresChrono">00:08</span>
+                        <span class="domScoresDiff domScoresDiff--medium">Moyen</span>
+                    </div>
+                    <div class="domScoresRow">
+                        <span class="domScoresMode">Solo</span>
+                        <span>Classique</span>
+                        <span>4×4</span>
+                        <span class="domScoresChrono">00:12</span>
+                        <span class="domScoresDiff domScoresDiff--easy">Facile</span>
+                    </div>
+                    <div class="domScoresRow">
+                        <span class="domScoresMode">Concepteur</span>
+                        <span>Custom</span>
+                        <span>8×8</span>
+                        <span class="domScoresChrono">00:34</span>
+                        <span class="domScoresDiff domScoresDiff--hard">Difficile</span>
+                    </div>
+                    <div class="domScoresRow">
+                        <span class="domScoresMode">Solo</span>
+                        <span>Classique</span>
+                        <span>5×5</span>
+                        <span class="domScoresChrono">00:19</span>
+                        <span class="domScoresDiff domScoresDiff--medium">Moyen</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </section>
 
+<!-- ───────────── CTA FINAL ───────────── -->
+<section class="domCta">
+    <div class="domCtaInner">
+        <h2 class="domCtaTitle">PRÊT À TRACER ?</h2>
+        <p class="domCtaText">
+            Un chemin, une seule ligne, tous les chiffres dans l'ordre. Le reste, c'est à toi de l'écrire.
+        </p>
+        <a href="/Dom/index.html" class="heroBtn heroBtnPrimary domCtaBtn">
+            <span>Lancer le jeu</span>
+        </a>
+    </div>
+</section>
+
+<!-- ───────────── FOOTER ───────────── -->
 <footer class="siteFooter">
     <div class="siteFooterLine"></div>
-    <p class="siteFooterText">© 2026 — Akramat OZDOEV &amp; Zakary HAMADOUCHE</p>
+    <p class="siteFooterText">© Copyright 2026 — Tous droits réservés par Akramat OZDOEV &amp; Zakary HAMADOUCHE</p>
 </footer>
-
-<div id="domLightbox" class="domLightbox" aria-hidden="true"></div>
 
 <script src="./dom.js"></script>
 </body>

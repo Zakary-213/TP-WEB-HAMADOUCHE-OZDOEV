@@ -1,69 +1,1036 @@
-/* ==================================================
-   DOM — Page styles (inspired by gow & canvas)
-   ================================================== */
+/* ========================================================
+   NEON ZIP — PAGE RÈGLES
+   Theme : Cyan néon + jaune électrique
+   ======================================================== */
 
-:root{
-    --dom-primary:#ff6b6b;
-    --dom-accent:#00c2ff;
-    --dom-ink:#0b1220;
+:root {
+    --dom-primary: #22d3ee;
+    --dom-primary-deep: #0891b2;
+    --dom-accent: #facc15;
+    --dom-accent-deep: #eab308;
+    --dom-success: #4ade80;
+    --dom-danger: #f87171;
+    --dom-ink: #0b1220;
+    --dom-ink-2: #0f1a2e;
 }
 
-.domHero{
-    position:relative;
-    padding:48px 20px 80px;
-    text-align:center;
+/* ───────── HERO ───────── */
+.domHero {
+    position: relative;
+    width: 100%;
+    padding: 60px 20px 80px;
+    overflow: hidden;
+    z-index: 2;
 }
-.domHeroInner{max-width:1080px;margin:0 auto;}
-.domEyebrow{font-family:Nunito, sans-serif;font-weight:800;letter-spacing:0.28em;text-transform:uppercase;color:var(--dom-accent);font-size:12px}
-.domHeroTitle{font-family:Bebas Neue, sans-serif;font-size:88px;line-height:0.9;color:#111}
-.domGradientText{background:linear-gradient(90deg,#00c2ff 0%,#00ffae 55%,#ffb020 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
-.domHeroSubtitle{max-width:760px;margin:10px auto 0;font-family:Nunito;font-weight:300;color:#222;line-height:1.6}
-.domHeroActions{margin-top:18px}
 
-.domHeroBackdrop{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 20% 30%, rgba(0,194,255,.06) 0%, transparent 40%)}
+.domHeroInner {
+    position: relative;
+    z-index: 3;
+    max-width: 1080px;
+    margin: 0 auto;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+}
 
-.domSection{max-width:1180px;margin:48px auto;padding:0 20px;display:flex;flex-direction:column;gap:80px}
-.domRow{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center;opacity:0;transform:translateY(40px);transition:opacity .7s cubic-bezier(.2,.9,.2,1),transform .7s cubic-bezier(.2,.9,.2,1)}
-.domRow.visible{opacity:1;transform:none}
-.domRow.reverse .domImageWrapper{order:2}.domRow.reverse .domContent{order:1}
+.domEyebrow {
+    margin: 0;
+    font-family: "Nunito", sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--dom-primary);
+}
 
-.domImageWrapper{position:relative;border-radius:12px;overflow:hidden;background:linear-gradient(180deg,rgba(0,0,0,.02),transparent);box-shadow:0 18px 40px rgba(0,0,0,.25)}
-.domImageWrapper img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .45s ease}
-.domImageWrapper:hover img{transform:scale(1.03)}
-.domImageIndex{position:absolute;top:12px;left:12px;background:rgba(0,0,0,.55);color:#fff;padding:6px 10px;font-family:Bebas Neue;font-size:26px;border:1px solid rgba(0,194,255,.35)}
-.domImageOverlay{position:absolute;inset:0;background:linear-gradient(180deg,transparent,rgba(0,0,0,.12));pointer-events:none}
+.domHeroTitle {
+    margin: 0;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 140px;
+    line-height: 0.88;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #FFFFFF;
+    text-shadow:
+        0 0 24px rgba(34, 211, 238, 0.35),
+        0 0 48px rgba(34, 211, 238, 0.18);
+}
 
-.domContent{display:flex;flex-direction:column;gap:14px;padding-left:12px}
-.domContent::before{content:"";position:absolute;left:20px;top:10px;width:3px;height:56px;background:linear-gradient(180deg,var(--dom-accent),transparent)}
-.domTag{font-family:Nunito;font-weight:800;letter-spacing:.18em;color:var(--dom-accent);text-transform:uppercase;font-size:12px}
-.domTitle{font-family:Bebas Neue;font-size:56px;color:#111;margin:0}
-.domDescription{font-family:Nunito;font-weight:300;color:#333;max-width:520px}
-.domList{list-style:none;padding:0;margin:8px 0 0;display:flex;flex-direction:column;gap:10px}
-.domList li{padding-left:22px;position:relative;font-family:Nunito;color:#333}
-.domList li::before{content:"";position:absolute;left:0;top:8px;width:8px;height:8px;background:linear-gradient(90deg,var(--dom-accent),var(--dom-primary));transform:rotate(45deg)}
+.domGradientText {
+    background: linear-gradient(90deg, #22d3ee 0%, #4ade80 45%, #facc15 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
 
-.domChips{display:flex;gap:8px;margin-top:8px}
-.domChip{background:rgba(0,0,0,.04);padding:8px 10px;border-radius:8px;font-weight:700;color:#222}
+.domHeroKicker {
+    margin: 0;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 22px;
+    letter-spacing: 0.4em;
+    color: rgba(34, 211, 238, 0.85);
+    text-transform: uppercase;
+}
 
-.domGallery{max-width:1180px;margin:40px auto;padding:0 20px}
-.domGalleryGrid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
-.domCard{border-radius:10px;overflow:hidden;background:#fff;box-shadow:0 12px 30px rgba(0,0,0,.12)}
-.domCard img{width:100%;height:100%;object-fit:cover;display:block}
-.domDesigners{display:flex;gap:20px;margin-top:18px}
-.designer{display:flex;align-items:center;gap:12px}
-.designer img{width:68px;height:68px;border-radius:10px;object-fit:cover}
-.designerInfo strong{display:block}
-.designerInfo span{color:#666;font-size:13px}
+.domHeroSubtitle {
+    margin: 0;
+    max-width: 760px;
+    font-family: "Nunito", sans-serif;
+    font-size: 18px;
+    font-weight: 300;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.8);
+}
 
-.siteFooter{padding:30px 20px;text-align:center;color:#666}
-.siteFooterLine{height:1px;background:linear-gradient(90deg,transparent,#ddd,transparent);margin-bottom:12px}
+.domHeroSubtitle strong {
+    color: #FFFFFF;
+    font-weight: 700;
+}
 
-/* Lightbox */
-.domLightbox{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.7);z-index:999}
-.domLightbox img{max-width:90%;max-height:90%;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.domHeroActions {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 10px;
+    isolation: isolate;
+}
 
-@media (max-width:900px){
-    .domRow{grid-template-columns:1fr;gap:28px}
-    .domGalleryGrid{grid-template-columns:repeat(2,1fr)}
-    .domHeroTitle{font-size:54px}
+.domHeroStats {
+    display: inline-flex;
+    align-items: center;
+    gap: 28px;
+    margin-top: 20px;
+    padding: 18px 30px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(34, 211, 238, 0.22);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.domStat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.domStatValue {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 38px;
+    line-height: 1;
+    color: #FFFFFF;
+    letter-spacing: 0.03em;
+}
+
+.domStatLabel {
+    font-family: "Nunito", sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.domStatDivider {
+    width: 1px;
+    height: 38px;
+    background: linear-gradient(180deg, transparent, rgba(34, 211, 238, 0.5), transparent);
+}
+
+.domHeroBackdrop {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse at 20% 30%, rgba(34, 211, 238, 0.18) 0%, transparent 45%),
+        radial-gradient(ellipse at 80% 70%, rgba(250, 204, 21, 0.10) 0%, transparent 45%);
+}
+
+/* Grille néon en fond */
+.domHeroBackdrop::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(34, 211, 238, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(34, 211, 238, 0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: radial-gradient(ellipse at center, black 0%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 0%, transparent 75%);
+}
+
+/* ───────── SECTION RÈGLES ───────── */
+.domSection {
+    position: relative;
+    z-index: 3;
+    max-width: 1250px;
+    margin: 40px auto 120px;
+    padding: 0 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 140px;
+}
+
+.domRow {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 90px;
+    align-items: center;
+
+    opacity: 0;
+    transform: translateY(60px);
+    transition:
+        opacity 0.9s cubic-bezier(.2,.9,.2,1),
+        transform 0.9s cubic-bezier(.2,.9,.2,1);
+}
+
+.domRow.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.domRow.reverse .domImageWrapper { order: 2; }
+.domRow.reverse .domContent { order: 1; }
+
+/* ───────── IMAGE ───────── */
+.domImageWrapper {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 11;
+    border-radius: 14px;
+    overflow: hidden;
+    background:
+        radial-gradient(ellipse at center, rgba(34, 211, 238, 0.10) 0%, transparent 70%),
+        var(--dom-ink);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.38);
+    transition: transform 0.45s ease, box-shadow 0.45s ease;
+}
+
+/* Variante pour image verticale (écran de victoire) */
+.domImageWrapper--small {
+    aspect-ratio: 4 / 3;
+}
+
+.domRow.visible .domImageWrapper:hover {
+    transform: translateY(-6px);
+    box-shadow:
+        0 30px 60px rgba(0, 0, 0, 0.5),
+        0 0 28px rgba(34, 211, 238, 0.25);
+}
+
+.domImageWrapper::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    padding: 2px;
+    border-radius: 14px;
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.9) 0%,
+        rgba(255, 255, 255, 0.5) 18%,
+        rgba(255, 255, 255, 0.12) 44%,
+        rgba(34, 211, 238, 0.35) 70%,
+        rgba(34, 211, 238, 0.95) 100%
+    );
+    -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 3;
+}
+
+.domImageWrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 20px;
+    display: block;
+    position: relative;
+    z-index: 1;
+    transition: transform 0.6s ease;
+}
+
+.domImageWrapper--small img {
+    padding: 30px;
+}
+
+.domImageWrapper:hover img {
+    transform: scale(1.03);
+}
+
+.domImageOverlay {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.15) 100%);
+    opacity: 0.4;
+}
+
+.domImageIndex {
+    position: absolute;
+    top: 16px;
+    left: 18px;
+    z-index: 4;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 34px;
+    line-height: 1;
+    color: #FFFFFF;
+    letter-spacing: 0.05em;
+    padding: 6px 12px;
+    background: rgba(0, 0, 0, 0.55);
+    border: 1px solid rgba(34, 211, 238, 0.6);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+/* ───────── CONTENU TEXTE ───────── */
+.domContent {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding-left: 24px;
+}
+
+.domContent::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 6px;
+    width: 3px;
+    height: 72px;
+    background: linear-gradient(180deg, var(--dom-primary) 0%, rgba(34, 211, 238, 0) 100%);
+}
+
+.domTag {
+    font-family: "Nunito", sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--dom-primary);
+}
+
+.domTitle {
+    margin: 0;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 74px;
+    line-height: 0.92;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #FFFFFF;
+}
+
+.domDescription {
+    margin: 0;
+    font-family: "Nunito", sans-serif;
+    font-size: 17px;
+    font-weight: 300;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.82);
+    max-width: 520px;
+}
+
+.domDescription strong {
+    color: #FFFFFF;
+    font-weight: 700;
+}
+
+/* ───────── LISTE SIMPLE ───────── */
+.domList {
+    list-style: none;
+    padding: 0;
+    margin: 8px 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.domList li {
+    position: relative;
+    padding-left: 22px;
+    font-family: "Nunito", sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.88);
+}
+
+.domList li strong {
+    color: var(--dom-primary);
+    font-weight: 800;
+    letter-spacing: 0.02em;
+}
+
+.domList li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 8px;
+    width: 8px;
+    height: 8px;
+    background: linear-gradient(90deg, #22d3ee 0%, #4ade80 100%);
+    transform: rotate(45deg);
+    box-shadow: 0 0 12px rgba(34, 211, 238, 0.45);
+}
+
+/* ───────── LISTE AVEC ICÔNES ───────── */
+.domListIcons {
+    list-style: none;
+    padding: 0;
+    margin: 8px 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.domListIcons li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-family: "Nunito", sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.88);
+}
+
+.domListIcons li strong {
+    color: var(--dom-primary);
+    font-weight: 800;
+    margin-right: 2px;
+}
+
+.domIcon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--dom-primary);
+    background: rgba(34, 211, 238, 0.08);
+    border: 1px solid rgba(34, 211, 238, 0.3);
+    border-radius: 6px;
+}
+
+.domIcon--hint {
+    color: var(--dom-accent);
+    background: rgba(250, 204, 21, 0.08);
+    border-color: rgba(250, 204, 21, 0.35);
+}
+
+/* Chip taille de grille */
+.domSizeChip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    min-width: 46px;
+    height: 32px;
+    padding: 0 8px;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 15px;
+    letter-spacing: 0.08em;
+    color: #FFFFFF;
+    background: rgba(34, 211, 238, 0.1);
+    border: 1px solid rgba(34, 211, 238, 0.4);
+    border-radius: 6px;
+}
+
+/* ───────── CARTES DIFFICULTÉS ───────── */
+.domDifficulties {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 10px;
+    max-width: 560px;
+}
+
+.domDiffCard {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px 14px 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 3px solid var(--diff-color, var(--dom-primary));
+    transition: transform 0.3s ease, background 0.3s ease;
+}
+
+.domDiffCard:hover {
+    transform: translateY(-3px);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.domDiffCard--easy   { --diff-color: #4ade80; }
+.domDiffCard--medium { --diff-color: #22d3ee; }
+.domDiffCard--hard   { --diff-color: #facc15; }
+
+.domDiffBadge {
+    font-family: "Nunito", sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--diff-color);
+}
+
+.domDiffGrid {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 32px;
+    line-height: 1;
+    letter-spacing: 0.05em;
+    color: #FFFFFF;
+}
+
+.domDiffDesc {
+    font-family: "Nunito", sans-serif;
+    font-size: 12px;
+    font-weight: 300;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* ======================================================================
+   CONCEPTEUR — 2 cartes côte à côte
+   ====================================================================== */
+.domDuo {
+    position: relative;
+    z-index: 3;
+    max-width: 1250px;
+    margin: 0 auto 120px;
+    padding: 0 20px;
+}
+
+.domDuoHeader {
+    text-align: center;
+    max-width: 800px;
+    margin: 0 auto 56px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.domSectionEyebrow {
+    margin: 0;
+    font-family: "Nunito", sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    color: var(--dom-primary);
+}
+
+.domSectionTitle {
+    margin: 0;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 72px;
+    line-height: 0.95;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #FFFFFF;
+}
+
+.domSectionSubtitle {
+    margin: 0;
+    font-family: "Nunito", sans-serif;
+    font-size: 17px;
+    font-weight: 300;
+    line-height: 1.55;
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.domDuoGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: stretch;
+}
+
+.domDuoCard {
+    position: relative;
+    padding: 36px 32px 32px;
+    background:
+        radial-gradient(circle at top right, rgba(34, 211, 238, 0.08) 0%, transparent 45%),
+        linear-gradient(180deg, rgba(15, 26, 46, 0.9) 0%, rgba(11, 18, 32, 0.95) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow: hidden;
+    transition: transform 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+}
+
+.domDuoCard::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--dom-primary) 0%, rgba(34, 211, 238, 0) 80%);
+}
+
+.domDuoCard--step2::before {
+    background: linear-gradient(90deg, rgba(250, 204, 21, 0) 20%, var(--dom-accent) 100%);
+}
+
+.domDuoCard:hover {
+    transform: translateY(-4px);
+    border-color: rgba(34, 211, 238, 0.3);
+    box-shadow:
+        0 20px 40px rgba(0, 0, 0, 0.4),
+        0 0 28px rgba(34, 211, 238, 0.12);
+}
+
+.domDuoCard--step2:hover {
+    border-color: rgba(250, 204, 21, 0.3);
+    box-shadow:
+        0 20px 40px rgba(0, 0, 0, 0.4),
+        0 0 28px rgba(250, 204, 21, 0.12);
+}
+
+.domDuoStep {
+    align-self: flex-start;
+    font-family: "Nunito", sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--dom-primary);
+    padding: 5px 10px;
+    background: rgba(34, 211, 238, 0.08);
+    border: 1px solid rgba(34, 211, 238, 0.3);
+}
+
+.domDuoCard--step2 .domDuoStep {
+    color: var(--dom-accent);
+    background: rgba(250, 204, 21, 0.08);
+    border-color: rgba(250, 204, 21, 0.35);
+}
+
+.domDuoImage {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #060a12;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.domDuoImage img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 12px;
+}
+
+.domDuoCardTitle {
+    margin: 0;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 46px;
+    line-height: 0.95;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #FFFFFF;
+}
+
+.domDuoCardText {
+    margin: 0;
+    font-family: "Nunito", sans-serif;
+    font-size: 14px;
+    font-weight: 300;
+    line-height: 1.55;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+/* Accent step2 */
+.domDuoCard--step2 .domListIcons li strong {
+    color: var(--dom-accent);
+}
+
+.domDuoCard--step2 .domIcon {
+    color: var(--dom-accent);
+    background: rgba(250, 204, 21, 0.08);
+    border-color: rgba(250, 204, 21, 0.35);
+}
+
+/* ======================================================================
+   SCORES / CLASSEMENT
+   ====================================================================== */
+.domScores {
+    position: relative;
+    z-index: 3;
+    max-width: 1250px;
+    margin: 0 auto 120px;
+    padding: 0 20px;
+}
+
+.domScoresInner {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 60px;
+    align-items: center;
+}
+
+.domScoresLeft {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.domScoresLeft .domSectionTitle {
+    text-align: left;
+    font-size: 64px;
+}
+
+.domScoresText {
+    margin: 0;
+    font-family: "Nunito", sans-serif;
+    font-size: 16px;
+    font-weight: 300;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.78);
+    max-width: 480px;
+}
+
+.domScoresPanel {
+    position: relative;
+    padding: 22px 24px;
+    background:
+        radial-gradient(circle at top right, rgba(34, 211, 238, 0.08) 0%, transparent 45%),
+        linear-gradient(180deg, rgba(15, 26, 46, 0.9) 0%, rgba(11, 18, 32, 0.95) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.domScoresPanel::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--dom-primary) 0%, rgba(34, 211, 238, 0) 80%);
+}
+
+.domScoresPanelHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.domScoresPanelTitle {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 26px;
+    letter-spacing: 0.04em;
+    color: #FFFFFF;
+    text-transform: uppercase;
+}
+
+.domScoresFilters {
+    display: inline-flex;
+    gap: 6px;
+}
+
+.domScoresFilter {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 12px;
+    font-family: "Nunito", sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+    cursor: default;
+}
+
+.domScoresFilter.active {
+    color: #FFFFFF;
+    background: rgba(34, 211, 238, 0.15);
+    border-color: rgba(34, 211, 238, 0.55);
+}
+
+.domScoresTable {
+    display: flex;
+    flex-direction: column;
+}
+
+.domScoresHead,
+.domScoresRow {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr 0.8fr 0.9fr 1fr;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 8px;
+}
+
+.domScoresHead {
+    font-family: "Nunito", sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding-bottom: 8px;
+    margin-bottom: 4px;
+}
+
+.domScoresRow {
+    font-family: "Nunito", sans-serif;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.88);
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.06);
+    transition: background 0.2s ease;
+}
+
+.domScoresRow:hover {
+    background: rgba(34, 211, 238, 0.04);
+}
+
+.domScoresRow:last-child {
+    border-bottom: none;
+}
+
+.domScoresMode {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--dom-primary);
+}
+
+.domScoresChrono {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 20px;
+    color: var(--dom-success);
+    letter-spacing: 0.06em;
+}
+
+.domScoresDiff {
+    padding: 4px 10px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    border-radius: 999px;
+    white-space: nowrap;
+    justify-self: start;
+}
+
+.domScoresDiff--easy {
+    color: #4ade80;
+    background: rgba(74, 222, 128, 0.1);
+    border: 1px solid rgba(74, 222, 128, 0.4);
+}
+
+.domScoresDiff--medium {
+    color: var(--dom-primary);
+    background: rgba(34, 211, 238, 0.1);
+    border: 1px solid rgba(34, 211, 238, 0.4);
+}
+
+.domScoresDiff--hard {
+    color: var(--dom-accent);
+    background: rgba(250, 204, 21, 0.1);
+    border: 1px solid rgba(250, 204, 21, 0.4);
+}
+
+/* ───────── CTA FINAL ───────── */
+.domCta {
+    position: relative;
+    z-index: 3;
+    max-width: 1100px;
+    margin: 0 auto 100px;
+    padding: 0 20px;
+}
+
+.domCtaInner {
+    position: relative;
+    padding: 64px 40px;
+    text-align: center;
+    background:
+        radial-gradient(circle at top left, rgba(34, 211, 238, 0.16) 0%, transparent 38%),
+        radial-gradient(circle at bottom right, rgba(250, 204, 21, 0.10) 0%, transparent 40%),
+        linear-gradient(180deg, rgba(15, 26, 46, 0.9) 0%, rgba(11, 18, 32, 0.95) 100%);
+    border: 1px solid rgba(34, 211, 238, 0.28);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.domCtaInner::before {
+    content: "";
+    position: absolute;
+    top: -120px;
+    left: -120px;
+    width: 360px;
+    height: 360px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(34, 211, 238, 0.22) 0%, transparent 70%);
+    filter: blur(14px);
+    pointer-events: none;
+}
+
+.domCtaInner::after {
+    content: "";
+    position: absolute;
+    bottom: -100px;
+    right: -80px;
+    width: 280px;
+    height: 280px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(250, 204, 21, 0.18) 0%, transparent 70%);
+    filter: blur(18px);
+    pointer-events: none;
+}
+
+.domCtaTitle {
+    margin: 0;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 72px;
+    line-height: 0.92;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #FFFFFF;
+    text-shadow: 0 0 24px rgba(34, 211, 238, 0.35);
+}
+
+.domCtaText {
+    margin: 0 0 14px;
+    max-width: 580px;
+    font-family: "Nunito", sans-serif;
+    font-size: 17px;
+    font-weight: 300;
+    color: rgba(255, 255, 255, 0.78);
+}
+
+.domCtaBtn {
+    margin-top: 6px;
+    padding: 0 44px !important;
+    clip-path: polygon(18px 0, 100% 0, calc(100% - 18px) 100%, 0 100%) !important;
+    min-width: 260px;
+}
+
+.domCtaBtn span {
+    margin: 0 auto;
+}
+
+/* ───────── RESPONSIVE ───────── */
+@media (max-width: 1100px) {
+    .domScoresInner {
+        grid-template-columns: 1fr;
+        gap: 40px;
+    }
+
+    .domScoresLeft {
+        text-align: center;
+        align-items: center;
+    }
+
+    .domScoresLeft .domSectionTitle {
+        text-align: center;
+    }
+}
+
+@media (max-width: 980px) {
+    .domHeroTitle { font-size: 96px; }
+
+    .domRow,
+    .domRow.reverse {
+        grid-template-columns: 1fr;
+        gap: 40px;
+    }
+
+    .domRow.reverse .domImageWrapper,
+    .domRow.reverse .domContent {
+        order: initial;
+    }
+
+    .domTitle { font-size: 56px; }
+    .domCtaTitle { font-size: 52px; }
+    .domSectionTitle { font-size: 52px; }
+
+    .domSection { gap: 90px; }
+
+    .domDuoGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .domHeroStats {
+        gap: 16px;
+        padding: 14px 20px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .domStatValue { font-size: 30px; }
+
+    .domScoresHead,
+    .domScoresRow {
+        grid-template-columns: 1fr 1fr 0.8fr 0.8fr;
+    }
+
+    .domScoresHead span:nth-child(2),
+    .domScoresRow span:nth-child(2) {
+        display: none;
+    }
+}
+
+@media (max-width: 680px) {
+    .domHeroTitle { font-size: 72px; }
+    .domHeroKicker { font-size: 16px; letter-spacing: 0.3em; }
+    .domTitle { font-size: 46px; }
+    .domCtaInner { padding: 40px 20px; }
+    .domDuoCard { padding: 28px 20px; }
+    .domDuoCardTitle { font-size: 36px; }
+
+    .domDifficulties {
+        grid-template-columns: 1fr;
+    }
+
+    .domScoresHead,
+    .domScoresRow {
+        grid-template-columns: 1fr auto;
+        gap: 6px 12px;
+    }
+
+    .domScoresHead span:not(:first-child):not(:nth-last-child(2)),
+    .domScoresRow span:not(.domScoresMode):not(.domScoresChrono):not(.domScoresDiff) {
+        display: none;
+    }
+
+    .domScoresHead span:nth-last-child(2),
+    .domScoresRow .domScoresChrono {
+        justify-self: end;
+    }
+
+    .domHeroActions {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+        max-width: 320px;
+    }
 }
