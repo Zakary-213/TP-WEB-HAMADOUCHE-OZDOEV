@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOM — Règles & Présentation</title>
+
+    <link rel="stylesheet" href="../index.css">
+    <link rel="stylesheet" href="./dom.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;600;800&family=Nunito:wght@300;400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="navLogo"><img src="/assets/images/logo.png" alt="Logo"></div>
+    <div class="navLinks">
+        <a href="/" class="navLink">Accueil</a>
+        <a href="/canvas.html" class="navLink">Canvas</a>
+        <a href="/gow.html" class="navLink">GamesOnWeb</a>
+        <a href="#" class="navLink active">Dom</a>
+        <a href="#" class="navLink">Scores</a>
+    </div>
+    <div class="navButtonWrapper">
+        <div class="navAuthButtons">
+            <a href="/#register" class="navAuthBtn registerButton">S'inscrire</a>
+            <a href="/#login" class="navAuthBtn loginButton">Se connecter</a>
+        </div>
+    </div>
+</nav>
+
+<section class="domHero">
+    <div class="domHeroInner">
+        <p class="domEyebrow">DOM • DÉMOS • EXEMPLES</p>
+        <h1 class="domHeroTitle">DOM<br><span class="domGradientText">PROJECTS</span></h1>
+        <p class="domHeroSubtitle">Collection de petites démos et composants DOM, réalisés pour illustrer des motifs d'interface, des interactions et des micro-jeux. Images et textes sont associés pour rester cohérents et présentables.</p>
+        <div class="domHeroActions">
+            <a href="#domContent" class="heroBtn heroBtnGhost"><span>Voir la page</span></a>
+        </div>
+    </div>
+    <div class="domHeroBackdrop" aria-hidden="true"></div>
+</section>
+
+<section class="domSection" id="domContent">
+
+    <article class="domRow" data-index="01">
+        <div class="domImageWrapper">
+            <div class="domImageIndex">01</div>
+            <img src="/assets/images/dom1.png" alt="Aperçu composant 1">
+            <div class="domImageOverlay"></div>
+        </div>
+
+        <div class="domContent">
+            <span class="domTag">Composant</span>
+            <h2 class="domTitle">Cartes interactives</h2>
+            <p class="domDescription">Cartes réactives et accessibles, conçues pour présenter une information synthétique avec un visuel fort. Les images illustrent l'usage et la mise en page.</p>
+            <ul class="domList">
+                <li><strong>Image</strong> — illustration contextualisée.</li>
+                <li><strong>Titre</strong> — mise en avant du contenu.</li>
+                <li><strong>CTA</strong> — actions claires et accessibles.</li>
+            </ul>
+        </div>
+    </article>
+
+    <article class="domRow reverse" data-index="02">
+        <div class="domImageWrapper">
+            <div class="domImageIndex">02</div>
+            <img src="/assets/images/dom2.png" alt="Aperçu composant 2">
+            <div class="domImageOverlay"></div>
+        </div>
+
+        <div class="domContent">
+            <span class="domTag">Layout</span>
+            <h2 class="domTitle">Grille responsive</h2>
+            <p class="domDescription">Système de grille fluide pour s'adapter à toutes les tailles d'écran. Les images restent nettes et cohérentes avec le contenu textuel associé.</p>
+            <div class="domChips">
+                <span class="domChip">Responsive</span>
+                <span class="domChip">Accessible</span>
+                <span class="domChip">Performant</span>
+            </div>
+        </div>
+    </article>
+
+    <article class="domRow" data-index="03">
+        <div class="domImageWrapper">
+            <div class="domImageIndex">03</div>
+            <img src="/assets/images/dom3.png" alt="Aperçu composant 3">
+            <div class="domImageOverlay"></div>
+        </div>
+
+        <div class="domContent">
+            <span class="domTag">Animation</span>
+            <h2 class="domTitle">Micro-interactions</h2>
+            <p class="domDescription">Animations subtiles, transitions et retours visuels soigneusement calibrés pour améliorer la lisibilité et la sensation d'interface.</p>
+            <ul class="domList">
+                <li><strong>Hover</strong> — retours tactiles doux.</li>
+                <li><strong>Focus</strong> — visibilité pour navigation clavier.</li>
+            </ul>
+        </div>
+    </article>
+
+    <article class="domRow reverse" data-index="04">
+        <div class="domImageWrapper">
+            <div class="domImageIndex">04</div>
+            <img src="/assets/images/dom4.png" alt="Aperçu composant 4">
+            <div class="domImageOverlay"></div>
+        </div>
+
+        <div class="domContent">
+            <span class="domTag">Démonstration</span>
+            <h2 class="domTitle">Widgets & contrôles</h2>
+            <p class="domDescription">Une collection de widgets prêts à l'emploi : boutons, contrôles, listes et modaux. Chaque visuel est choisi pour rester fidèle au texte descriptif.</p>
+        </div>
+    </article>
+
+</section>
+
+<section class="domGallery">
+    <div class="domGalleryHeader">
+        <p class="domSectionEyebrow">GALLERY • DESIGNERS</p>
+        <h2 class="domSectionTitle">Contributeurs & Ressources</h2>
+    </div>
+
+    <div class="domGalleryGrid">
+        <article class="domCard">
+            <img src="/assets/images/dom5.png" alt="Extrait 5">
+        </article>
+        <article class="domCard">
+            <img src="/assets/images/dom6.png" alt="Extrait 6">
+        </article>
+        <article class="domCard">
+            <img src="/assets/images/dom7.png" alt="Extrait 7">
+        </article>
+        <article class="domCard">
+            <img src="/assets/images/dom8.png" alt="Extrait 8">
+        </article>
+        <article class="domCard">
+            <img src="/assets/images/dom9.png" alt="Extrait 9">
+        </article>
+    </div>
+
+    <div class="domDesigners">
+        <div class="designer">
+            <img src="/assets/images/domConcepteur1.png" alt="Concepteur 1">
+            <div class="designerInfo"><strong>Zakary</strong><span>Lead UI</span></div>
+        </div>
+        <div class="designer">
+            <img src="/assets/images/domConcepteur2.png" alt="Concepteur 2">
+            <div class="designerInfo"><strong>Akram</strong><span>Frontend</span></div>
+        </div>
+    </div>
+</section>
+
+<footer class="siteFooter">
+    <div class="siteFooterLine"></div>
+    <p class="siteFooterText">© 2026 — Akramat OZDOEV &amp; Zakary HAMADOUCHE</p>
+</footer>
+
+<div id="domLightbox" class="domLightbox" aria-hidden="true"></div>
+
+<script src="./dom.js"></script>
+</body>
+</html>
