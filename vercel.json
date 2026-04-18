@@ -23,7 +23,11 @@
       "destination": "/GamesOnWeb/$1"
     },
     {
-      "source": "/((?!api|JeuCanvas|GamesOnWeb).*)",
+      "source": "/Dom/(.*)",
+      "destination": "/Dom/$1"
+    },
+    {
+      "source": "/((?!api|JeuCanvas|GamesOnWeb|Dom).*)",
       "destination": "/frontend/$1"
     }
   ]

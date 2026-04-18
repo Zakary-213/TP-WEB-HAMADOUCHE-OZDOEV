@@ -97,6 +97,7 @@ app.use(['/api/canvas-profile', '/canvas-profile'], require('../backend/authRout
 // Expose game folders for local navigation from the frontend homepage.
 app.use('/GamesOnWeb', express.static(path.join(__dirname, '..', 'GamesOnWeb')));
 app.use('/JeuCanvas', express.static(path.join(__dirname, '..', 'JeuCanvas')));
+app.use('/Dom', express.static(path.join(__dirname, '..', 'Dom')));
 
 // On déplace le static APRÈS les routes API pour éviter qu'il n'intercepte les requêtes API
 app.use(express.static(path.join(__dirname, "..", "frontend")));

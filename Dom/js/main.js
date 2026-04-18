@@ -20,6 +20,7 @@ const winTimeEl      = document.getElementById('win-time');
 const winDiffEl      = document.getElementById('win-difficulty');
 const overlayNewPuzzleBtnEl = document.getElementById('overlay-new-puzzle');
 const overlayResetBtnEl = document.getElementById('overlay-reset');
+const overlayQuitBtnEl = document.getElementById('overlay-quit');
 const difficultyEl   = document.getElementById('difficulty');
 const maxNumEl       = document.getElementById('max-num');
 const hintBtnEl      = document.getElementById('hint-btn');
@@ -57,16 +58,12 @@ let designerPickedFromIndex = null;
 const CLASSIC_GRID_SIZE = 6;
 let activeScoresFilter = 'all';
 let scoresSortDirection = 'asc';
-
-const DEMO_SCORES = [
-    { mode: 'solo', grid: 'Classique', size: '6x6', time: 118, difficulty: 'easy' },
-    { mode: 'solo', grid: 'Classique', size: '8x8', time: 246, difficulty: 'medium' },
-    { mode: 'designer', grid: 'Personnalisee', size: '10x10', time: 511, difficulty: null },
-    { mode: 'solo', grid: 'Classique', size: '10x10', time: 398, difficulty: 'hard' },
-    { mode: 'designer', grid: 'Personnalisee', size: '6x6', time: 169, difficulty: null },
-    { mode: 'solo', grid: 'Classique', size: '6x6', time: 132, difficulty: 'medium' },
-    { mode: 'designer', grid: 'Personnalisee', size: '8x8', time: 303, difficulty: null },
-];
+let userScores = [];
+let scoresError = '';
+let isLoadingScores = false;
+let hasLoadedScores = false;
+let hasSavedWinScore = false;
+let isSavingWinScore = false;
 
 /* ---------- Initialisation de la grille ---------- */
 let cellsElements = initGrid(gridEl);
@@ -93,6 +90,130 @@ function onTimerTick(seconds) {
 
 const timer = createTimer(onTimerTick);
 
+function difficultyLabel(d) {
+    return { easy: 'Facile', medium: 'Moyen', hard: 'Difficile' }[d] ?? d;
+}
+
+function getCurrentUserId() {
+    if (window.CANVAS_API && typeof window.CANVAS_API.getUserId === 'function') {
+        return window.CANVAS_API.getUserId();
+    }
+    return localStorage.getItem('tpweb_user_id');
+}
+
+function toApiUrl(path) {
+    if (window.CANVAS_API && typeof window.CANVAS_API.toUrl === 'function') {
+        return window.CANVAS_API.toUrl(path);
+    }
+    return path;
+}
+
+function scoresModeLabel(mode) {
+    return mode === 'designer' ? 'Concepteur' : 'Solo';
+}
+
+function mapScoreRecordToUi(record) {
+    const rawMode = String((record && record.mode) || 'solo').toLowerCase();
+    const mode = rawMode === 'designer' ? 'designer' : 'solo';
+    const data = record && record.data ? record.data : {};
+
+    const rawGridSize = Number(data.gridSize || data.size || data.grid || 0);
+    const gridSize = Number.isFinite(rawGridSize) && rawGridSize >= 4 && rawGridSize <= 10
+        ? Math.floor(rawGridSize)
+        : CLASSIC_GRID_SIZE;
+
+    const totalTimeMs = Number(record && record.totalTime);
+    const seconds = Number.isFinite(totalTimeMs) && totalTimeMs >= 0
+        ? Math.round(totalTimeMs / 1000)
+        : 0;
+
+    return {
+        mode,
+        grid: mode === 'designer' ? 'Personnalisee' : 'Classique',
+        size: `${gridSize}x${gridSize}`,
+        time: seconds,
+        difficulty: mode === 'solo' ? String(data.difficulty || 'medium') : null,
+    };
+}
+
+async function loadUserScores() {
+    if (isLoadingScores) return;
+
+    const userId = getCurrentUserId();
+    if (!userId) {
+        userScores = [];
+        hasLoadedScores = true;
+        scoresError = 'Connecte-toi pour voir tes scores.';
+        renderScoresList();
+        return;
+    }
+
+    isLoadingScores = true;
+    scoresError = '';
+    renderScoresList();
+
+    try {
+        const [soloRes, designerRes] = await Promise.all([
+            fetch(toApiUrl(`/api/scores/top?game=dom&mode=solo&userId=${encodeURIComponent(userId)}&limit=100`)),
+            fetch(toApiUrl(`/api/scores/top?game=dom&mode=designer&userId=${encodeURIComponent(userId)}&limit=100`)),
+        ]);
+
+        if (!soloRes.ok || !designerRes.ok) {
+            throw new Error('Impossible de charger les scores.');
+        }
+
+        const [soloBody, designerBody] = await Promise.all([soloRes.json(), designerRes.json()]);
+        userScores = [...(soloBody?.data || []), ...(designerBody?.data || [])]
+            .map(mapScoreRecordToUi)
+            .filter((entry) => Number.isFinite(entry.time));
+        hasLoadedScores = true;
+        scoresError = '';
+    } catch (error) {
+        userScores = [];
+        hasLoadedScores = true;
+        scoresError = error && error.message ? error.message : 'Erreur de chargement des scores.';
+    } finally {
+        isLoadingScores = false;
+        renderScoresList();
+    }
+}
+
+async function persistWinScoreIfNeeded() {
+    if (hasSavedWinScore || isSavingWinScore) return;
+
+    const userId = getCurrentUserId();
+    hasSavedWinScore = true;
+    if (!userId) return;
+
+    const mode = isCustomValidatedSession ? 'designer' : 'solo';
+    const payload = {
+        userId,
+        game: 'dom',
+        mode,
+        totalTime: Math.max(0, Math.round(gameState.elapsedSeconds * 1000)),
+        totalMeteorites: Number(gameState.solutionPath.length || 0),
+        data: {
+            gridSize: getGridSize(),
+            difficulty: mode === 'solo' ? gameState.difficulty : null,
+            mode,
+        },
+    };
+
+    isSavingWinScore = true;
+    try {
+        await fetch(toApiUrl('/api/scores/scorecanvas'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+        hasLoadedScores = false;
+    } catch (error) {
+        console.error('Erreur lors de la sauvegarde du score Dom:', error);
+    } finally {
+        isSavingWinScore = false;
+    }
+}
+
 /* ---------- Rendu ---------- */
 function render() {
     renderGrid(cellsElements, gameState, uiState, isAdjacent);
@@ -110,25 +231,27 @@ function render() {
         }
 
         timer.stop();
-        // Afficher l'overlay de victoire avec les stats
+        persistWinScoreIfNeeded();
         winTimeEl.textContent  = formatTime(gameState.elapsedSeconds);
         winDiffEl.textContent  = difficultyLabel(gameState.difficulty);
         setTimeout(() => winOverlayEl.classList.remove('hidden'), 250);
     }
 }
 
-function difficultyLabel(d) {
-    return { easy: 'Facile', medium: 'Moyen', hard: 'Difficile' }[d] ?? d;
-}
-
-function scoresModeLabel(mode) {
-    return mode === 'designer' ? 'Concepteur' : 'Solo';
-}
-
 function renderScoresList() {
     if (!scoresListEl) return;
 
-    const entries = DEMO_SCORES.filter((entry) => {
+    if (scoresError) {
+        scoresListEl.innerHTML = `<div class="scores-empty">${scoresError}</div>`;
+        return;
+    }
+
+    if (isLoadingScores && !hasLoadedScores) {
+        scoresListEl.innerHTML = '<div class="scores-empty">Chargement des scores...</div>';
+        return;
+    }
+
+    const entries = userScores.filter((entry) => {
         if (activeScoresFilter === 'all') return true;
         return entry.mode === activeScoresFilter;
     }).sort((a, b) => {
@@ -140,22 +263,20 @@ function renderScoresList() {
         return;
     }
 
-    const html = entries
-        .map((entry) => {
-            const difficulty = entry.mode === 'solo'
-                ? difficultyLabel(entry.difficulty)
-                : '<span class="score-difficulty-muted">-</span>';
-            return `
-                <div class="score-line ${entry.mode}">
-                    <span>${scoresModeLabel(entry.mode)}</span>
-                    <span>${entry.grid}</span>
-                    <span>${entry.size}</span>
-                    <span class="score-time">${formatTime(entry.time)}</span>
-                    <span>${difficulty}</span>
-                </div>
-            `;
-        })
-        .join('');
+    const html = entries.map((entry) => {
+        const difficulty = entry.mode === 'solo'
+            ? difficultyLabel(entry.difficulty)
+            : '<span class="score-difficulty-muted">-</span>';
+        return `
+            <div class="score-line ${entry.mode}">
+                <span>${scoresModeLabel(entry.mode)}</span>
+                <span>${entry.grid}</span>
+                <span>${entry.size}</span>
+                <span class="score-time">${formatTime(entry.time)}</span>
+                <span>${difficulty}</span>
+            </div>
+        `;
+    }).join('');
 
     scoresListEl.innerHTML = html;
 }
@@ -185,6 +306,7 @@ function resetGame() {
     gameState.path = [];
     uiState.isDrawing = false;
     uiState.hintTargetIndex = null;
+    hasSavedWinScore = false;
     hintTextEl.textContent = 'Indice: clique pour voir le premier déplacement conseillé.';
     timer.reset((v) => { gameState.elapsedSeconds = v; });
     winOverlayEl.classList.add('hidden');
@@ -277,6 +399,7 @@ function startGameFromMenu() {
     if (instructionsEl) {
         instructionsEl.innerHTML = defaultInstructionsHtml;
     }
+    hasSavedWinScore = false;
     loadNewPuzzle(CLASSIC_GRID_SIZE);
 }
 
@@ -296,6 +419,9 @@ function openScoresOverlay() {
     currentMode = 'menu';
     setScoresFilter('all');
     updateScoresSortButton();
+    if (!hasLoadedScores) {
+        loadUserScores();
+    }
 
     if (scoresOverlayEl) {
         scoresOverlayEl.classList.remove('hidden');
@@ -427,6 +553,7 @@ function startDesignerMode() {
     draggedDesignerSourceIndex = null;
     isDesignerValidating = false;
     isCustomValidatedSession = false;
+    hasSavedWinScore = false;
     designerPickedValue = null;
     designerPickedFromIndex = null;
 
@@ -449,6 +576,7 @@ function launchValidatedCustomLevel(solutionPath) {
     currentMode = 'play';
     document.body.classList.remove('designer-mode');
     isCustomValidatedSession = true;
+    hasSavedWinScore = false;
 
     if (designerWorkspaceEl) {
         designerWorkspaceEl.classList.add('hidden');
@@ -735,6 +863,14 @@ if (overlayResetBtnEl) {
     timer.reset((v) => { gameState.elapsedSeconds = v; });
     render();
 });
+}
+
+if (overlayQuitBtnEl) {
+    overlayQuitBtnEl.addEventListener('click', () => {
+        winOverlayEl.classList.add('hidden');
+        timer.stop();
+        openModeMenu();
+    });
 }
 
 difficultyEl.addEventListener('change', loadNewPuzzle);
