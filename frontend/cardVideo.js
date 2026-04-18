@@ -35,7 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
             kicker: "PLATEFORME • 2026 • WEB",
             heading: "DEUX JEUX,<br>UNE PLATEFORME,<br>SANS LIMITE",
             text: "Inscris-toi, suis tes scores et reviens battre tes records. GamesOnWeb 2026 — entièrement jouable dans ton navigateur.",
-            playLabel: "S'inscrire",
+            playLabel: "Jouer",
             playHref: "#"
         }
     ];
