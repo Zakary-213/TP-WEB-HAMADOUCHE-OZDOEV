@@ -31,12 +31,12 @@ document.addEventListener("DOMContentLoaded", () => {
             playHref: "/GamesOnWeb/index.html"
         },
         {
-            video: "./assets/videos/test2.mp4",
-            kicker: "PLATEFORME • 2026 • WEB",
-            heading: "DEUX JEUX,<br>UNE PLATEFORME,<br>SANS LIMITE",
-            text: "Inscris-toi, suis tes scores et reviens battre tes records. GamesOnWeb 2026 — entièrement jouable dans ton navigateur.",
+            video: "./assets/videos/dom.mp4",
+            kicker: "PUZZLE • LOGIQUE • NÉON",
+            heading: "TRACE TON CHEMIN<br>ET BATS<br>LE CHRONO",
+            text: "Relie les chiffres dans l'ordre, couvre toute la grille et crée tes propres puzzles dans Neon Zip.",
             playLabel: "Jouer",
-            playHref: "#"
+            playHref: "/Dom/index.html"
         }
     ];
 

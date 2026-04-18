@@ -13,11 +13,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const gamesData = [
         ["./assets/images/canvas1.png","./assets/images/canvas2.png","./assets/images/canvas3.png","./assets/images/canvas4.png"],
         ["./assets/images/gow1.png","./assets/images/gow2.png","./assets/images/gow3.png","./assets/images/gow4.png"],
-        ["./assets/images/logo.png","./assets/images/logo.png","./assets/images/logo.png","./assets/images/logo.png"]
+        ["./assets/images/dom1.png","./assets/images/dom2.png","./assets/images/dom3.png","./assets/images/dom8.png"]
     ];
 
-    const gameHrefs    = ["/JeuCanvas/index.html", "/GamesOnWeb/index.html", "#"];
-    const detailsHrefs = ["/canvas.html",          "/gow.html",              "#"];
+    const gameHrefs    = ["/JeuCanvas/index.html", "/GamesOnWeb/index.html", "/Dom/index.html"];
+    const detailsHrefs = ["/canvas.html",          "/gow.html",              "/dom.html"];
 
     function showButtons() {
         if (button)     button.classList.add("is-visible");
