@@ -446,34 +446,44 @@ body {
     background-size: cover;
 }
 
+
 .navbar {
     width: 100%;
     height: 104px;
     background: transparent;
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
-    justify-content: space-between;
     padding: 0 78px 0 80px;
 }
 
 .navLogo {
     display: flex;
     align-items: center;
+    justify-self: start;
+}
+
+.navLinks {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 38px;
+    margin-left: 0;
+    flex: initial;
+    justify-self: center;
+}
+
+.navButtonWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    justify-self: end;
 }
 
 .navLogo img {
     display: block;
     width: 98px;
     height: auto;
-}
-
-.navLinks {
-    display: flex;
-    align-items: center;
-    gap: 38px;
-    margin-left: 40px;
-    flex: 1;
-    justify-content: center;
 }
 
 .navLink {
@@ -487,12 +497,6 @@ body {
 
 .navLink:hover {
     color: #EE642A;
-}
-
-.navButtonWrapper {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
 }
 
 .navAuthButtons {
