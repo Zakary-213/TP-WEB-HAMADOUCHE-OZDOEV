@@ -1175,10 +1175,6 @@ body {
 }
 
 /* Partie 5 : 4 Images par jeu */
-/* =========================
-   PARTIE 5 — AWARDS SECTION
-   ========================= */
-
 .awardsSection {
     position: relative;
     z-index: 3;
@@ -1265,6 +1261,8 @@ body {
     height: 100%;
     object-fit: cover;
     display: block;
+    position: relative;
+    z-index: 3;
 }
 
 /* Bordure : blanc en haut/gauche, orange en bas/droite */
@@ -1288,7 +1286,7 @@ body {
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     pointer-events: none;
-    z-index: 2;
+    z-index: 1;
 }
 
 /* Dimensions exactes des 4 images */
@@ -1358,15 +1356,15 @@ body {
 
 .awardsMoreBtn {
     align-self: flex-end;
-    margin-bottom: 4px;
-    width: 118px;
-    height: 28px;
+    margin-top: 40px;
+    width: 350px;
+    height: 80px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     text-decoration: none;
     font-family: "Nunito", sans-serif;
-    font-size: 9px;
+    font-size: 28px;
     font-weight: 800;
     color: #ffffff;
     background: linear-gradient(90deg, #c1260f 0%, #ee642a 100%);
@@ -1381,52 +1379,46 @@ body {
     box-shadow: 0 14px 28px rgba(238, 100, 42, 0.32);
 }
 
-/* Responsive */
-@media (max-width: 1260px) {
-    .awardsGrid {
-        grid-template-columns: 1fr 1fr;
-    }
-
-    .awardCard,
-    .awardsInfo {
-        width: 100%;
-    }
+/* Animations: switch direction + sequential reveal */
+.awardsGrid {
+    transition: transform 0.6s cubic-bezier(.2,.9,.2,1), opacity 0.6s ease;
+    will-change: transform, opacity;
 }
 
-@media (max-width: 980px) {
-    .awardsTitle {
-        font-size: 56px;
-    }
+.awardsGrid.is-left {
+    transform: translateX(-36px);
+    opacity: 0;
+}
 
-    .awardsGrid {
-        grid-template-columns: 1fr;
-    }
+.awardsGrid.is-right {
+    transform: translateX(36px);
+    opacity: 0;
+}
 
-    .awardsColumnRight {
-        transform: none;
-    }
+.awardCard img {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+    transition: opacity 900ms ease, transform 900ms cubic-bezier(.2,.9,.2,1);
+    will-change: opacity, transform;
+}
 
-    .awardsColumnLeft .awardCard:nth-child(1),
-    .awardsColumnLeft .awardCard:nth-child(2),
-    .awardsColumnRight .awardCard:nth-child(1),
-    .awardsColumnRight .awardCard:nth-child(2) {
-        width: 100%;
-        height: auto;
-        aspect-ratio: 595.94 / 488.01;
-    }
+.awardCard.is-loaded img {
+    opacity: 1 !important;
+    transform: translateY(0) scale(1) !important;
+    z-index: 4 !important;
+}
 
-    .awardsInfo {
-        width: 100%;
-        min-height: auto;
-        flex-direction: column;
-        align-items: flex-start;
-    }
+.awardsMoreBtn {
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+    transition: opacity 420ms ease, transform 420ms cubic-bezier(.2,.9,.2,1);
+}
 
-    .awardsMoreBtn {
-        align-self: flex-start;
-        margin-top: 10px;
-        margin-bottom: 0;
-    }
+.awardsMoreBtn.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
 }
 
 
