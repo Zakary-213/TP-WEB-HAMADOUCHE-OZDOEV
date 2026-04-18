@@ -16,26 +16,26 @@ document.addEventListener("DOMContentLoaded", () => {
     const slides = [
         {
             video: "./assets/videos/rl.mp4",
-            kicker: "BOOSTING • COACHING • RANKED",
-            heading: "DOMINATE THE LADDER<br>AND REACH YOUR<br>DESIRED RANK",
-            text: "Fast, secure and premium boosting experience for competitive players. Choose your service and start climbing today.",
-            playLabel: "Play Now",
-            playHref: "#"
+            kicker: "RÉFLEXES • SURVIE • SCORE",
+            heading: "ESQUIVE LES MÉTÉORES<br>ET BATS<br>TON RECORD",
+            text: "Jeu d'arcade pur : pilote ton vaisseau à travers un champ d'astéroïdes. Plus tu dures, plus le score grimpe. Simple, intense, addictif.",
+            playLabel: "Jouer",
+            playHref: "/JeuCanvas/index.html"
         },
         {
             video: "./assets/videos/test.mp4",
-            kicker: "TEAMPLAY • PROGRESS • PERFORMANCE",
-            heading: "IMPROVE YOUR SKILLS<br>WITH HIGH LEVEL<br>COACHING",
-            text: "Train with experienced players, review your mistakes and level up faster with focused sessions built for your rank.",
-            playLabel: "Start Coaching",
-            playHref: "#"
+            kicker: "FOOTBALL • ARCADE • TOURNOI",
+            heading: "CHOISIS TON ÉQUIPE<br>ET AFFRONTE<br>L'IA",
+            text: "10 équipes françaises, 4 stades, 2 modes de jeu. Lance un tournoi à élimination directe ou défie un ami en 1vs1. Plus tu avances, plus l'IA devient redoutable.",
+            playLabel: "Jouer",
+            playHref: "/GamesOnWeb/index.html"
         },
         {
             video: "./assets/videos/test2.mp4",
-            kicker: "PREMIUM • FAST • SECURE",
-            heading: "CHOOSE YOUR SERVICE<br>AND PLAY WITH<br>CONFIDENCE",
-            text: "From solo queue grinding to custom coaching plans, access a complete premium experience designed for serious players.",
-            playLabel: "Explore Services",
+            kicker: "PLATEFORME • 2026 • WEB",
+            heading: "DEUX JEUX,<br>UNE PLATEFORME,<br>SANS LIMITE",
+            text: "Inscris-toi, suis tes scores et reviens battre tes records. GamesOnWeb 2026 — entièrement jouable dans ton navigateur.",
+            playLabel: "S'inscrire",
             playHref: "#"
         }
     ];

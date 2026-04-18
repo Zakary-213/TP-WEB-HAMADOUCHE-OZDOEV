@@ -10,10 +10,12 @@ document.addEventListener("DOMContentLoaded", () => {
     let spawnTimeouts = [];
 
     const gamesData = [
-        ["./assets/images/logo.png","./assets/images/logo.png","./assets/images/logo.png","./assets/images/logo.png"],
-        ["./assets/images/logo.png","./assets/images/logo.png","./assets/images/logo.png","./assets/images/logo.png"],
+        ["./assets/images/canvas1.png","./assets/images/canvas2.png","./assets/images/canvas3.png","./assets/images/canvas4.png"],
+        ["./assets/images/gow1.png","./assets/images/gow2.png","./assets/images/gow3.png","./assets/images/gow4.png"],
         ["./assets/images/logo.png","./assets/images/logo.png","./assets/images/logo.png","./assets/images/logo.png"]
     ];
+
+    const gameHrefs = ["/JeuCanvas/index.html", "/GamesOnWeb/index.html", "#"];
 
     function spawnCards(images, onAllLoaded) {
         // cancel any pending spawns from a previous call
@@ -132,6 +134,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         tabs.forEach(t => t.classList.remove("active"));
         tabs[newIndex].classList.add("active");
+
+        if (button) button.setAttribute("href", gameHrefs[newIndex] || "#");
 
         currentIndex = newIndex;
     }

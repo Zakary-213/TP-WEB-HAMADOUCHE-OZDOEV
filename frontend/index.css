@@ -590,6 +590,29 @@ body {
     letter-spacing: 0;
     text-align: center;
     text-transform: uppercase;
+    animation: heroFadeUp 0.75s ease both;
+}
+
+.heroAccent {
+    display: inline-block;
+    background: linear-gradient(90deg, #d92f10 0%, #f35b1d 55%, #ffaa44 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+}
+
+@keyframes heroFadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(18px);
+        letter-spacing: 0.12em;
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        letter-spacing: 0;
+    }
 }
 
 /* Partie 3 : Bannières */
@@ -1447,6 +1470,84 @@ body {
 
 
 
+
+/* Banners ticker */
+.bannerTicker {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    height: 100%;
+    padding: 0 20px;
+    white-space: nowrap;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 22px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.72);
+    animation: bannerScroll 26s linear infinite;
+    will-change: transform;
+}
+
+.bannerTicker--dark {
+    color: #111111;
+    animation-direction: reverse;
+}
+
+.bannerDot {
+    color: #EE642A;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+.bannerTicker--dark .bannerDot {
+    color: #C1260F;
+}
+
+@keyframes bannerScroll {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+}
+
+/* Game card coming soon */
+.gameCard--locked .gameCardImageWrapper {
+    filter: saturate(0.15) brightness(0.55);
+}
+
+.gameCardComingSoon {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 26px;
+    letter-spacing: 0.22em;
+    color: rgba(255, 255, 255, 0.68);
+    background: rgba(0, 0, 0, 0.32);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.gameCardTitle--muted {
+    color: rgba(255, 255, 255, 0.38);
+}
+
+.gamePlayButton--disabled {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    color: rgba(255, 255, 255, 0.30);
+    box-shadow: none;
+    pointer-events: none;
+    filter: none;
+    clip-path: polygon(
+        0 0,
+        100% 0,
+        calc(100% - var(--btn-cut)) 100%,
+        var(--btn-cut) 100%
+    );
+}
 
 /* Footer */
 .siteFooter {
