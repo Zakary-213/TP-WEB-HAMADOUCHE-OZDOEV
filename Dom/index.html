@@ -27,7 +27,7 @@
     <div id="scores-overlay" class="designer-overlay hidden" aria-hidden="true">
         <div class="designer-card scores-card">
             <h2>Meilleurs Scores</h2>
-            <p>Apercu des sauvegardes de parties (donnees de demonstration).</p>
+            <p>Historique de tes parties sauvegardees par utilisateur.</p>
             <div class="scores-toolbar">
                 <div class="scores-filters" role="group" aria-label="Filtrer les scores">
                     <button class="scores-filter-btn is-active" data-filter="all" type="button">Tous les modes</button>
@@ -193,10 +193,13 @@
             <div class="win-buttons">
                 <button id="overlay-new-puzzle" class="btn btn-primary">Nouveau Puzzle</button>
                 <button id="overlay-reset" class="btn btn-secondary">Rejouer</button>
+                <button id="overlay-quit" class="btn btn-secondary">Quitter</button>
             </div>
         </div>
     </div>
 
+    <script src="../runtime-config.js"></script>
+    <script src="../JeuCanvas/js/core/canvas-api.js"></script>
     <script type="module" src="js/main.js"></script>
 </body>
 </html>
