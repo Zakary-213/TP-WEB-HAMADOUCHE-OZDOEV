@@ -68,6 +68,11 @@ app.get('/rules/canvas.html', (req, res) => {
   res.redirect('/canvas.html');
 });
 
+// Support legacy/alternate path for GamesOnWeb page (serve frontend/gow.html)
+app.get('/rules/gow.html', (req, res) => {
+  res.redirect('/gow.html');
+});
+
 // Route de test supplémentaire
 app.get("/api/ping", (req, res) => {
   res.json({ pong: true, time: new Date().toISOString() });

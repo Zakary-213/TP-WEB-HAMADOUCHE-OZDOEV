@@ -6,6 +6,12 @@
       "destination": "/canvas.html",
       "permanent": false
     }
+    ,
+    {
+      "source": "/rules/gow.html",
+      "destination": "/gow.html",
+      "permanent": false
+    }
   ],
   "rewrites": [
     {

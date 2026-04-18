@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Games On Web — Règles</title>
+
+    <link rel="stylesheet" href="../index.css">
+    <link rel="stylesheet" href="./gow.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;600;800&family=Nunito:wght@300;400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- ───────────── NAVBAR ───────────── -->
+<nav class="navbar">
+    <div class="navLogo">
+        <img src="/assets/images/logo.png" alt="Logo">
+    </div>
+
+    <div class="navLinks">
+        <a href="/" class="navLink">Accueil</a>
+        <a href="/JeuCanvas/canvas.html" class="navLink">Canvas</a>
+        <a href="/GamesOnWeb/gow.html" class="navLink active">GamesOnWeb</a>
+        <a href="#" class="navLink">Scores</a>
+    </div>
+
+    <div class="navButtonWrapper">
+        <div class="navAuthButtons">
+            <a href="/#register" class="navAuthBtn registerButton">Register</a>
+            <a href="/#login" class="navAuthBtn loginButton">Login</a>
+        </div>
+    </div>
+</nav>
+
+<!-- ───────────── HERO ───────────── -->
+<section class="gowHero">
+    <div class="gowHeroInner">
+        <p class="gowEyebrow">FOOTBALL • TOURNOI • ARCADE 3D</p>
+
+        <h1 class="gowHeroTitle">
+            GAMES ON<br>
+            <span class="gowGradientText">WEB</span>
+        </h1>
+
+        <p class="gowHeroSubtitle">
+            Enfile les crampons et prends le contrôle de ton équipe favorite dans un jeu de foot arcade nerveux.
+            Gravis les rounds d'un tournoi à élimination directe, affronte un ami en 1vs1, et explore des stades
+            aux ambiances uniques. Plus tu avances, plus l'IA adverse devient redoutable.
+        </p>
+
+        <div class="gowHeroActions">
+            <a href="/GamesOnWeb/index.html" class="heroBtn heroBtnPrimary">
+                <span>Jouer maintenant</span>
+            </a>
+            <a href="#gowContent" class="heroBtn heroBtnGhost">
+                <span>Voir les règles</span>
+            </a>
+        </div>
+
+        <div class="gowHeroStats">
+            <div class="gowStat">
+                <span class="gowStatValue">10</span>
+                <span class="gowStatLabel">Équipes</span>
+            </div>
+            <div class="gowStatDivider"></div>
+            <div class="gowStat">
+                <span class="gowStatValue">04</span>
+                <span class="gowStatLabel">Stades</span>
+            </div>
+            <div class="gowStatDivider"></div>
+            <div class="gowStat">
+                <span class="gowStatValue">04</span>
+                <span class="gowStatLabel">Caméras</span>
+            </div>
+            <div class="gowStatDivider"></div>
+            <div class="gowStat">
+                <span class="gowStatValue">02</span>
+                <span class="gowStatLabel">Modes</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="gowHeroBackdrop" aria-hidden="true"></div>
+</section>
+
+<!-- ───────────── RÈGLES ───────────── -->
+<section class="gowSection" id="gowContent">
+
+    <!-- Règle 01 — MENU PRINCIPAL -->
+    <article class="gowRow" data-index="01">
+        <div class="gowImageWrapper">
+            <div class="gowImageIndex">01</div>
+            <img src="/assets/images/gow2.png" alt="Menu principal GamesOnWeb">
+            <div class="gowImageOverlay"></div>
+        </div>
+
+        <div class="gowContent">
+            <span class="gowTag">Menu</span>
+            <h2 class="gowTitle">Choisis ton mode</h2>
+            <p class="gowDescription">
+                Depuis le menu principal, tu accèdes à tout ce qu'il te faut en quelques clics. Deux modes de jeu
+                complémentaires, l'historique de tes performances et les réglages du jeu. Survole une carte pour
+                voir sa présentation vidéo avant de lancer ta partie.
+            </p>
+
+            <ul class="gowList">
+                <li><strong>Mode Tournoi</strong> — Parcours à élimination directe sur 4 stades de difficulté croissante.</li>
+                <li><strong>Mode 1vs1</strong> — Affronte un ami en match rapide dans un stade de ton choix.</li>
+                <li><strong>Score</strong> — Consulte l'historique de tes derniers matchs et tes statistiques.</li>
+                <li><strong>Paramètres</strong> — Audio, caméra, contrôles clavier et manette entièrement personnalisables.</li>
+            </ul>
+        </div>
+    </article>
+
+    <!-- Règle 02 — ÉQUIPES / SKINS -->
+    <article class="gowRow reverse" data-index="02">
+        <div class="gowImageWrapper">
+            <div class="gowImageIndex">02</div>
+            <img src="/assets/images/gow3.png" alt="Sélection des skins">
+            <div class="gowImageOverlay"></div>
+        </div>
+
+        <div class="gowContent">
+            <span class="gowTag">Rosters</span>
+            <h2 class="gowTitle">10 équipes françaises</h2>
+            <p class="gowDescription">
+                Prends les couleurs de l'une des <strong>10 plus grandes villes de France</strong> et défends son
+                blason sur le terrain. Chaque équipe a sa propre identité visuelle et son style de jeu. En mode 1vs1,
+                deux joueurs peuvent même choisir leur club respectif pour des derbys incontournables.
+            </p>
+
+            <div class="gowTeamChips">
+                <span class="gowTeamChip" data-num="1">Paris</span>
+                <span class="gowTeamChip" data-num="2">Lyon</span>
+                <span class="gowTeamChip" data-num="3">Marseille</span>
+                <span class="gowTeamChip" data-num="4">Bordeaux</span>
+                <span class="gowTeamChip" data-num="5">Lille</span>
+                <span class="gowTeamChip" data-num="6">Nantes</span>
+                <span class="gowTeamChip" data-num="7">Toulouse</span>
+                <span class="gowTeamChip" data-num="8">Rennes</span>
+                <span class="gowTeamChip" data-num="9">Nice</span>
+                <span class="gowTeamChip" data-num="10">Strasbourg</span>
+            </div>
+        </div>
+    </article>
+
+    <!-- Règle 03 — STADES / PROGRESSION -->
+    <article class="gowRow" data-index="03">
+        <div class="gowImageWrapper">
+            <div class="gowImageIndex">03</div>
+            <img src="/assets/images/gow1.png" alt="Sélection du stade">
+            <div class="gowImageOverlay"></div>
+        </div>
+
+        <div class="gowContent">
+            <span class="gowTag">Tournoi</span>
+            <h2 class="gowTitle">4 stades, 4 défis</h2>
+            <p class="gowDescription">
+                Le mode Tournoi te fait gravir 4 rounds à élimination directe, chacun dans un stade unique avec sa
+                propre ambiance et une <strong>IA adaptée à la difficulté</strong>. Plus tu avances, plus tes adversaires
+                deviennent impitoyables. Le cadre change, le rythme s'accélère, la tension monte.
+            </p>
+
+            <ul class="gowList">
+                <li><strong>Huitième de finale</strong> — Le premier vrai test. Stade standard, IA équilibrée.</li>
+                <li><strong>Quart de finale</strong> — <em>Prochainement.</em> IA plus agressive et lectures de jeu affinées.</li>
+                <li><strong>Demi-finale</strong> — <em>Prochainement.</em> Stade spectaculaire, rivaux redoutables.</li>
+                <li><strong>Finale</strong> — <em>Prochainement.</em> Le cadre le plus grandiose, l'IA la plus dure.</li>
+            </ul>
+        </div>
+    </article>
+
+    <!-- Règle 04 — PARAMÈTRES / CONTRÔLES -->
+    <article class="gowRow reverse" data-index="04">
+        <div class="gowImageWrapper">
+            <div class="gowImageIndex">04</div>
+            <img src="/assets/images/gow4.png" alt="Paramètres">
+            <div class="gowImageOverlay"></div>
+        </div>
+
+        <div class="gowContent">
+            <span class="gowTag">Controls</span>
+            <h2 class="gowTitle">Clavier ou manette</h2>
+            <p class="gowDescription">
+                Joue comme tu veux. Le jeu supporte <strong>clavier et manette</strong> à la volée, avec des contrôles
+                entièrement remappables depuis le menu Paramètres. Règle aussi le volume, la vue de caméra par défaut,
+                et la distance de la caméra pour adapter l'expérience à ton style.
+            </p>
+
+            <div class="gowControlsTabs" role="tablist">
+                <button class="gowControlsTab active" data-target="panel-keyboard" type="button">Clavier</button>
+                <button class="gowControlsTab" data-target="panel-gamepad" type="button">Manette</button>
+            </div>
+
+            <div class="gowControlsPanel active" id="panel-keyboard">
+                <div class="gowControlsGrid">
+                    <div class="gowControlLine"><span>Avancer</span><span class="gowKey">Z</span></div>
+                    <div class="gowControlLine"><span>Reculer</span><span class="gowKey">S</span></div>
+                    <div class="gowControlLine"><span>Gauche</span><span class="gowKey">Q</span></div>
+                    <div class="gowControlLine"><span>Droite</span><span class="gowKey">D</span></div>
+                    <div class="gowControlLine"><span>Sprint</span><span class="gowKey gowKey--wide">SHIFT</span></div>
+                    <div class="gowControlLine"><span>Tir (maintenir)</span><span class="gowKey gowKey--wide">SPACE</span></div>
+                    <div class="gowControlLine"><span>Tacle glissé</span><span class="gowKey">T</span></div>
+                    <div class="gowControlLine"><span>Joueur gauche</span><span class="gowKey">A</span></div>
+                    <div class="gowControlLine"><span>Joueur droite</span><span class="gowKey">E</span></div>
+                    <div class="gowControlLine"><span>Paramètres</span><span class="gowKey gowKey--wide">ÉCHAP</span></div>
+                </div>
+            </div>
+
+            <div class="gowControlsPanel" id="panel-gamepad">
+                <div class="gowControlsGrid">
+                    <div class="gowControlLine"><span>Déplacement</span><span class="gowKey gowKey--pad gowKey--wide">STICK G</span></div>
+                    <div class="gowControlLine"><span>Tir / Skip</span><span class="gowKey gowKey--pad">X</span></div>
+                    <div class="gowControlLine"><span>Sprint</span><span class="gowKey gowKey--pad">R2</span></div>
+                    <div class="gowControlLine"><span>Tacle</span><span class="gowKey gowKey--pad gowKey--wide">CARRÉ</span></div>
+                    <div class="gowControlLine"><span>Joueur gauche</span><span class="gowKey gowKey--pad">L1</span></div>
+                    <div class="gowControlLine"><span>Joueur droite</span><span class="gowKey gowKey--pad">R1</span></div>
+                    <div class="gowControlLine"><span>Paramètres</span><span class="gowKey gowKey--pad gowKey--wide">OPTIONS</span></div>
+                </div>
+            </div>
+        </div>
+    </article>
+
+</section>
+
+<!-- ───────────── STADES DU TOURNOI (4 cartes) ───────────── -->
+<section class="gowStages">
+    <div class="gowStagesHeader">
+        <p class="gowSectionEyebrow">ROAD • TO • THE • FINAL</p>
+        <h2 class="gowSectionTitle">Les stades du <span class="gowGradientText">tournoi</span></h2>
+        <p class="gowSectionSubtitle">
+            Chaque round a son propre stade, sa propre atmosphère et son propre niveau de difficulté. Saurais-tu survivre jusqu'à la finale ?
+        </p>
+    </div>
+
+    <div class="gowStagesGrid">
+
+        <article class="gowStageCard gowStageCard--active">
+            <div class="gowStageCardImage">
+                <span class="gowStageCardBadge gowStageCardBadge--ok">Disponible</span>
+                <img src="/assets/images/gowHuitieme.png" alt="Stade huitième de finale">
+            </div>
+            <div class="gowStageCardBody">
+                <span class="gowStageCardRound">Round 01</span>
+                <h3 class="gowStageCardTitle">Huitième de finale</h3>
+                <p class="gowStageCardText">L'entrée en matière. IA équilibrée, terrain classique : le vrai test de tes fondamentaux.</p>
+                <div class="gowStageCardMeta">
+                    <span class="gowStageCardDiff"><em></em><em></em><em class="off"></em><em class="off"></em></span>
+                    <span class="gowStageCardDiffLabel">Facile</span>
+                </div>
+            </div>
+        </article>
+
+        <article class="gowStageCard gowStageCard--locked">
+            <div class="gowStageCardImage">
+                <span class="gowStageCardBadge gowStageCardBadge--soon">Prochainement</span>
+                <img src="/assets/images/gowQuart.png" alt="Stade quart de finale">
+            </div>
+            <div class="gowStageCardBody">
+                <span class="gowStageCardRound">Round 02</span>
+                <h3 class="gowStageCardTitle">Quart de finale</h3>
+                <p class="gowStageCardText">L'IA monte d'un cran : pressing plus agressif et meilleure lecture des passes.</p>
+                <div class="gowStageCardMeta">
+                    <span class="gowStageCardDiff"><em></em><em></em><em></em><em class="off"></em></span>
+                    <span class="gowStageCardDiffLabel">Moyen</span>
+                </div>
+            </div>
+        </article>
+
+        <article class="gowStageCard gowStageCard--locked">
+            <div class="gowStageCardImage">
+                <span class="gowStageCardBadge gowStageCardBadge--soon">Prochainement</span>
+                <img src="/assets/images/gowDemi.png" alt="Stade demi-finale">
+            </div>
+            <div class="gowStageCardBody">
+                <span class="gowStageCardRound">Round 03</span>
+                <h3 class="gowStageCardTitle">Demi-finale</h3>
+                <p class="gowStageCardText">L'ambiance s'intensifie. Des rivaux redoutables pour un spectacle tendu.</p>
+                <div class="gowStageCardMeta">
+                    <span class="gowStageCardDiff"><em></em><em></em><em></em><em></em></span>
+                    <span class="gowStageCardDiffLabel">Difficile</span>
+                </div>
+            </div>
+        </article>
+
+        <article class="gowStageCard gowStageCard--locked gowStageCard--finale">
+            <div class="gowStageCardImage">
+                <span class="gowStageCardBadge gowStageCardBadge--soon">Prochainement</span>
+                <img src="/assets/images/gowFinale.png" alt="Stade finale">
+            </div>
+            <div class="gowStageCardBody">
+                <span class="gowStageCardRound">Round 04</span>
+                <h3 class="gowStageCardTitle">Finale</h3>
+                <p class="gowStageCardText">Le dernier combat. Le cadre le plus grandiose, l'IA la plus impitoyable.</p>
+                <div class="gowStageCardMeta">
+                    <span class="gowStageCardDiff"><em></em><em></em><em></em><em></em><em></em></span>
+                    <span class="gowStageCardDiffLabel">Élite</span>
+                </div>
+            </div>
+        </article>
+
+    </div>
+</section>
+
+<!-- ───────────── CAMÉRAS (4 vues) ───────────── -->
+<section class="gowCameras">
+    <div class="gowStagesHeader">
+        <p class="gowSectionEyebrow">VIEW • YOUR • GAME</p>
+        <h2 class="gowSectionTitle">4 angles de <span class="gowGradientText">caméra</span></h2>
+        <p class="gowSectionSubtitle">
+            Change de point de vue à la volée. Chaque caméra offre une expérience et une lecture du terrain différentes.
+        </p>
+    </div>
+
+    <div class="gowCamerasGrid">
+
+        <article class="gowCamCard">
+            <div class="gowCamImage">
+                <img src="/assets/images/gowBroadcast.png" alt="Vue Broadcast">
+                <span class="gowCamTag">Par défaut</span>
+            </div>
+            <div class="gowCamBody">
+                <h3 class="gowCamTitle">Broadcast</h3>
+                <p class="gowCamText">La vue télévisée classique, légèrement surélevée sur la touche. Parfaite pour lire le jeu et voir les appels.</p>
+            </div>
+        </article>
+
+        <article class="gowCamCard">
+            <div class="gowCamImage">
+                <img src="/assets/images/gowTPS.png" alt="Vue TPS">
+            </div>
+            <div class="gowCamBody">
+                <h3 class="gowCamTitle">TPS</h3>
+                <p class="gowCamText">Troisième personne, proche de ton joueur. Plus immersif, plus nerveux, pensé pour les dribbleurs.</p>
+            </div>
+        </article>
+
+        <article class="gowCamCard">
+            <div class="gowCamImage">
+                <img src="/assets/images/gowSkycam.png" alt="Vue SkyCam">
+            </div>
+            <div class="gowCamBody">
+                <h3 class="gowCamTitle">SkyCam</h3>
+                <p class="gowCamText">Vue aérienne façon stratégie. Idéale pour visualiser les espaces et piloter tes coéquipiers.</p>
+            </div>
+        </article>
+
+        <article class="gowCamCard">
+            <div class="gowCamImage">
+                <img src="/assets/images/gowPOV.png" alt="Vue POV">
+            </div>
+            <div class="gowCamBody">
+                <h3 class="gowCamTitle">POV</h3>
+                <p class="gowCamText">Vue à la première personne pour l'immersion totale. Réservé aux plus téméraires.</p>
+            </div>
+        </article>
+
+    </div>
+</section>
+
+<!-- ───────────── SCORES / DERNIERS MATCHS ───────────── -->
+<section class="gowScores">
+    <div class="gowScoresInner">
+        <div class="gowScoresLeft">
+            <p class="gowSectionEyebrow">STATS • HISTORY</p>
+            <h2 class="gowSectionTitle">Tes derniers <span class="gowGradientText">matchs</span></h2>
+            <p class="gowScoresText">
+                Chaque rencontre est enregistrée automatiquement dans ton historique. Retrouve le détail de tes
+                performances : équipes affrontées, scores, buteurs, et résultats filtrables par victoire, match nul ou défaite.
+            </p>
+
+            <ul class="gowList">
+                <li><strong>Historique complet</strong> — tous tes matchs 1vs1 et Tournoi.</li>
+                <li><strong>Filtres rapides</strong> — victoire, match nul, défaite.</li>
+                <li><strong>Détail des buts</strong> — qui a marqué et quand.</li>
+                <li><strong>Synchronisation</strong> — tes résultats suivent ton compte.</li>
+            </ul>
+        </div>
+
+        <div class="gowScoresRight">
+            <div class="gowScoresPanel">
+                <div class="gowScoresPanelHeader">
+                    <span class="gowScoresPanelTitle">Derniers matchs</span>
+                    <div class="gowScoresFilters">
+                        <span class="gowScoresFilter active">Tous</span>
+                        <span class="gowScoresFilter">V</span>
+                        <span class="gowScoresFilter">N</span>
+                        <span class="gowScoresFilter">D</span>
+                    </div>
+                </div>
+                <ul class="gowScoresList">
+                    <li class="gowScoresItem">
+                        <span class="gowScoresMode">1vs1</span>
+                        <span class="gowScoresTeams">Nantes <em>vs</em> Toulouse</span>
+                        <span class="gowScoresScore">1 – 0</span>
+                        <span class="gowScoresResult gowScoresResult--win">Victoire</span>
+                    </li>
+                    <li class="gowScoresItem">
+                        <span class="gowScoresMode">1vs1</span>
+                        <span class="gowScoresTeams">Lyon <em>vs</em> Paris</span>
+                        <span class="gowScoresScore">0 – 0</span>
+                        <span class="gowScoresResult gowScoresResult--draw">Nul</span>
+                    </li>
+                    <li class="gowScoresItem">
+                        <span class="gowScoresMode">1vs1</span>
+                        <span class="gowScoresTeams">Lille <em>vs</em> Bordeaux</span>
+                        <span class="gowScoresScore">1 – 0</span>
+                        <span class="gowScoresResult gowScoresResult--win">Victoire</span>
+                    </li>
+                    <li class="gowScoresItem">
+                        <span class="gowScoresMode">Tournoi</span>
+                        <span class="gowScoresTeams">You <em>vs</em> IA</span>
+                        <span class="gowScoresScore">0 – 1</span>
+                        <span class="gowScoresResult gowScoresResult--loss">Défaite</span>
+                    </li>
+                    <li class="gowScoresItem">
+                        <span class="gowScoresMode">1vs1</span>
+                        <span class="gowScoresTeams">Lille <em>vs</em> Nice</span>
+                        <span class="gowScoresScore">0 – 0</span>
+                        <span class="gowScoresResult gowScoresResult--draw">Nul</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ───────────── CTA FINAL ───────────── -->
+<section class="gowCta">
+    <div class="gowCtaInner">
+        <h2 class="gowCtaTitle">PRÊT POUR LE COUP D'ENVOI ?</h2>
+        <p class="gowCtaText">
+            Choisis ton équipe, ton stade et ton adversaire. Le tournoi commence maintenant.
+        </p>
+        <a href="/GamesOnWeb/index.html" class="heroBtn heroBtnPrimary gowCtaBtn">
+            <span>Lancer le jeu</span>
+        </a>
+    </div>
+</section>
+
+<!-- ───────────── FOOTER ───────────── -->
+<footer class="siteFooter">
+    <div class="siteFooterLine"></div>
+    <p class="siteFooterText">© Copyright 2026, All Rights Reserved by GamesOnWeb</p>
+</footer>
+
+<script src="./gow.js"></script>
+</body>
+</html>

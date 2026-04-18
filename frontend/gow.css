@@ -1,0 +1,1186 @@
+/* ========================================================
+   GAMES ON WEB — PAGE RÈGLES
+   Theme : Football / Stade — accent bleu électrique
+   ======================================================== */
+
+:root {
+    --gow-primary: #00c2ff;
+    --gow-primary-deep: #008CFF;
+    --gow-accent: #00ffae;
+    --gow-warn: #ffb020;
+    --gow-danger: #ff3b4f;
+    --gow-ink: #0a1220;
+}
+
+/* ───────── HERO ───────── */
+.gowHero {
+    position: relative;
+    width: 100%;
+    padding: 60px 20px 80px;
+    overflow: hidden;
+    z-index: 2;
+}
+
+.gowHeroInner {
+    position: relative;
+    z-index: 3;
+    max-width: 1080px;
+    margin: 0 auto;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 26px;
+}
+
+.gowEyebrow {
+    margin: 0;
+    font-family: "Nunito", sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--gow-primary);
+}
+
+.gowHeroTitle {
+    margin: 0;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 128px;
+    line-height: 0.88;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    color: #FFFFFF;
+}
+
+.gowGradientText {
+    background: linear-gradient(90deg, #00c2ff 0%, #00ffae 55%, #ffb020 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.gowHeroSubtitle {
+    margin: 0;
+    max-width: 760px;
+    font-family: "Nunito", sans-serif;
+    font-size: 18px;
+    font-weight: 300;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.gowHeroActions {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 10px;
+    isolation: isolate;
+}
+
+.gowHeroStats {
+    display: inline-flex;
+    align-items: center;
+    gap: 28px;
+    margin-top: 22px;
+    padding: 18px 30px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(0, 194, 255, 0.18);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.gowStat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.gowStatValue {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 38px;
+    line-height: 1;
+    color: #FFFFFF;
+    letter-spacing: 0.03em;
+}
+
+.gowStatLabel {
+    font-family: "Nunito", sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.gowStatDivider {
+    width: 1px;
+    height: 38px;
+    background: linear-gradient(180deg, transparent, rgba(0, 194, 255, 0.45), transparent);
+}
+
+.gowHeroBackdrop {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse at 20% 30%, rgba(0, 194, 255, 0.18) 0%, transparent 45%),
+        radial-gradient(ellipse at 80% 70%, rgba(0, 255, 174, 0.10) 0%, transparent 45%);
+}
+
+.gowHeroBackdrop::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(0, 194, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 194, 255, 0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse at center, black 0%, transparent 70%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 0%, transparent 70%);
+}
+
+/* ───────── SECTION RÈGLES ───────── */
+.gowSection {
+    position: relative;
+    z-index: 3;
+    max-width: 1250px;
+    margin: 40px auto 120px;
+    padding: 0 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 140px;
+}
+
+.gowRow {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 90px;
+    align-items: center;
+
+    opacity: 0;
+    transform: translateY(60px);
+    transition:
+        opacity 0.9s cubic-bezier(.2,.9,.2,1),
+        transform 0.9s cubic-bezier(.2,.9,.2,1);
+}
+
+.gowRow.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.gowRow.reverse .gowImageWrapper { order: 2; }
+.gowRow.reverse .gowContent { order: 1; }
+
+/* ───────── IMAGE ───────── */
+.gowImageWrapper {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 11;
+    border-radius: 14px;
+    overflow: hidden;
+    background:
+        radial-gradient(ellipse at center, rgba(0, 194, 255, 0.08) 0%, transparent 70%),
+        var(--gow-ink);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.38);
+    transition: transform 0.45s ease, box-shadow 0.45s ease;
+}
+
+.gowRow.visible .gowImageWrapper:hover {
+    transform: translateY(-6px);
+    box-shadow:
+        0 30px 60px rgba(0, 0, 0, 0.5),
+        0 0 24px rgba(0, 194, 255, 0.18);
+}
+
+.gowImageWrapper::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    padding: 2px;
+    border-radius: 14px;
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.92) 0%,
+        rgba(255, 255, 255, 0.55) 18%,
+        rgba(255, 255, 255, 0.12) 44%,
+        rgba(0, 194, 255, 0.30) 70%,
+        rgba(0, 194, 255, 0.95) 100%
+    );
+    -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 3;
+}
+
+.gowImageWrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 20px;
+    display: block;
+    position: relative;
+    z-index: 1;
+    filter: brightness(1) saturate(1.05);
+    transition: transform 0.6s ease;
+}
+
+.gowImageWrapper:hover img {
+    transform: scale(1.03);
+}
+
+.gowImageOverlay {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    background:
+        linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.15) 100%);
+    opacity: 0.4;
+}
+
+.gowImageIndex {
+    position: absolute;
+    top: 16px;
+    left: 18px;
+    z-index: 4;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 34px;
+    line-height: 1;
+    color: #FFFFFF;
+    letter-spacing: 0.05em;
+    padding: 6px 12px;
+    background: rgba(0, 0, 0, 0.55);
+    border: 1px solid rgba(0, 194, 255, 0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+/* ───────── CONTENU TEXTE ───────── */
+.gowContent {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding-left: 24px;
+}
+
+.gowContent::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 6px;
+    width: 3px;
+    height: 72px;
+    background: linear-gradient(180deg, var(--gow-primary) 0%, rgba(0, 194, 255, 0) 100%);
+}
+
+.gowTag {
+    font-family: "Nunito", sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gow-primary);
+}
+
+.gowTitle {
+    margin: 0;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 74px;
+    line-height: 0.92;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #FFFFFF;
+}
+
+.gowDescription {
+    margin: 0;
+    font-family: "Nunito", sans-serif;
+    font-size: 17px;
+    font-weight: 300;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.82);
+    max-width: 520px;
+}
+
+.gowDescription strong {
+    color: #FFFFFF;
+    font-weight: 700;
+}
+
+/* ───────── LISTE SIMPLE ───────── */
+.gowList {
+    list-style: none;
+    padding: 0;
+    margin: 8px 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.gowList li {
+    position: relative;
+    padding-left: 22px;
+    font-family: "Nunito", sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.88);
+}
+
+.gowList li strong {
+    color: var(--gow-primary);
+    font-weight: 800;
+    letter-spacing: 0.02em;
+}
+
+.gowList li em {
+    font-style: normal;
+    color: var(--gow-warn);
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-right: 4px;
+}
+
+.gowList li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 8px;
+    width: 8px;
+    height: 8px;
+    background: linear-gradient(90deg, #00c2ff 0%, #00ffae 100%);
+    transform: rotate(45deg);
+    box-shadow: 0 0 12px rgba(0, 194, 255, 0.4);
+}
+
+/* ───────── CHIPS ÉQUIPES ───────── */
+.gowTeamChips {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 8px;
+    max-width: 560px;
+}
+
+.gowTeamChip {
+    position: relative;
+    padding: 10px 12px 10px 36px;
+    font-family: "Nunito", sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #FFFFFF;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-left: 3px solid var(--chip-color, var(--gow-primary));
+    transition: background 0.25s ease, transform 0.25s ease;
+}
+
+.gowTeamChip:hover {
+    background: rgba(255, 255, 255, 0.06);
+    transform: translateX(3px);
+}
+
+.gowTeamChip::before {
+    content: attr(data-num);
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 14px;
+    color: var(--chip-color, var(--gow-primary));
+    letter-spacing: 0.05em;
+}
+
+.gowTeamChip[data-num="1"]  { --chip-color: #3b82f6; }
+.gowTeamChip[data-num="2"]  { --chip-color: #00ffae; }
+.gowTeamChip[data-num="3"]  { --chip-color: #00c2ff; }
+.gowTeamChip[data-num="4"]  { --chip-color: #ffb020; }
+.gowTeamChip[data-num="5"]  { --chip-color: #ff3b4f; }
+.gowTeamChip[data-num="6"]  { --chip-color: #fbbf24; }
+.gowTeamChip[data-num="7"]  { --chip-color: #a855f7; }
+.gowTeamChip[data-num="8"]  { --chip-color: #06b6d4; }
+.gowTeamChip[data-num="9"]  { --chip-color: #f59e0b; }
+.gowTeamChip[data-num="10"] { --chip-color: #ef4444; }
+
+/* ───────── ONGLETS CONTRÔLES ───────── */
+.gowControlsTabs {
+    display: inline-flex;
+    gap: 4px;
+    padding: 4px;
+    margin-top: 6px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    align-self: flex-start;
+}
+
+.gowControlsTab {
+    padding: 8px 18px;
+    font-family: "Nunito", sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.gowControlsTab:hover {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.gowControlsTab.active {
+    color: #FFFFFF;
+    background: linear-gradient(180deg, rgba(0, 194, 255, 0.2) 0%, rgba(0, 194, 255, 0.08) 100%);
+    border: 1px solid rgba(0, 194, 255, 0.5);
+}
+
+.gowControlsPanel {
+    display: none;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 8px;
+}
+
+.gowControlsPanel.active {
+    display: flex;
+}
+
+.gowControlsGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 24px;
+    max-width: 560px;
+}
+
+.gowControlLine {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.06);
+    font-family: "Nunito", sans-serif;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.gowKey {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 32px;
+    padding: 0 10px;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 16px;
+    letter-spacing: 0.08em;
+    color: #FFFFFF;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+    border: 1px solid rgba(0, 194, 255, 0.45);
+    border-bottom-width: 3px;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        0 3px 10px rgba(0, 194, 255, 0.18);
+}
+
+.gowKey--pad {
+    border-color: rgba(0, 255, 174, 0.5);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        0 3px 10px rgba(0, 255, 174, 0.15);
+}
+
+.gowKey--wide {
+    min-width: 74px;
+    font-size: 13px;
+    letter-spacing: 0.12em;
+}
+
+/* ======================================================================
+   STADES DU TOURNOI — 4 cartes
+   ====================================================================== */
+.gowStages {
+    position: relative;
+    z-index: 3;
+    max-width: 1250px;
+    margin: 0 auto 120px;
+    padding: 0 20px;
+}
+
+.gowStagesHeader {
+    text-align: center;
+    max-width: 800px;
+    margin: 0 auto 56px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.gowSectionEyebrow {
+    margin: 0;
+    font-family: "Nunito", sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    color: var(--gow-primary);
+}
+
+.gowSectionTitle {
+    margin: 0;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 72px;
+    line-height: 0.95;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #FFFFFF;
+}
+
+.gowSectionSubtitle {
+    margin: 0;
+    font-family: "Nunito", sans-serif;
+    font-size: 17px;
+    font-weight: 300;
+    line-height: 1.55;
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.gowStagesGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+.gowStageCard {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: rgba(10, 18, 32, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: transform 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+}
+
+.gowStageCard:hover {
+    transform: translateY(-6px);
+    border-color: rgba(0, 194, 255, 0.35);
+    box-shadow:
+        0 20px 40px rgba(0, 0, 0, 0.4),
+        0 0 24px rgba(0, 194, 255, 0.15);
+}
+
+.gowStageCard--finale {
+    border-color: rgba(255, 176, 32, 0.25);
+}
+
+.gowStageCard--finale:hover {
+    border-color: rgba(255, 176, 32, 0.55);
+    box-shadow:
+        0 20px 40px rgba(0, 0, 0, 0.4),
+        0 0 24px rgba(255, 176, 32, 0.2);
+}
+
+.gowStageCard--locked .gowStageCardImage img {
+    filter: grayscale(0.6) brightness(0.7);
+}
+
+.gowStageCardImage {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background: #050a12;
+}
+
+.gowStageCardImage img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s ease, filter 0.4s ease;
+}
+
+.gowStageCard:hover .gowStageCardImage img {
+    transform: scale(1.08);
+}
+
+.gowStageCardImage::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0) 40%, rgba(10, 18, 32, 0.95) 100%);
+    pointer-events: none;
+}
+
+.gowStageCardBadge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 2;
+    padding: 5px 10px;
+    font-family: "Nunito", sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #FFFFFF;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+.gowStageCardBadge--ok {
+    color: #00ffae;
+    border: 1px solid rgba(0, 255, 174, 0.55);
+}
+
+.gowStageCardBadge--soon {
+    color: var(--gow-warn);
+    border: 1px solid rgba(255, 176, 32, 0.55);
+}
+
+.gowStageCardBody {
+    padding: 20px 18px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.gowStageCardRound {
+    font-family: "Nunito", sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gow-primary);
+}
+
+.gowStageCard--finale .gowStageCardRound {
+    color: var(--gow-warn);
+}
+
+.gowStageCardTitle {
+    margin: 0;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 30px;
+    line-height: 1;
+    color: #FFFFFF;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.gowStageCardText {
+    margin: 0;
+    font-family: "Nunito", sans-serif;
+    font-size: 13px;
+    font-weight: 300;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.gowStageCardMeta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 6px;
+    padding-top: 10px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.08);
+}
+
+.gowStageCardDiff {
+    display: inline-flex;
+    gap: 3px;
+}
+
+.gowStageCardDiff em {
+    width: 8px;
+    height: 8px;
+    background: var(--gow-primary);
+    transform: rotate(45deg);
+    box-shadow: 0 0 6px rgba(0, 194, 255, 0.5);
+}
+
+.gowStageCardDiff em.off {
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: none;
+}
+
+.gowStageCard--finale .gowStageCardDiff em:not(.off) {
+    background: var(--gow-warn);
+    box-shadow: 0 0 6px rgba(255, 176, 32, 0.5);
+}
+
+.gowStageCardDiffLabel {
+    font-family: "Nunito", sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+/* ======================================================================
+   CAMÉRAS — 4 cartes
+   ====================================================================== */
+.gowCameras {
+    position: relative;
+    z-index: 3;
+    max-width: 1250px;
+    margin: 0 auto 120px;
+    padding: 0 20px;
+}
+
+.gowCamerasGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+.gowCamCard {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: rgba(10, 18, 32, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: transform 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+}
+
+.gowCamCard:hover {
+    transform: translateY(-6px);
+    border-color: rgba(0, 255, 174, 0.35);
+    box-shadow:
+        0 20px 40px rgba(0, 0, 0, 0.4),
+        0 0 24px rgba(0, 255, 174, 0.12);
+}
+
+.gowCamImage {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    background: #050a12;
+}
+
+.gowCamImage img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s ease;
+}
+
+.gowCamCard:hover .gowCamImage img {
+    transform: scale(1.08);
+}
+
+.gowCamImage::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0) 50%, rgba(10, 18, 32, 0.9) 100%);
+    pointer-events: none;
+}
+
+.gowCamTag {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 2;
+    padding: 4px 10px;
+    font-family: "Nunito", sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gow-primary);
+    background: rgba(0, 0, 0, 0.55);
+    border: 1px solid rgba(0, 194, 255, 0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+.gowCamBody {
+    padding: 18px 18px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.gowCamTitle {
+    margin: 0;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 32px;
+    line-height: 1;
+    color: #FFFFFF;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.gowCamText {
+    margin: 0;
+    font-family: "Nunito", sans-serif;
+    font-size: 13px;
+    font-weight: 300;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.72);
+}
+
+/* ======================================================================
+   SCORES / DERNIERS MATCHS
+   ====================================================================== */
+.gowScores {
+    position: relative;
+    z-index: 3;
+    max-width: 1250px;
+    margin: 0 auto 120px;
+    padding: 0 20px;
+}
+
+.gowScoresInner {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 60px;
+    align-items: center;
+}
+
+.gowScoresLeft {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.gowScoresLeft .gowSectionTitle {
+    text-align: left;
+    font-size: 64px;
+}
+
+.gowScoresText {
+    margin: 0;
+    font-family: "Nunito", sans-serif;
+    font-size: 16px;
+    font-weight: 300;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.78);
+    max-width: 480px;
+}
+
+.gowScoresPanel {
+    position: relative;
+    padding: 22px 24px;
+    background:
+        radial-gradient(circle at top right, rgba(0, 194, 255, 0.08) 0%, transparent 45%),
+        linear-gradient(180deg, rgba(16, 22, 36, 0.9) 0%, rgba(10, 14, 24, 0.95) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.gowScoresPanel::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--gow-primary) 0%, rgba(0, 194, 255, 0) 80%);
+}
+
+.gowScoresPanelHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.gowScoresPanelTitle {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 24px;
+    letter-spacing: 0.04em;
+    color: #FFFFFF;
+    text-transform: uppercase;
+}
+
+.gowScoresFilters {
+    display: inline-flex;
+    gap: 6px;
+}
+
+.gowScoresFilter {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+    padding: 4px 10px;
+    font-family: "Nunito", sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+    cursor: default;
+}
+
+.gowScoresFilter.active {
+    color: #FFFFFF;
+    background: rgba(0, 194, 255, 0.15);
+    border-color: rgba(0, 194, 255, 0.5);
+}
+
+.gowScoresList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.gowScoresItem {
+    display: grid;
+    grid-template-columns: 80px 1fr auto auto;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 8px;
+    font-family: "Nunito", sans-serif;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.88);
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.06);
+    transition: background 0.2s ease;
+}
+
+.gowScoresItem:hover {
+    background: rgba(0, 194, 255, 0.04);
+}
+
+.gowScoresItem:last-child {
+    border-bottom: none;
+}
+
+.gowScoresMode {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gow-primary);
+}
+
+.gowScoresTeams {
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.gowScoresTeams em {
+    font-style: normal;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.4);
+    margin: 0 6px;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+.gowScoresScore {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 22px;
+    color: #FFFFFF;
+    letter-spacing: 0.05em;
+}
+
+.gowScoresResult {
+    padding: 4px 10px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.gowScoresResult--win {
+    color: #00ffae;
+    background: rgba(0, 255, 174, 0.1);
+    border: 1px solid rgba(0, 255, 174, 0.4);
+}
+
+.gowScoresResult--draw {
+    color: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.gowScoresResult--loss {
+    color: var(--gow-danger);
+    background: rgba(255, 59, 79, 0.1);
+    border: 1px solid rgba(255, 59, 79, 0.4);
+}
+
+/* ───────── CTA FINAL ───────── */
+.gowCta {
+    position: relative;
+    z-index: 3;
+    max-width: 1100px;
+    margin: 0 auto 100px;
+    padding: 0 20px;
+}
+
+.gowCtaInner {
+    position: relative;
+    padding: 64px 40px;
+    text-align: center;
+    background:
+        radial-gradient(circle at top left, rgba(0, 194, 255, 0.14) 0%, transparent 38%),
+        radial-gradient(circle at bottom right, rgba(0, 255, 174, 0.10) 0%, transparent 40%),
+        linear-gradient(180deg, rgba(16, 22, 36, 0.9) 0%, rgba(10, 14, 24, 0.95) 100%);
+    border: 1px solid rgba(0, 194, 255, 0.25);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.gowCtaInner::before {
+    content: "";
+    position: absolute;
+    top: -120px;
+    left: -120px;
+    width: 360px;
+    height: 360px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0, 194, 255, 0.22) 0%, transparent 70%);
+    filter: blur(14px);
+    pointer-events: none;
+}
+
+.gowCtaTitle {
+    margin: 0;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 72px;
+    line-height: 0.92;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #FFFFFF;
+}
+
+.gowCtaText {
+    margin: 0 0 14px;
+    max-width: 580px;
+    font-family: "Nunito", sans-serif;
+    font-size: 17px;
+    font-weight: 300;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.gowCtaBtn {
+    margin-top: 6px;
+    padding: 0 44px !important;
+    clip-path: polygon(18px 0, 100% 0, calc(100% - 18px) 100%, 0 100%) !important;
+    min-width: 260px;
+}
+
+.gowCtaBtn span {
+    margin: 0 auto;
+}
+
+/* ───────── RESPONSIVE ───────── */
+@media (max-width: 1100px) {
+    .gowStagesGrid,
+    .gowCamerasGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .gowScoresInner {
+        grid-template-columns: 1fr;
+        gap: 40px;
+    }
+
+    .gowScoresLeft .gowSectionTitle {
+        text-align: center;
+    }
+
+    .gowScoresLeft {
+        text-align: center;
+        align-items: center;
+    }
+}
+
+@media (max-width: 980px) {
+    .gowHeroTitle { font-size: 84px; }
+
+    .gowRow,
+    .gowRow.reverse {
+        grid-template-columns: 1fr;
+        gap: 40px;
+    }
+
+    .gowRow.reverse .gowImageWrapper,
+    .gowRow.reverse .gowContent {
+        order: initial;
+    }
+
+    .gowTitle { font-size: 56px; }
+    .gowCtaTitle { font-size: 52px; }
+    .gowSectionTitle { font-size: 52px; }
+
+    .gowSection { gap: 90px; }
+
+    .gowHeroStats {
+        gap: 16px;
+        padding: 14px 20px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .gowStatValue { font-size: 30px; }
+
+    .gowControlsGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 680px) {
+    .gowHeroTitle { font-size: 64px; }
+    .gowTitle { font-size: 46px; }
+    .gowCtaInner { padding: 40px 20px; }
+
+    .gowTeamChips {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .gowStagesGrid,
+    .gowCamerasGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .gowScoresItem {
+        grid-template-columns: 1fr auto;
+        gap: 4px 10px;
+    }
+
+    .gowScoresMode { grid-column: 1; }
+    .gowScoresResult { grid-column: 2; grid-row: 1; }
+    .gowScoresTeams { grid-column: 1 / -1; }
+    .gowScoresScore { grid-column: 1 / -1; text-align: left; }
+
+    .gowHeroActions {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+        max-width: 320px;
+    }
+}
