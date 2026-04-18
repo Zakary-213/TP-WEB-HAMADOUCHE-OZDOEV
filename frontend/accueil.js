@@ -6,6 +6,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const button = document.getElementById("awardsMoreBtn");
 
     let currentIndex = 0;
+    let isTransitioning = false;
+    let spawnTimeouts = [];
 
     const gamesData = [
         ["./assets/images/logo.png","./assets/images/logo.png","./assets/images/logo.png","./assets/images/logo.png"],
@@ -14,6 +16,10 @@ document.addEventListener("DOMContentLoaded", () => {
     ];
 
     function spawnCards(images, onAllLoaded) {
+        // cancel any pending spawns from a previous call
+        spawnTimeouts.forEach(id => clearTimeout(id));
+        spawnTimeouts = [];
+
         let loadedCount = 0;
         cards.forEach((card, i) => {
             const img = card.querySelector("img");
@@ -22,7 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
             img.style.opacity = 0;
             img.removeAttribute('src');
 
-            setTimeout(() => {
+            const t = setTimeout(() => {
                 const desired = images[i];
                 const withoutDot = desired.replace(/^\.\//, '');
 
@@ -74,11 +80,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 img.src = withoutDot;
             }, i * 500);
+            spawnTimeouts.push(t);
         });
     }
 
     function switchGame(newIndex) {
         if (newIndex === currentIndex) return;
+
+        if (isTransitioning) return;
+        isTransitioning = true;
 
         const direction = newIndex > currentIndex ? "left" : "right";
 
@@ -95,9 +105,14 @@ document.addEventListener("DOMContentLoaded", () => {
             let imagesLoaded = false;
             let transitionDone = false;
 
+            const finish = () => {
+                isTransitioning = false;
+                button.classList.add("is-visible");
+            };
+
             const onAllLoaded = () => {
                 imagesLoaded = true;
-                if (transitionDone) button.classList.add("is-visible");
+                if (transitionDone) finish();
             };
 
             const onTransitionBack = (e) => {
@@ -105,7 +120,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (e.propertyName !== 'transform' && e.propertyName !== 'opacity') return;
                 grid.removeEventListener('transitionend', onTransitionBack);
                 transitionDone = true;
-                if (imagesLoaded) button.classList.add("is-visible");
+                if (imagesLoaded) finish();
             };
 
             spawnCards(gamesData[newIndex], onAllLoaded);
