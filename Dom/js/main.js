@@ -18,6 +18,7 @@ const loadingEl      = document.getElementById('loading');
 const winOverlayEl   = document.getElementById('win-overlay');
 const winTimeEl      = document.getElementById('win-time');
 const winDiffEl      = document.getElementById('win-difficulty');
+const winSecondaryLabelEl = document.getElementById('win-secondary-label');
 const overlayNewPuzzleBtnEl = document.getElementById('overlay-new-puzzle');
 const overlayResetBtnEl = document.getElementById('overlay-reset');
 const overlayQuitBtnEl = document.getElementById('overlay-quit');
@@ -92,6 +93,12 @@ const timer = createTimer(onTimerTick);
 
 function difficultyLabel(d) {
     return { easy: 'Facile', medium: 'Moyen', hard: 'Difficile' }[d] ?? d;
+}
+
+function syncDifficultyControlState() {
+    if (!difficultyEl) return;
+    const isLocked = currentMode === 'designer' || isCustomValidatedSession;
+    difficultyEl.disabled = isLocked;
 }
 
 function getCurrentUserId() {
@@ -233,7 +240,14 @@ function render() {
         timer.stop();
         persistWinScoreIfNeeded();
         winTimeEl.textContent  = formatTime(gameState.elapsedSeconds);
-        winDiffEl.textContent  = difficultyLabel(gameState.difficulty);
+        if (isCustomValidatedSession) {
+            if (winSecondaryLabelEl) winSecondaryLabelEl.textContent = 'Grille';
+            const size = getGridSize();
+            winDiffEl.textContent = `${size}x${size}`;
+        } else {
+            if (winSecondaryLabelEl) winSecondaryLabelEl.textContent = 'Difficulté';
+            winDiffEl.textContent = difficultyLabel(gameState.difficulty);
+        }
         setTimeout(() => winOverlayEl.classList.remove('hidden'), 250);
     }
 }
@@ -358,6 +372,7 @@ function loadNewPuzzle(gridSizeOverride = CLASSIC_GRID_SIZE) {
 
 function openModeMenu() {
     currentMode = 'menu';
+    isCustomValidatedSession = false;
     document.body.classList.remove('designer-mode');
 
     if (modeMenuOverlayEl) modeMenuOverlayEl.classList.remove('hidden');
@@ -376,6 +391,7 @@ function openModeMenu() {
     if (instructionsEl) {
         instructionsEl.innerHTML = defaultInstructionsHtml;
     }
+    syncDifficultyControlState();
 }
 
 function startGameFromMenu() {
@@ -400,6 +416,7 @@ function startGameFromMenu() {
         instructionsEl.innerHTML = defaultInstructionsHtml;
     }
     hasSavedWinScore = false;
+    syncDifficultyControlState();
     loadNewPuzzle(CLASSIC_GRID_SIZE);
 }
 
@@ -569,6 +586,7 @@ function startDesignerMode() {
         instructionsEl.innerHTML = `Mode concepteur: grille vide <strong>${targetSize}x${targetSize}</strong>. Glisse les chiffres de <strong>1</strong> a <strong>10</strong> dans les cases.`;
     }
 
+    syncDifficultyControlState();
     render();
 }
 
@@ -604,6 +622,7 @@ function launchValidatedCustomLevel(solutionPath) {
         maxNumEl.textContent = String(gameState.solutionPath.length || Math.min(10, getGridSize() * getGridSize()));
     }
 
+    syncDifficultyControlState();
     render();
 }
 
@@ -873,7 +892,13 @@ if (overlayQuitBtnEl) {
     });
 }
 
-difficultyEl.addEventListener('change', loadNewPuzzle);
+difficultyEl.addEventListener('change', () => {
+    if (currentMode === 'designer' || isCustomValidatedSession) {
+        difficultyEl.value = gameState.difficulty || 'medium';
+        return;
+    }
+    loadNewPuzzle();
+});
 
 if (menuPlayBtnEl) {
     menuPlayBtnEl.addEventListener('click', startGameFromMenu);
@@ -927,4 +952,5 @@ designerGridBtns.forEach((btn) => {
 timerTextEl.textContent = '00:00';
 updateDesignerGridSelection(selectedDesignerGrid);
 updateDesignerValidateControls();
+syncDifficultyControlState();
 openModeMenu();
