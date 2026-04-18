@@ -1,0 +1,151 @@
+.rulesHero {
+    text-align: center;
+    margin-top: 80px;
+}
+
+.rulesHero h1 {
+    font-family: "Bebas Neue";
+    font-size: 90px;
+    background: linear-gradient(90deg, #EE642A, #008cff);
+    -webkit-background-clip: text;
+    color: transparent;
+}
+
+.rulesHero p {
+    font-family: "Nunito";
+    opacity: 0.6;
+}
+
+.rulesSection {
+    max-width: 1200px;
+    margin: 120px auto;
+    display: flex;
+    flex-direction: column;
+    gap: 140px;
+}
+
+/* GRID */
+.ruleRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+
+    opacity: 0;
+    transform: translateY(80px);
+    transition: all 0.8s ease;
+}
+
+.ruleRow.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.ruleRow.reverse {
+    direction: rtl;
+}
+
+.ruleRow.reverse .ruleContent {
+    direction: ltr;
+}
+
+/* IMAGE */
+.ruleImageWrapper {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+/* GRID overlay */
+.ruleImageWrapper::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px);
+    background-size: 40px 40px;
+    z-index: 2;
+}
+
+/* BORDER */
+.ruleImageWrapper::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+    border: 2px solid rgba(255,255,255,0.1);
+}
+
+/* IMAGE */
+.ruleImageWrapper img {
+    width: 100%;
+    display: block;
+    border-radius: 16px;
+
+    filter: brightness(0.85);
+    transition: transform 0.4s ease;
+}
+
+.ruleImageWrapper:hover img {
+    transform: scale(1.05);
+}
+
+/* TEXT */
+.ruleContent {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.ruleContent::before {
+    content: "";
+    position: absolute;
+    left: -20px;
+    top: 10px;
+    width: 4px;
+    height: 60px;
+    background: linear-gradient(#EE642A, transparent);
+}
+
+.ruleTag {
+    font-family: "Nunito";
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    color: #EE642A;
+}
+
+.ruleTitle {
+    font-family: "Bebas Neue";
+    font-size: 72px;
+}
+
+.ruleDescription {
+    font-family: "Nunito";
+    font-size: 18px;
+    color: rgba(255,255,255,0.8);
+}
+
+/* LIST */
+.ruleList {
+    list-style: none;
+    padding: 0;
+}
+
+.ruleList li {
+    position: relative;
+    padding-left: 20px;
+    margin-bottom: 10px;
+}
+
+.ruleList li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 8px;
+    width: 8px;
+    height: 8px;
+    background: #EE642A;
+    transform: rotate(45deg);
+}
