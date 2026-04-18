@@ -10,15 +10,28 @@
 export function createPuzzleWorker(onPuzzleReady, onError) {
     // Le Worker est chargé depuis le contexte de la page (Dom/) – pas du module.
     const worker = new Worker('worker.js');
+    const pendingValidations = new Map();
+    let requestId = 0;
 
     worker.onmessage = (e) => {
-        if (e.data.type !== 'PUZZLE_RESULT') return;
-        const result = e.data.payload;
-        if (!result || !result.solutionPath || result.solutionPath.length === 0) {
-            onError('Impossible de générer un puzzle. Veuillez réessayer.');
+        if (e.data.type === 'PUZZLE_RESULT') {
+            const result = e.data.payload;
+            if (!result || !result.solutionPath || result.solutionPath.length === 0) {
+                onError('Impossible de générer un puzzle. Veuillez réessayer.');
+                return;
+            }
+            onPuzzleReady(result);
             return;
         }
-        onPuzzleReady(result);
+
+        if (e.data.type === 'CUSTOM_LEVEL_VALIDATION_RESULT') {
+            const payload = e.data.payload || {};
+            const pending = pendingValidations.get(payload.requestId);
+            if (pending) {
+                pendingValidations.delete(payload.requestId);
+                pending(payload);
+            }
+        }
     };
 
     worker.onerror = (err) => {
@@ -29,10 +42,26 @@ export function createPuzzleWorker(onPuzzleReady, onError) {
     /**
      * Demande la génération d'un nouveau puzzle.
      * @param {'easy'|'medium'|'hard'} difficulty
+     * @param {number} gridSize
      */
-    function loadPuzzle(difficulty = 'medium') {
-        worker.postMessage({ type: 'GENERATE_PUZZLE', difficulty });
+    function loadPuzzle(difficulty = 'medium', gridSize = 6) {
+        worker.postMessage({ type: 'GENERATE_PUZZLE', difficulty, gridSize });
     }
 
-    return { loadPuzzle };
+    function validateCustomLevel(numbers = [], gridSize = 6) {
+        return new Promise((resolve) => {
+            requestId += 1;
+            const id = requestId;
+            pendingValidations.set(id, resolve);
+
+            worker.postMessage({
+                type: 'VALIDATE_CUSTOM_LEVEL',
+                requestId: id,
+                numbers,
+                gridSize,
+            });
+        });
+    }
+
+    return { loadPuzzle, validateCustomLevel };
 }

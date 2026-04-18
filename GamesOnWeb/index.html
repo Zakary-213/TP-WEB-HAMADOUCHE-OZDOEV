@@ -36,6 +36,11 @@
                         <span class="menu-tile-title">Mode 1vs1</span>
                         <span class="menu-tile-sub">Affronte un ami en match rapide</span>
                     </button>
+                    <button class="menu-tile menu-tile--score" data-preview="score" type="button">
+                        <span class="menu-tile-kicker">Stats</span>
+                        <span class="menu-tile-title">Score</span>
+                        <span class="menu-tile-sub">Consulte tes derniers resultats</span>
+                    </button>
                     <button class="menu-tile menu-tile--settings" type="button">
                         <span class="menu-tile-kicker">Options</span>
                         <span class="menu-tile-title">Parametres</span>
@@ -59,6 +64,15 @@
                             <div class="pre-match-tournament-line">
                                 <div class="pre-match-tournament-head">MODE</div>
                                 <div class="pre-match-tournament-tail"><span>1VS1</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="menu-preview-frame" data-preview="score">
+                        <div class="menu-preview-label">Apercu score</div>
+                        <div class="menu-preview-tournament-anim" aria-hidden="true">
+                            <div class="pre-match-tournament-line">
+                                <div class="pre-match-tournament-head">MEILLEURS</div>
+                                <div class="pre-match-tournament-tail"><span>SCORES</span></div>
                             </div>
                         </div>
                     </div>
@@ -123,6 +137,42 @@
             <div id="pre-match-tournament-head" class="pre-match-tournament-head">HUITIEME</div>
             <div id="pre-match-tournament-tail" class="pre-match-tournament-tail">
                 <span id="pre-match-tournament-tail-text">DE FINALE</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Historique des scores (données en dur temporaire) -->
+    <div id="score-history-overlay" class="settings-overlay score-history-overlay" aria-hidden="true">
+        <div class="settings-panel score-history-panel" role="dialog" aria-label="Derniers matchs">
+            <div class="settings-header score-history-header">
+                <span class="settings-icon">📊</span>
+                <h2 class="settings-title">Derniers matchs</h2>
+                <button id="score-history-close-btn" class="settings-close" title="Fermer">✕</button>
+            </div>
+
+            <div class="settings-body score-history-body">
+                <div class="score-history-filters" role="group" aria-label="Filtres des resultats">
+                    <button class="score-history-filter-btn is-active" data-result-filter="all" type="button">Tous les matchs</button>
+                    <button class="score-history-filter-btn" data-result-filter="win" type="button">Victoire</button>
+                    <button class="score-history-filter-btn" data-result-filter="draw" type="button">Match nul</button>
+                    <button class="score-history-filter-btn" data-result-filter="loss" type="button">Defaite</button>
+                </div>
+
+                <div class="score-history-table-wrap">
+                    <table class="score-history-table" aria-label="Tableau des derniers matchs">
+                        <thead>
+                            <tr>
+                                <th>Competition</th>
+                                <th>Stade</th>
+                                <th>Equipes</th>
+                                <th>Score</th>
+                                <th>Resultat</th>
+                                <th>Details des buts</th>
+                            </tr>
+                        </thead>
+                        <tbody id="score-history-table-body"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -467,6 +517,7 @@
     <script src="js/ui/scoreboard.js"></script>
     <script src="js/ui/matchFlow.js"></script>
     <script src="js/ui/goalReplay.js"></script>
+    <script src="js/ui/scoreHistory.js"></script>
     <script src="js/ui/mainMenu.js"></script>
 
     <!-- Main Script -->

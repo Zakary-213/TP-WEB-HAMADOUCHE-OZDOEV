@@ -8,8 +8,15 @@
  * 3. Vérifier que le puzzle est valide (chemin unique possible).
  */
 
-const GRID_SIZE = 6;
-const TOTAL_CELLS = GRID_SIZE * GRID_SIZE;
+let GRID_SIZE = 6;
+let TOTAL_CELLS = GRID_SIZE * GRID_SIZE;
+
+function setGridSize(size) {
+    const numeric = Number(size);
+    if (!Number.isFinite(numeric)) return;
+    GRID_SIZE = Math.max(4, Math.min(10, Math.floor(numeric)));
+    TOTAL_CELLS = GRID_SIZE * GRID_SIZE;
+}
 
 /* ---------- Voisins adjacents ---------- */
 function getNeighbors(idx) {
@@ -268,11 +275,159 @@ function generatePuzzle(difficulty = 'medium') {
     return { solutionPath, numbers, obstacles };
 }
 
+function sanitizeCustomNumbers(rawNumbers) {
+    const source = Array.isArray(rawNumbers) ? rawNumbers : [];
+    const byValue = new Map();
+    const byIndex = new Map();
+
+    for (const item of source) {
+        const value = Number(item && item.value);
+        const index = Number(item && item.index);
+
+        if (!Number.isFinite(value) || !Number.isFinite(index)) continue;
+        if (value < 1 || value > 10) continue;
+        if (index < 0 || index >= TOTAL_CELLS) continue;
+        if (byValue.has(value) || byIndex.has(index)) continue;
+
+        const entry = { value: Math.floor(value), index: Math.floor(index) };
+        byValue.set(entry.value, entry);
+        byIndex.set(entry.index, entry);
+    }
+
+    const numbers = Array.from(byValue.values()).sort((a, b) => a.value - b.value);
+
+    if (!numbers.length) {
+        return { valid: false, reason: 'Place au moins 2 chiffres.' };
+    }
+
+    if (numbers.length < 2) {
+        return { valid: false, reason: 'Place au moins 2 chiffres.' };
+    }
+
+    if (numbers[0].value !== 1) {
+        return { valid: false, reason: 'Le chiffre 1 est obligatoire.' };
+    }
+
+    for (let i = 0; i < numbers.length; i++) {
+        if (numbers[i].value !== i + 1) {
+            return { valid: false, reason: 'Les chiffres doivent se suivre: 1, 2, 3...' };
+        }
+    }
+
+    return { valid: true, numbers };
+}
+
+function findConstrainedHamiltonianPath(numbers, timeLimitMs = 1200) {
+    const constraintByIndex = new Map(numbers.map((n) => [n.index, n.value]));
+    const expectedValues = numbers.map((n) => n.value);
+    const startIndex = numbers[0].index;
+    const deadline = Date.now() + timeLimitMs;
+
+    const visited = new Uint8Array(TOTAL_CELLS);
+    const path = [];
+
+    function sortCandidates(candidates) {
+        return candidates.sort((a, b) => {
+            const degreeA = getNeighbors(a).filter((n) => !visited[n]).length;
+            const degreeB = getNeighbors(b).filter((n) => !visited[n]).length;
+            if (degreeA !== degreeB) return degreeA - degreeB;
+            return Math.random() - 0.5;
+        });
+    }
+
+    function backtrack(current, nextConstraintPos) {
+        if (Date.now() > deadline) return false;
+
+        const currentConstraintValue = constraintByIndex.get(current);
+        let nextPos = nextConstraintPos;
+
+        if (typeof currentConstraintValue === 'number') {
+            const expected = expectedValues[nextPos];
+            if (currentConstraintValue !== expected) return false;
+            nextPos += 1;
+        }
+
+        if (path.length === TOTAL_CELLS) {
+            return nextPos === expectedValues.length;
+        }
+
+        const candidates = sortCandidates(
+            getNeighbors(current).filter((n) => !visited[n])
+        );
+
+        for (const next of candidates) {
+            const nextConstraintValue = constraintByIndex.get(next);
+            if (typeof nextConstraintValue === 'number') {
+                const expected = expectedValues[nextPos];
+                if (nextConstraintValue !== expected) {
+                    continue;
+                }
+            }
+
+            visited[next] = 1;
+            path.push(next);
+
+            if (backtrack(next, nextPos)) return true;
+
+            path.pop();
+            visited[next] = 0;
+        }
+
+        return false;
+    }
+
+    visited[startIndex] = 1;
+    path.push(startIndex);
+
+    const found = backtrack(startIndex, 0);
+    if (!found) return null;
+
+    return [...path];
+}
+
+function validateCustomLevel(rawNumbers) {
+    const sanitized = sanitizeCustomNumbers(rawNumbers);
+    if (!sanitized.valid) {
+        return {
+            feasible: false,
+            reason: sanitized.reason,
+        };
+    }
+
+    const solutionPath = findConstrainedHamiltonianPath(sanitized.numbers, 1400);
+    if (!solutionPath) {
+        return {
+            feasible: false,
+            reason: 'Reessayer: le niveau est pas faisable.',
+        };
+    }
+
+    return {
+        feasible: true,
+        solutionPath,
+        numbers: sanitized.numbers,
+    };
+}
+
 /* ---------- Interface Web Worker ---------- */
 self.onmessage = function (e) {
     if (e.data.type === 'GENERATE_PUZZLE') {
         const difficulty = e.data.difficulty ?? 'medium';
+        setGridSize(e.data.gridSize ?? 6);
         const result = generatePuzzle(difficulty);
         self.postMessage({ type: 'PUZZLE_RESULT', payload: result });
+        return;
+    }
+
+    if (e.data.type === 'VALIDATE_CUSTOM_LEVEL') {
+        setGridSize(e.data.gridSize ?? 6);
+        const validation = validateCustomLevel(e.data.numbers);
+        self.postMessage({
+            type: 'CUSTOM_LEVEL_VALIDATION_RESULT',
+            payload: {
+                requestId: e.data.requestId,
+                ...validation,
+            }
+        });
     }
 };

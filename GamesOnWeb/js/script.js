@@ -552,6 +552,7 @@ const createScene = function (gameMode) {
 
     let previousPlayerPosition = activePlayer.position.clone();
     let playerMoveVelocity = new BABYLON.Vector3(0, 0, 0);
+    let player2ChargeState = null;
 
     let lastKickTime = 0;
     const kickCooldown = 300;
@@ -1190,6 +1191,7 @@ const createScene = function (gameMode) {
         tryStealBall(controlledPlayer, ball, myTeam);
 
         // COLLISION JOUEUR HUMAIN (J2 en mode 1v1) → BALLE
+        player2ChargeState = null;
         if (player2Controller) {
             const p2State = player2Controller.update({
                 dt,
@@ -1201,6 +1203,10 @@ const createScene = function (gameMode) {
                     ? (inputP2) => cameraRuntime.computeMoveAxes(inputP2)
                     : null
             });
+
+            if (typeof player2Controller.getChargeState === "function") {
+                player2ChargeState = player2Controller.getChargeState();
+            }
 
             if (p2State && p2State.controlledPlayer) {
                 checkBallCollision(
@@ -1281,6 +1287,12 @@ const createScene = function (gameMode) {
 
         // UPDATE JAUGE
         const humanCharging = isCharging;
+        const player2Charging = !!(
+            isVersusMode &&
+            player2ChargeState &&
+            player2ChargeState.isCharging &&
+            player2ChargeState.activePlayer
+        );
         const aiRestartCharging = isRestartWaitingKick() && restartState.aiCharging && restartState.taker;
         const aiCharging = opponentTeam && opponentTeam.aiShotCharging;
 
@@ -1291,6 +1303,16 @@ const createScene = function (gameMode) {
                 kickGauge,
                 controlledPlayer,
                 lastDirection,
+                time
+            );
+        } else if (player2Charging) {
+            const time = performance.now() / 1000;
+            const p2Direction = player2ChargeState.lastDirection || player2ChargeState.playerFacing || new BABYLON.Vector3(-1, 0, 0);
+
+            updateKickGauge(
+                kickGauge,
+                player2ChargeState.activePlayer,
+                p2Direction,
                 time
             );
         } else if (aiRestartCharging) {
