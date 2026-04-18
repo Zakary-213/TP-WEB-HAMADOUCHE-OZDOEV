@@ -18,7 +18,38 @@
             <p class="mode-menu-subtitle">Lance une partie classique ou ouvre le concepteur de niveau.</p>
             <div class="mode-menu-actions">
                 <button id="menu-play-btn" class="btn btn-primary mode-menu-btn" type="button">Jouer</button>
+                <button id="menu-scores-btn" class="btn btn-accent mode-menu-btn" type="button">Scores</button>
                 <button id="menu-designer-btn" class="btn btn-secondary mode-menu-btn" type="button">Concepteur niveau</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="scores-overlay" class="designer-overlay hidden" aria-hidden="true">
+        <div class="designer-card scores-card">
+            <h2>Meilleurs Scores</h2>
+            <p>Apercu des sauvegardes de parties (donnees de demonstration).</p>
+            <div class="scores-toolbar">
+                <div class="scores-filters" role="group" aria-label="Filtrer les scores">
+                    <button class="scores-filter-btn is-active" data-filter="all" type="button">Tous les modes</button>
+                    <button class="scores-filter-btn" data-filter="solo" type="button">Solo</button>
+                    <button class="scores-filter-btn" data-filter="designer" type="button">Concepteur</button>
+                </div>
+                <button id="scores-sort-btn" class="scores-sort-btn" type="button" aria-label="Trier par chrono">
+                    Chrono ↑
+                </button>
+            </div>
+            <div class="scores-list" aria-live="polite">
+                <div class="score-line score-line-head" role="row">
+                    <span>Mode</span>
+                    <span>Grille</span>
+                    <span>Taille</span>
+                    <span>Chrono</span>
+                    <span>Difficulte</span>
+                </div>
+                <div id="scores-list" class="scores-rows"></div>
+            </div>
+            <div class="designer-actions">
+                <button id="scores-back-btn" class="btn btn-secondary" type="button">Retour au menu</button>
             </div>
         </div>
     </div>

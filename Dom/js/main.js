@@ -26,7 +26,13 @@ const hintBtnEl      = document.getElementById('hint-btn');
 const hintTextEl     = document.getElementById('hint-text');
 const modeMenuOverlayEl = document.getElementById('mode-menu-overlay');
 const menuPlayBtnEl = document.getElementById('menu-play-btn');
+const menuScoresBtnEl = document.getElementById('menu-scores-btn');
 const menuDesignerBtnEl = document.getElementById('menu-designer-btn');
+const scoresOverlayEl = document.getElementById('scores-overlay');
+const scoresListEl = document.getElementById('scores-list');
+const scoresFilterBtns = Array.from(document.querySelectorAll('.scores-filter-btn[data-filter]'));
+const scoresSortBtnEl = document.getElementById('scores-sort-btn');
+const scoresBackBtnEl = document.getElementById('scores-back-btn');
 const designerOverlayEl = document.getElementById('designer-overlay');
 const designerBackBtnEl = document.getElementById('designer-back-btn');
 const designerPlayBtnEl = document.getElementById('designer-play-btn');
@@ -48,6 +54,19 @@ let isDesignerValidating = false;
 let isCustomValidatedSession = false;
 let designerPickedValue = null;
 let designerPickedFromIndex = null;
+const CLASSIC_GRID_SIZE = 6;
+let activeScoresFilter = 'all';
+let scoresSortDirection = 'asc';
+
+const DEMO_SCORES = [
+    { mode: 'solo', grid: 'Classique', size: '6x6', time: 118, difficulty: 'easy' },
+    { mode: 'solo', grid: 'Classique', size: '8x8', time: 246, difficulty: 'medium' },
+    { mode: 'designer', grid: 'Personnalisee', size: '10x10', time: 511, difficulty: null },
+    { mode: 'solo', grid: 'Classique', size: '10x10', time: 398, difficulty: 'hard' },
+    { mode: 'designer', grid: 'Personnalisee', size: '6x6', time: 169, difficulty: null },
+    { mode: 'solo', grid: 'Classique', size: '6x6', time: 132, difficulty: 'medium' },
+    { mode: 'designer', grid: 'Personnalisee', size: '8x8', time: 303, difficulty: null },
+];
 
 /* ---------- Initialisation de la grille ---------- */
 let cellsElements = initGrid(gridEl);
@@ -102,6 +121,65 @@ function difficultyLabel(d) {
     return { easy: 'Facile', medium: 'Moyen', hard: 'Difficile' }[d] ?? d;
 }
 
+function scoresModeLabel(mode) {
+    return mode === 'designer' ? 'Concepteur' : 'Solo';
+}
+
+function renderScoresList() {
+    if (!scoresListEl) return;
+
+    const entries = DEMO_SCORES.filter((entry) => {
+        if (activeScoresFilter === 'all') return true;
+        return entry.mode === activeScoresFilter;
+    }).sort((a, b) => {
+        return scoresSortDirection === 'asc' ? a.time - b.time : b.time - a.time;
+    });
+
+    if (!entries.length) {
+        scoresListEl.innerHTML = '<div class="scores-empty">Aucune partie pour ce filtre.</div>';
+        return;
+    }
+
+    const html = entries
+        .map((entry) => {
+            const difficulty = entry.mode === 'solo'
+                ? difficultyLabel(entry.difficulty)
+                : '<span class="score-difficulty-muted">-</span>';
+            return `
+                <div class="score-line ${entry.mode}">
+                    <span>${scoresModeLabel(entry.mode)}</span>
+                    <span>${entry.grid}</span>
+                    <span>${entry.size}</span>
+                    <span class="score-time">${formatTime(entry.time)}</span>
+                    <span>${difficulty}</span>
+                </div>
+            `;
+        })
+        .join('');
+
+    scoresListEl.innerHTML = html;
+}
+
+function updateScoresSortButton() {
+    if (!scoresSortBtnEl) return;
+    scoresSortBtnEl.textContent = scoresSortDirection === 'asc' ? 'Chrono ↑' : 'Chrono ↓';
+}
+
+function toggleScoresSortDirection() {
+    scoresSortDirection = scoresSortDirection === 'asc' ? 'desc' : 'asc';
+    updateScoresSortButton();
+    renderScoresList();
+}
+
+function setScoresFilter(nextFilter) {
+    activeScoresFilter = nextFilter;
+    scoresFilterBtns.forEach((btn) => {
+        const isActive = btn.dataset.filter === nextFilter;
+        btn.classList.toggle('is-active', isActive);
+    });
+    renderScoresList();
+}
+
 /* ---------- Reset / Nouveau puzzle ---------- */
 function resetGame() {
     gameState.path = [];
@@ -141,11 +219,11 @@ const puzzleWorker = createPuzzleWorker(
     }
 );
 
-function loadNewPuzzle() {
+function loadNewPuzzle(gridSizeOverride = CLASSIC_GRID_SIZE) {
     const difficulty = difficultyEl.value;
     gameState.difficulty = difficulty;
 
-    const targetSize = parseGridSizeLabel(selectedDesignerGrid);
+    const targetSize = Number(gridSizeOverride) || CLASSIC_GRID_SIZE;
     if (targetSize !== getGridSize()) {
         setGridSize(targetSize);
         cellsElements = initGrid(gridEl);
@@ -161,6 +239,10 @@ function openModeMenu() {
     document.body.classList.remove('designer-mode');
 
     if (modeMenuOverlayEl) modeMenuOverlayEl.classList.remove('hidden');
+    if (scoresOverlayEl) {
+        scoresOverlayEl.classList.add('hidden');
+        scoresOverlayEl.setAttribute('aria-hidden', 'true');
+    }
     if (designerOverlayEl) {
         designerOverlayEl.classList.add('hidden');
         designerOverlayEl.setAttribute('aria-hidden', 'true');
@@ -180,6 +262,10 @@ function startGameFromMenu() {
     isCustomValidatedSession = false;
 
     if (modeMenuOverlayEl) modeMenuOverlayEl.classList.add('hidden');
+    if (scoresOverlayEl) {
+        scoresOverlayEl.classList.add('hidden');
+        scoresOverlayEl.setAttribute('aria-hidden', 'true');
+    }
     if (designerOverlayEl) {
         designerOverlayEl.classList.add('hidden');
         designerOverlayEl.setAttribute('aria-hidden', 'true');
@@ -191,13 +277,33 @@ function startGameFromMenu() {
     if (instructionsEl) {
         instructionsEl.innerHTML = defaultInstructionsHtml;
     }
-    loadNewPuzzle();
+    loadNewPuzzle(CLASSIC_GRID_SIZE);
 }
 
 function openDesignerPlaceholder() {
     if (designerOverlayEl) {
         designerOverlayEl.classList.remove('hidden');
         designerOverlayEl.setAttribute('aria-hidden', 'false');
+    }
+    if (scoresOverlayEl) {
+        scoresOverlayEl.classList.add('hidden');
+        scoresOverlayEl.setAttribute('aria-hidden', 'true');
+    }
+    if (modeMenuOverlayEl) modeMenuOverlayEl.classList.add('hidden');
+}
+
+function openScoresOverlay() {
+    currentMode = 'menu';
+    setScoresFilter('all');
+    updateScoresSortButton();
+
+    if (scoresOverlayEl) {
+        scoresOverlayEl.classList.remove('hidden');
+        scoresOverlayEl.setAttribute('aria-hidden', 'false');
+    }
+    if (designerOverlayEl) {
+        designerOverlayEl.classList.add('hidden');
+        designerOverlayEl.setAttribute('aria-hidden', 'true');
     }
     if (modeMenuOverlayEl) modeMenuOverlayEl.classList.add('hidden');
 }
@@ -408,6 +514,8 @@ function onCellInteraction(index) {
 
         if (existing) {
             if (designerPickedValue === existing.value && designerPickedFromIndex === index) {
+                removeDesignerNumber(existing.value);
+                setDesignerStatus(`Chiffre ${existing.value} retire de la grille.`);
                 designerPickedValue = null;
                 designerPickedFromIndex = null;
                 updateDesignerValidateControls();
@@ -635,8 +743,26 @@ if (menuPlayBtnEl) {
     menuPlayBtnEl.addEventListener('click', startGameFromMenu);
 }
 
+if (menuScoresBtnEl) {
+    menuScoresBtnEl.addEventListener('click', openScoresOverlay);
+}
+
 if (menuDesignerBtnEl) {
     menuDesignerBtnEl.addEventListener('click', openDesignerPlaceholder);
+}
+
+if (scoresBackBtnEl) {
+    scoresBackBtnEl.addEventListener('click', openModeMenu);
+}
+
+scoresFilterBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+        setScoresFilter(btn.dataset.filter || 'all');
+    });
+});
+
+if (scoresSortBtnEl) {
+    scoresSortBtnEl.addEventListener('click', toggleScoresSortDirection);
 }
 
 if (designerBackBtnEl) {

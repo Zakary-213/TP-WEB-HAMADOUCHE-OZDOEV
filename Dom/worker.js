@@ -98,15 +98,97 @@ function manhattanDistance(idxA, idxB) {
     return Math.abs(rowA - rowB) + Math.abs(colA - colB);
 }
 
-function isFarEnough(candidatePos, selectedPositions, path, minManhattan) {
+function obstacleBlocksCell(obstacle, index) {
+    return obstacle && obstacle.type === 'blocked-cell' && obstacle.index === index;
+}
+
+function obstacleBlocksEdge(obstacle, fromIdx, toIdx) {
+    if (!obstacle || obstacle.type !== 'blocked-side') return false;
+    if (obstacle.index !== fromIdx && obstacle.index !== toIdx) return false;
+
+    const fromRow = Math.floor(fromIdx / GRID_SIZE);
+    const fromCol = fromIdx % GRID_SIZE;
+    const toRow = Math.floor(toIdx / GRID_SIZE);
+    const toCol = toIdx % GRID_SIZE;
+
+    const sideFrom =
+        toRow < fromRow ? 'top' :
+        toRow > fromRow ? 'bottom' :
+        toCol < fromCol ? 'left' :
+        toCol > fromCol ? 'right' : null;
+
+    if (!sideFrom) return false;
+
+    const opposite = {
+        top: 'bottom',
+        bottom: 'top',
+        left: 'right',
+        right: 'left',
+    };
+
+    if (obstacle.index === fromIdx) {
+        return obstacle.side === sideFrom;
+    }
+
+    return obstacle.side === opposite[sideFrom];
+}
+
+function isBlockedCellByObstacles(obstacles, index) {
+    return obstacles.some((obstacle) => obstacleBlocksCell(obstacle, index));
+}
+
+function isBlockedEdgeByObstacles(obstacles, fromIdx, toIdx) {
+    return obstacles.some((obstacle) => obstacleBlocksEdge(obstacle, fromIdx, toIdx));
+}
+
+function shortestDistanceWithObstacles(fromIdx, toIdx, obstacles = []) {
+    if (fromIdx === toIdx) return 0;
+
+    if (isBlockedCellByObstacles(obstacles, fromIdx) || isBlockedCellByObstacles(obstacles, toIdx)) {
+        return Infinity;
+    }
+
+    const visited = new Uint8Array(TOTAL_CELLS);
+    const distances = new Int16Array(TOTAL_CELLS);
+    const queue = [fromIdx];
+
+    visited[fromIdx] = 1;
+
+    while (queue.length > 0) {
+        const current = queue.shift();
+        const baseDistance = distances[current];
+
+        for (const neighbor of getNeighbors(current)) {
+            if (visited[neighbor]) continue;
+            if (isBlockedCellByObstacles(obstacles, neighbor)) continue;
+            if (isBlockedEdgeByObstacles(obstacles, current, neighbor)) continue;
+
+            visited[neighbor] = 1;
+            distances[neighbor] = baseDistance + 1;
+
+            if (neighbor === toIdx) {
+                return distances[neighbor];
+            }
+
+            queue.push(neighbor);
+        }
+    }
+
+    return Infinity;
+}
+
+function isFarEnough(candidatePos, selectedPositions, path, minDistance, obstacles = []) {
     const candidateCell = path[candidatePos];
     return selectedPositions.every((selectedPos) => {
         const selectedCell = path[selectedPos];
-        return manhattanDistance(candidateCell, selectedCell) >= minManhattan;
+        const distance = obstacles.length
+            ? shortestDistanceWithObstacles(candidateCell, selectedCell, obstacles)
+            : manhattanDistance(candidateCell, selectedCell);
+        return distance >= minDistance;
     });
 }
 
-function selectHints(path, difficulty) {
+function selectHints(path, difficulty, obstacles = []) {
     const config = HINT_CONFIG[difficulty] ?? HINT_CONFIG.medium;
     const limit = Math.max(2, Math.min(config.count, path.length));
     const selectedPositions = [0];
@@ -131,7 +213,7 @@ function selectHints(path, difficulty) {
 
         let picked = null;
         for (const pos of candidates) {
-            if (isFarEnough(pos, selectedPositions, path, config.minManhattan)) {
+            if (isFarEnough(pos, selectedPositions, path, config.minManhattan, obstacles)) {
                 picked = pos;
                 break;
             }
@@ -270,7 +352,7 @@ function generatePuzzle(difficulty = 'medium') {
         obstacles = hardSetup.obstacles;
     }
 
-    const numbers = selectHints(solutionPath, difficulty);
+    const numbers = selectHints(solutionPath, difficulty, obstacles);
 
     return { solutionPath, numbers, obstacles };
 }
