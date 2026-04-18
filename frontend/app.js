@@ -1,5 +1,23 @@
 document.addEventListener('DOMContentLoaded', () => {
 
+    if ('scrollRestoration' in history) {
+        history.scrollRestoration = 'manual';
+    }
+
+    if (sessionStorage.getItem('tpweb_force_scroll_top') === 'true') {
+        sessionStorage.removeItem('tpweb_force_scroll_top');
+
+        window.scrollTo(0, 0);
+
+        requestAnimationFrame(() => {
+            window.scrollTo(0, 0);
+        });
+
+        setTimeout(() => {
+            window.scrollTo(0, 0);
+        }, 0);
+    }
+
     const logoutBtn = document.getElementById('logout-btn');
     /*
     const canvasScoreEl = document.getElementById('canvas-score');
@@ -13,6 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.removeItem('tpweb_username');
         setGamesLocked(true);
         syncAuthUi();
+        sessionStorage.setItem('tpweb_force_scroll_top', 'true');
         window.location.reload();
     });
 
@@ -398,6 +417,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     syncAuthUi();
 
                     setTimeout(() => {
+                        sessionStorage.setItem('tpweb_force_scroll_top', 'true');
                         window.location.reload();
                     }, 150);
                 }, 3000);
@@ -442,6 +462,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     syncAuthUi();
 
                     setTimeout(() => {
+                        sessionStorage.setItem('tpweb_force_scroll_top', 'true');
                         window.location.reload();
                     }, 150);
                 }, 3000);
