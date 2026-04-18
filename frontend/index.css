@@ -803,6 +803,19 @@ body {
     isolation: isolate;
 }
 
+/* Border wrapper to ensure the orange outline remains visible
+   even when clip-path or transitions hide the button border. */
+.screenActions::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border: 1px solid #f15a24;
+    border-radius: 2px;
+    z-index: 6; /* above content (z-index:5) but below heroBtnGhost (z-index:7) */
+    transition: opacity 0.2s ease;
+}
+
 .heroBtn {
     position: relative;
     height: 54px;
@@ -868,12 +881,13 @@ body {
 
 /* bouton droit : même ligne oblique, côté gauche */
 .heroBtnGhost {
-    z-index: 2;
+    z-index: 7;
     margin-left: calc(var(--join-cut) * -1);
     padding-left: calc(30px + var(--join-cut));
     color: #F4F4F4;
     background: rgba(0, 0, 0, 0.92);
     border: 1px solid #f15a24;
+    box-shadow: 0 0 0 1px #f15a24, 0 14px 30px rgba(241, 90, 36, 0.14);
     clip-path: polygon(
         var(--join-cut) 0,
         100% 0,
@@ -1478,6 +1492,25 @@ body {
     opacity: 1;
     transform: translateY(0);
     pointer-events: auto;
+}
+
+/* Ensure hover interaction is not blocked by overlays or stacking context */
+.awardsMoreBtn,
+.awardsDetailsBtn {
+    z-index: 20; /* sit above decorative pseudo-elements */
+    pointer-events: auto; /* make sure they receive hover/click */
+}
+
+.awardsMoreBtn:hover {
+    transform: translateY(-2px) !important;
+    filter: brightness(1.06) !important;
+    box-shadow: 0 14px 28px rgba(238, 100, 42, 0.32) !important;
+}
+
+.awardsDetailsBtn:hover {
+    transform: translateY(-2px) !important;
+    background: rgba(238, 100, 42, 0.08) !important;
+    box-shadow: 0 12px 24px rgba(238, 100, 42, 0.16) !important;
 }
 
 
