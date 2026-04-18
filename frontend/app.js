@@ -18,7 +18,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     const AUTH_STATE_KEY = 'tpweb_is_authenticated';
-    const gameLinks = document.querySelectorAll('.gamePlayButton');
+    const gameLinks = document.querySelectorAll('.gamePlayButton, #playNowBtn, #awardsMoreBtn');
+    const openLoginModalBtn = document.getElementById('openLoginModal');
+    const registerNowBtn = document.getElementById('openRegisterNowModal');
+    const featuredGamesSection = document.querySelector('.featuredGamesSection');
+    const playNowBtn = document.getElementById('playNowBtn');
 
     const setGamesLocked = (locked) => {
         gameLinks.forEach((link) => {
@@ -53,6 +57,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const signupForm = document.getElementById('signup-form');
     const messageDiv = document.getElementById('message');
 
+    const openLoginPopup = () => {
+        if (openLoginModalBtn) {
+            openLoginModalBtn.click();
+        }
+
+        if (loginToggle && signupToggle && loginForm && signupForm) {
+            loginToggle.classList.add('active');
+            signupToggle.classList.remove('active');
+            loginForm.classList.add('active');
+            signupForm.classList.remove('active');
+        }
+    };
+
     const syncAuthUi = () => {
         const loggedIn = isAuthenticated();
         const username = localStorage.getItem('tpweb_username') || 'Joueur';
@@ -63,7 +80,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (navAuthButtons) navAuthButtons.style.display = loggedIn ? 'none' : 'flex';
         if (navUserPanel)   navUserPanel.style.display   = loggedIn ? 'flex' : 'none';
-        if (navUserText)    navUserText.textContent       = `Bonjour, ${username}`;
+        if (navUserText)    navUserText.textContent = `Bonjour, ${username}`;
+
+        if (registerNowBtn) {
+            registerNowBtn.textContent = loggedIn ? 'VOIR LES JEUX' : "S'INSCRIRE MAINTENANT";
+        }
     };
 
     setGamesLocked(!isAuthenticated());
@@ -73,10 +94,50 @@ document.addEventListener('DOMContentLoaded', () => {
         link.addEventListener('click', (event) => {
             if (!isAuthenticated()) {
                 event.preventDefault();
-                showMessage('Connecte-toi d\'abord pour acceder au jeu.', 'error');
+                event.stopImmediatePropagation();
+                openLoginPopup();
+                showMessage('Connecte-toi d\'abord pour accéder au jeu.', 'error');
             }
-        });
+        }, true);
     });
+
+    if (playNowBtn) {
+        playNowBtn.addEventListener('click', (event) => {
+            const targetHref = playNowBtn.getAttribute('href');
+
+            if (!isAuthenticated()) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                openLoginPopup();
+                showMessage('Connecte-toi d\'abord pour accéder au jeu.', 'error');
+                return;
+            }
+
+            if (targetHref && targetHref !== '#') {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                window.location.href = targetHref;
+            }
+        }, true);
+    }
+
+    if (registerNowBtn) {
+        registerNowBtn.addEventListener('click', (event) => {
+            if (!isAuthenticated()) {
+                return;
+            }
+
+            event.preventDefault();
+            event.stopImmediatePropagation();
+
+            if (featuredGamesSection) {
+                featuredGamesSection.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        }, true);
+    }
 
     // Toggle between Login and Signup
     loginToggle.addEventListener('click', () => {
@@ -382,4 +443,3 @@ document.addEventListener('DOMContentLoaded', () => {
         messageDiv.textContent = '';
     }
 });
-
