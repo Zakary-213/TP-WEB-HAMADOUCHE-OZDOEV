@@ -90,11 +90,22 @@
 }
 
 .domHeroActions {
+    --join-cut: 22px;
     display: inline-flex;
     align-items: center;
-    gap: 14px;
     margin-top: 10px;
     isolation: isolate;
+}
+
+.domHeroActions .heroBtnPrimary {
+    position: relative;
+    z-index: 2;
+}
+
+.domHeroActions .heroBtn + .heroBtn {
+    margin-left: calc(var(--join-cut) * -1);
+    position: relative;
+    z-index: 1;
 }
 
 .domHeroStats {
