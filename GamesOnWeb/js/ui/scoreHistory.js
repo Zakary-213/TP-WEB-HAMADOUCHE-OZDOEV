@@ -11,6 +11,7 @@
     if (!overlay || !tbody) return;
     var activeFilter = "all";
     var historyRows = [];
+    var lastBackPressed = false;
 
     function getUserId() {
         if (window.CANVAS_API && typeof window.CANVAS_API.getUserId === "function") {
@@ -259,6 +260,21 @@
         return overlay.getAttribute("aria-hidden") === "false";
     }
 
+    function pollScoreHistoryGamepad() {
+        var pads = (navigator.getGamepads && navigator.getGamepads()) || [];
+        var pad = pads.find(function (p) { return p && p.connected; }) || null;
+        var buttons = pad && pad.buttons ? pad.buttons : [];
+        // Bouton B (Xbox) / Rond (PlayStation) via Gamepad API standard.
+        var backPressed = !!(buttons[1] && buttons[1].pressed);
+
+        if (isOpen() && backPressed && !lastBackPressed) {
+            close();
+        }
+
+        lastBackPressed = backPressed;
+        window.requestAnimationFrame(pollScoreHistoryGamepad);
+    }
+
     if (closeBtn) {
         closeBtn.addEventListener("click", close);
     }
@@ -287,4 +303,5 @@
     };
 
     setFilter("all");
+    pollScoreHistoryGamepad();
 })();

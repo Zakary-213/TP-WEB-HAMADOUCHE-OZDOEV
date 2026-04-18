@@ -1076,6 +1076,12 @@
         var pads = (navigator.getGamepads && navigator.getGamepads()) || [];
         var pad = pads.find(function (p) { return p && p.connected; }) || null;
 
+        if (window.scoreHistory && typeof window.scoreHistory.isOpen === "function" && window.scoreHistory.isOpen()) {
+            lastSubmitPressed = false;
+            window.requestAnimationFrame(pollMenuGamepad);
+            return;
+        }
+
         if (handleSkinGamepad(pad)) {
             window.requestAnimationFrame(pollMenuGamepad);
             return;
