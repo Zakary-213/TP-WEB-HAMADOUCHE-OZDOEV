@@ -3,7 +3,7 @@
  * Orchestre l'UI, le timer, la logique et le worker.
  */
 
-import { GRID_SIZE } from './config.js';
+import { getGridSize, setGridSize } from './config.js';
 import { gameState, uiState } from './state.js';
 import { createTimer } from './timer.js';
 import { isAdjacent, handleCellInteraction, hasWonAgainstTarget } from './logic.js';
@@ -18,13 +18,48 @@ const loadingEl      = document.getElementById('loading');
 const winOverlayEl   = document.getElementById('win-overlay');
 const winTimeEl      = document.getElementById('win-time');
 const winDiffEl      = document.getElementById('win-difficulty');
+const overlayNewPuzzleBtnEl = document.getElementById('overlay-new-puzzle');
+const overlayResetBtnEl = document.getElementById('overlay-reset');
 const difficultyEl   = document.getElementById('difficulty');
 const maxNumEl       = document.getElementById('max-num');
 const hintBtnEl      = document.getElementById('hint-btn');
 const hintTextEl     = document.getElementById('hint-text');
+const modeMenuOverlayEl = document.getElementById('mode-menu-overlay');
+const menuPlayBtnEl = document.getElementById('menu-play-btn');
+const menuDesignerBtnEl = document.getElementById('menu-designer-btn');
+const designerOverlayEl = document.getElementById('designer-overlay');
+const designerBackBtnEl = document.getElementById('designer-back-btn');
+const designerPlayBtnEl = document.getElementById('designer-play-btn');
+const designerSubtitleEl = document.getElementById('designer-subtitle');
+const designerGridBtns = Array.from(document.querySelectorAll('.designer-grid-btn[data-grid-size]'));
+const instructionsEl = document.querySelector('.instructions');
+const designerWorkspaceEl = document.getElementById('designer-workspace');
+const designerExitBtnEl = document.getElementById('designer-exit-btn');
+const designerNumberPaletteEl = document.getElementById('designer-number-palette');
+const designerValidateBtnEl = document.getElementById('designer-validate-btn');
+const designerValidateStatusEl = document.getElementById('designer-validate-status');
+const defaultInstructionsHtml = instructionsEl ? instructionsEl.innerHTML : '';
+
+let selectedDesignerGrid = localStorage.getItem('neonzip_designer_grid') || '4x4';
+let currentMode = 'menu';
+let draggedDesignerValue = null;
+let draggedDesignerSourceIndex = null;
+let isDesignerValidating = false;
+let isCustomValidatedSession = false;
+let designerPickedValue = null;
+let designerPickedFromIndex = null;
 
 /* ---------- Initialisation de la grille ---------- */
-const cellsElements = initGrid(gridEl);
+let cellsElements = initGrid(gridEl);
+
+function parseGridSizeLabel(label) {
+    const raw = String(label || '').toLowerCase();
+    const match = raw.match(/^(\d+)x\1$/);
+    if (!match) return 6;
+    const size = Number(match[1]);
+    if (!Number.isFinite(size)) return 6;
+    return Math.max(4, Math.min(10, Math.floor(size)));
+}
 
 /* ---------- Timer ---------- */
 function formatTime(seconds) {
@@ -43,7 +78,18 @@ const timer = createTimer(onTimerTick);
 function render() {
     renderGrid(cellsElements, gameState, uiState, isAdjacent);
 
-    if (hasWonAgainstTarget(gameState.path, gameState.solutionPath.length)) {
+    if (currentMode === 'designer') {
+        syncDesignerPaletteState();
+    }
+
+    if (currentMode === 'play' && gameState.solutionPath.length > 0 && hasWonAgainstTarget(gameState.path, gameState.solutionPath.length)) {
+        if (overlayNewPuzzleBtnEl) {
+            overlayNewPuzzleBtnEl.textContent = isCustomValidatedSession ? 'Retour au menu' : 'Nouveau Puzzle';
+        }
+        if (overlayResetBtnEl) {
+            overlayResetBtnEl.textContent = 'Rejouer';
+        }
+
         timer.stop();
         // Afficher l'overlay de victoire avec les stats
         winTimeEl.textContent  = formatTime(gameState.elapsedSeconds);
@@ -98,13 +144,292 @@ const puzzleWorker = createPuzzleWorker(
 function loadNewPuzzle() {
     const difficulty = difficultyEl.value;
     gameState.difficulty = difficulty;
+
+    const targetSize = parseGridSizeLabel(selectedDesignerGrid);
+    if (targetSize !== getGridSize()) {
+        setGridSize(targetSize);
+        cellsElements = initGrid(gridEl);
+    }
+
     loadingEl.classList.remove('hidden');
     winOverlayEl.classList.add('hidden');
-    puzzleWorker.loadPuzzle(difficulty);
+    puzzleWorker.loadPuzzle(difficulty, getGridSize());
+}
+
+function openModeMenu() {
+    currentMode = 'menu';
+    document.body.classList.remove('designer-mode');
+
+    if (modeMenuOverlayEl) modeMenuOverlayEl.classList.remove('hidden');
+    if (designerOverlayEl) {
+        designerOverlayEl.classList.add('hidden');
+        designerOverlayEl.setAttribute('aria-hidden', 'true');
+    }
+    if (designerWorkspaceEl) {
+        designerWorkspaceEl.classList.add('hidden');
+        designerWorkspaceEl.setAttribute('aria-hidden', 'true');
+    }
+    if (instructionsEl) {
+        instructionsEl.innerHTML = defaultInstructionsHtml;
+    }
+}
+
+function startGameFromMenu() {
+    currentMode = 'play';
+    document.body.classList.remove('designer-mode');
+    isCustomValidatedSession = false;
+
+    if (modeMenuOverlayEl) modeMenuOverlayEl.classList.add('hidden');
+    if (designerOverlayEl) {
+        designerOverlayEl.classList.add('hidden');
+        designerOverlayEl.setAttribute('aria-hidden', 'true');
+    }
+    if (designerWorkspaceEl) {
+        designerWorkspaceEl.classList.add('hidden');
+        designerWorkspaceEl.setAttribute('aria-hidden', 'true');
+    }
+    if (instructionsEl) {
+        instructionsEl.innerHTML = defaultInstructionsHtml;
+    }
+    loadNewPuzzle();
+}
+
+function openDesignerPlaceholder() {
+    if (designerOverlayEl) {
+        designerOverlayEl.classList.remove('hidden');
+        designerOverlayEl.setAttribute('aria-hidden', 'false');
+    }
+    if (modeMenuOverlayEl) modeMenuOverlayEl.classList.add('hidden');
+}
+
+function updateDesignerGridSelection(nextGrid) {
+    selectedDesignerGrid = nextGrid || '4x4';
+    localStorage.setItem('neonzip_designer_grid', selectedDesignerGrid);
+
+    designerGridBtns.forEach((btn) => {
+        btn.classList.toggle('is-active', btn.dataset.gridSize === selectedDesignerGrid);
+    });
+
+    if (designerSubtitleEl) {
+        designerSubtitleEl.textContent = `Choisis ta grille pour commencer la creation du niveau. Taille selectionnee: ${selectedDesignerGrid}.`;
+    }
+}
+
+function updateDesignerValidateControls() {
+    if (!designerValidateBtnEl || !designerValidateStatusEl) return;
+
+    const canValidate = gameState.numbers.length >= 2;
+    designerValidateBtnEl.disabled = !canValidate || isDesignerValidating;
+
+    if (isDesignerValidating) {
+        designerValidateStatusEl.classList.remove('is-error', 'is-success');
+        designerValidateStatusEl.textContent = 'Validation en cours...';
+        return;
+    }
+
+    if (!canValidate) {
+        designerValidateStatusEl.classList.remove('is-error', 'is-success');
+        designerValidateStatusEl.textContent = 'Place au moins 2 chiffres pour valider.';
+    }
+}
+
+function setDesignerStatus(message, kind = 'neutral') {
+    if (!designerValidateStatusEl) return;
+    designerValidateStatusEl.classList.remove('is-error', 'is-success');
+    if (kind === 'error') designerValidateStatusEl.classList.add('is-error');
+    if (kind === 'success') designerValidateStatusEl.classList.add('is-success');
+    designerValidateStatusEl.textContent = message;
+}
+
+function placeDesignerNumber(value, cellIndex) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric) || numeric < 1 || numeric > 10) return;
+
+    gameState.numbers = gameState.numbers.filter((entry) => {
+        return entry.value !== numeric && entry.index !== cellIndex;
+    });
+
+    gameState.numbers.push({ index: cellIndex, value: numeric });
+    gameState.numbers.sort((a, b) => a.value - b.value);
+    render();
+}
+
+function removeDesignerNumber(value) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return;
+    gameState.numbers = gameState.numbers.filter((entry) => entry.value !== numeric);
+    render();
+}
+
+function getDesignerNumberAtCell(cellIndex) {
+    return gameState.numbers.find((entry) => entry.index === cellIndex) || null;
+}
+
+function syncDesignerPaletteState() {
+    if (!designerNumberPaletteEl) return;
+
+    const chips = Array.from(designerNumberPaletteEl.querySelectorAll('.designer-number-chip[data-value]'));
+    chips.forEach((chip) => {
+        const numeric = Number(chip.dataset.value);
+        const isUsed = gameState.numbers.some((entry) => entry.value === numeric);
+        chip.classList.toggle('is-used', isUsed);
+        chip.draggable = !isUsed;
+        chip.setAttribute('aria-hidden', isUsed ? 'true' : 'false');
+    });
+
+    cellsElements.forEach((cellEl) => {
+        const idx = Number(cellEl.dataset.index);
+        const entry = getDesignerNumberAtCell(idx);
+        cellEl.draggable = !!entry;
+    });
+
+    updateDesignerValidateControls();
+}
+
+function clearDesignerDropTarget() {
+    gridEl.querySelectorAll('.cell.designer-drop-target').forEach((cell) => {
+        cell.classList.remove('designer-drop-target');
+    });
+}
+
+function startDesignerMode() {
+    currentMode = 'designer';
+    document.body.classList.add('designer-mode');
+
+    if (modeMenuOverlayEl) modeMenuOverlayEl.classList.add('hidden');
+    if (designerOverlayEl) {
+        designerOverlayEl.classList.add('hidden');
+        designerOverlayEl.setAttribute('aria-hidden', 'true');
+    }
+    if (designerWorkspaceEl) {
+        designerWorkspaceEl.classList.remove('hidden');
+        designerWorkspaceEl.setAttribute('aria-hidden', 'false');
+    }
+
+    const targetSize = parseGridSizeLabel(selectedDesignerGrid);
+    setGridSize(targetSize);
+    cellsElements = initGrid(gridEl);
+
+    gameState.path = [];
+    gameState.numbers = [];
+    gameState.solutionPath = [];
+    gameState.obstacles = [];
+    uiState.isDrawing = false;
+    uiState.hintTargetIndex = null;
+    gameState.elapsedSeconds = 0;
+    draggedDesignerValue = null;
+    draggedDesignerSourceIndex = null;
+    isDesignerValidating = false;
+    isCustomValidatedSession = false;
+    designerPickedValue = null;
+    designerPickedFromIndex = null;
+
+    timer.stop();
+    timer.reset((v) => { gameState.elapsedSeconds = v; });
+    timerTextEl.textContent = '00:00';
+
+    if (loadingEl) loadingEl.classList.add('hidden');
+    if (winOverlayEl) winOverlayEl.classList.add('hidden');
+
+    if (maxNumEl) maxNumEl.textContent = String(Math.min(10, targetSize * targetSize));
+    if (instructionsEl) {
+        instructionsEl.innerHTML = `Mode concepteur: grille vide <strong>${targetSize}x${targetSize}</strong>. Glisse les chiffres de <strong>1</strong> a <strong>10</strong> dans les cases.`;
+    }
+
+    render();
+}
+
+function launchValidatedCustomLevel(solutionPath) {
+    currentMode = 'play';
+    document.body.classList.remove('designer-mode');
+    isCustomValidatedSession = true;
+
+    if (designerWorkspaceEl) {
+        designerWorkspaceEl.classList.add('hidden');
+        designerWorkspaceEl.setAttribute('aria-hidden', 'true');
+    }
+
+    if (instructionsEl) {
+        instructionsEl.innerHTML = defaultInstructionsHtml;
+    }
+
+    gameState.path = [];
+    gameState.solutionPath = Array.isArray(solutionPath) ? [...solutionPath] : [];
+    gameState.obstacles = [];
+    uiState.isDrawing = false;
+    uiState.hintTargetIndex = null;
+    gameState.elapsedSeconds = 0;
+
+    timer.stop();
+    timer.reset((v) => { gameState.elapsedSeconds = v; });
+    timerTextEl.textContent = '00:00';
+    winOverlayEl.classList.add('hidden');
+    loadingEl.classList.add('hidden');
+
+    if (maxNumEl) {
+        maxNumEl.textContent = String(gameState.solutionPath.length || Math.min(10, getGridSize() * getGridSize()));
+    }
+
+    render();
+}
+
+async function validateDesignerLevel() {
+    if (currentMode !== 'designer' || !puzzleWorker || typeof puzzleWorker.validateCustomLevel !== 'function') return;
+    if (gameState.numbers.length < 2) return;
+
+    isDesignerValidating = true;
+    updateDesignerValidateControls();
+
+    const response = await puzzleWorker.validateCustomLevel(gameState.numbers, getGridSize());
+
+    isDesignerValidating = false;
+    updateDesignerValidateControls();
+
+    if (!designerValidateStatusEl) return;
+
+    if (!response || !response.feasible) {
+        designerValidateStatusEl.classList.add('is-error');
+        designerValidateStatusEl.classList.remove('is-success');
+        designerValidateStatusEl.textContent = (response && response.reason) ? response.reason : 'Reessayer: le niveau est pas faisable.';
+        return;
+    }
+
+    designerValidateStatusEl.classList.remove('is-error');
+    designerValidateStatusEl.classList.add('is-success');
+    designerValidateStatusEl.textContent = 'Niveau jouable ! Lancement de la partie...';
+
+    launchValidatedCustomLevel(response.solutionPath || []);
 }
 
 /* ---------- Interaction cellule ---------- */
 function onCellInteraction(index) {
+    if (currentMode === 'designer') {
+        const existing = getDesignerNumberAtCell(index);
+
+        if (existing) {
+            if (designerPickedValue === existing.value && designerPickedFromIndex === index) {
+                designerPickedValue = null;
+                designerPickedFromIndex = null;
+                updateDesignerValidateControls();
+                return;
+            }
+
+            designerPickedValue = existing.value;
+            designerPickedFromIndex = index;
+            setDesignerStatus(`Chiffre ${existing.value} selectionne. Clique sur une case pour le deplacer.`);
+            return;
+        }
+
+        if (designerPickedValue !== null) {
+            placeDesignerNumber(designerPickedValue, index);
+            setDesignerStatus(`Chiffre ${designerPickedValue} deplace.`);
+            designerPickedValue = null;
+            designerPickedFromIndex = null;
+        }
+
+        return;
+    }
+
     uiState.hintTargetIndex = null;
     hintTextEl.textContent = 'Indice: clique pour voir le premier déplacement conseillé.';
     handleCellInteraction(index, gameState, uiState, startTimerIfNeeded);
@@ -112,15 +437,20 @@ function onCellInteraction(index) {
 }
 
 function directionLabel(fromIdx, toIdx) {
+    const gridSize = getGridSize();
     const diff = toIdx - fromIdx;
-    if (diff === -GRID_SIZE) return 'haut';
-    if (diff === GRID_SIZE) return 'bas';
+    if (diff === -gridSize) return 'haut';
+    if (diff === gridSize) return 'bas';
     if (diff === -1) return 'gauche';
     if (diff === 1) return 'droite';
     return 'case voisine';
 }
 
 function showHint() {
+    if (currentMode === 'designer') {
+        return;
+    }
+
     const solution = gameState.solutionPath;
     if (!Array.isArray(solution) || solution.length < 2) {
         hintTextEl.textContent = 'Indice indisponible: puzzle non chargé.';
@@ -160,6 +490,114 @@ bindGridPointerEvents(gridEl, {
     canDraw: () => uiState.isDrawing,
 });
 
+if (designerNumberPaletteEl) {
+    designerNumberPaletteEl.addEventListener('dragstart', (event) => {
+        const target = event.target instanceof Element ? event.target : null;
+        const chip = target ? target.closest('.designer-number-chip[data-value]') : null;
+        if (!chip) return;
+        draggedDesignerValue = chip.dataset.value;
+        draggedDesignerSourceIndex = null;
+        designerPickedValue = null;
+        designerPickedFromIndex = null;
+        if (event.dataTransfer) {
+            event.dataTransfer.setData('text/plain', chip.dataset.value);
+            event.dataTransfer.effectAllowed = 'copy';
+        }
+    });
+
+    designerNumberPaletteEl.addEventListener('dragover', (event) => {
+        if (currentMode !== 'designer') return;
+        event.preventDefault();
+        designerNumberPaletteEl.classList.add('is-drop-target');
+    });
+
+    designerNumberPaletteEl.addEventListener('dragleave', () => {
+        designerNumberPaletteEl.classList.remove('is-drop-target');
+    });
+
+    designerNumberPaletteEl.addEventListener('drop', (event) => {
+        if (currentMode !== 'designer') return;
+        event.preventDefault();
+
+        const transferValue = event.dataTransfer ? event.dataTransfer.getData('text/plain') : '';
+        const value = transferValue || draggedDesignerValue;
+        if (value) {
+            removeDesignerNumber(value);
+        }
+
+        designerNumberPaletteEl.classList.remove('is-drop-target');
+        draggedDesignerValue = null;
+        draggedDesignerSourceIndex = null;
+    });
+
+    designerNumberPaletteEl.addEventListener('dragend', () => {
+        draggedDesignerValue = null;
+        draggedDesignerSourceIndex = null;
+        clearDesignerDropTarget();
+        designerNumberPaletteEl.classList.remove('is-drop-target');
+    });
+}
+
+gridEl.addEventListener('dragstart', (event) => {
+    if (currentMode !== 'designer') return;
+    const target = event.target instanceof Element ? event.target : null;
+    const cell = target ? target.closest('.cell[data-index]') : null;
+    if (!cell) return;
+
+    const index = Number(cell.dataset.index);
+    const numberEntry = getDesignerNumberAtCell(index);
+    if (!numberEntry) {
+        event.preventDefault();
+        return;
+    }
+
+    draggedDesignerValue = String(numberEntry.value);
+    draggedDesignerSourceIndex = index;
+    designerPickedValue = null;
+    designerPickedFromIndex = null;
+
+    if (event.dataTransfer) {
+        event.dataTransfer.setData('text/plain', draggedDesignerValue);
+        event.dataTransfer.effectAllowed = 'move';
+    }
+});
+
+gridEl.addEventListener('dragover', (event) => {
+    if (currentMode !== 'designer') return;
+    const target = event.target instanceof Element ? event.target : null;
+    const cell = target ? target.closest('.cell[data-index]') : null;
+    if (!cell) return;
+    event.preventDefault();
+    clearDesignerDropTarget();
+    cell.classList.add('designer-drop-target');
+});
+
+gridEl.addEventListener('dragleave', (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    const cell = target ? target.closest('.cell[data-index]') : null;
+    if (!cell) return;
+    cell.classList.remove('designer-drop-target');
+});
+
+gridEl.addEventListener('drop', (event) => {
+    if (currentMode !== 'designer') return;
+    const target = event.target instanceof Element ? event.target : null;
+    const cell = target ? target.closest('.cell[data-index]') : null;
+    if (!cell) return;
+
+    event.preventDefault();
+
+    const transferValue = event.dataTransfer ? event.dataTransfer.getData('text/plain') : '';
+    const value = transferValue || draggedDesignerValue;
+    const index = Number(cell.dataset.index);
+
+    placeDesignerNumber(value, index);
+    cell.classList.remove('designer-drop-target');
+    setDesignerStatus(`Chiffre ${value} place.`);
+    draggedDesignerValue = null;
+    draggedDesignerSourceIndex = null;
+});
+
 document.getElementById('reset').addEventListener('click', () => {
     timer.stop();
     resetGame();
@@ -167,8 +605,19 @@ document.getElementById('reset').addEventListener('click', () => {
 
 document.getElementById('new-puzzle').addEventListener('click', loadNewPuzzle);
 hintBtnEl.addEventListener('click', showHint);
-document.getElementById('overlay-new-puzzle').addEventListener('click', loadNewPuzzle);
-document.getElementById('overlay-reset').addEventListener('click', () => {
+if (overlayNewPuzzleBtnEl) {
+    overlayNewPuzzleBtnEl.addEventListener('click', () => {
+        if (isCustomValidatedSession) {
+            winOverlayEl.classList.add('hidden');
+            openModeMenu();
+            return;
+        }
+        loadNewPuzzle();
+    });
+}
+
+if (overlayResetBtnEl) {
+    overlayResetBtnEl.addEventListener('click', () => {
     winOverlayEl.classList.add('hidden');
     timer.stop();
     gameState.path = [];
@@ -178,9 +627,42 @@ document.getElementById('overlay-reset').addEventListener('click', () => {
     timer.reset((v) => { gameState.elapsedSeconds = v; });
     render();
 });
+}
 
 difficultyEl.addEventListener('change', loadNewPuzzle);
 
+if (menuPlayBtnEl) {
+    menuPlayBtnEl.addEventListener('click', startGameFromMenu);
+}
+
+if (menuDesignerBtnEl) {
+    menuDesignerBtnEl.addEventListener('click', openDesignerPlaceholder);
+}
+
+if (designerBackBtnEl) {
+    designerBackBtnEl.addEventListener('click', openModeMenu);
+}
+
+if (designerPlayBtnEl) {
+    designerPlayBtnEl.addEventListener('click', startDesignerMode);
+}
+
+if (designerExitBtnEl) {
+    designerExitBtnEl.addEventListener('click', openModeMenu);
+}
+
+if (designerValidateBtnEl) {
+    designerValidateBtnEl.addEventListener('click', validateDesignerLevel);
+}
+
+designerGridBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+        updateDesignerGridSelection(btn.dataset.gridSize || '4x4');
+    });
+});
+
 /* ---------- Démarrage ---------- */
 timerTextEl.textContent = '00:00';
-loadNewPuzzle();
+updateDesignerGridSelection(selectedDesignerGrid);
+updateDesignerValidateControls();
+openModeMenu();

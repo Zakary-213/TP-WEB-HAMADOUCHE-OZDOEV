@@ -2,7 +2,7 @@
  * grid.js – Création et rendu de la grille dans le DOM.
  */
 
-import { GRID_SIZE, TOTAL_CELLS } from './config.js';
+import { getGridSize, getTotalCells } from './config.js';
 
 /* ---------- Initialisation ---------- */
 /**
@@ -11,15 +11,18 @@ import { GRID_SIZE, TOTAL_CELLS } from './config.js';
  * @returns {HTMLElement[]}
  */
 export function initGrid(gridEl) {
+    const gridSize = getGridSize();
+    const totalCells = getTotalCells();
+
     gridEl.innerHTML = '';
 
     // Mettre à jour les variables CSS pour la grille
-    gridEl.style.setProperty('--cols', GRID_SIZE);
-    gridEl.style.setProperty('--rows', GRID_SIZE);
+    gridEl.style.setProperty('--cols', gridSize);
+    gridEl.style.setProperty('--rows', gridSize);
 
     const cellsElements = [];
 
-    for (let i = 0; i < TOTAL_CELLS; i++) {
+    for (let i = 0; i < totalCells; i++) {
         const cell = document.createElement('div');
         cell.className = 'cell';
         cell.dataset.index = i;
@@ -56,6 +59,7 @@ export function initGrid(gridEl) {
  * @param {(a:number, b:number) => boolean} isAdjacent
  */
 export function renderGrid(cellsElements, gameState, uiState, isAdjacent) {
+    const gridSize = getGridSize();
     const { path, numbers, obstacles = [] } = gameState;
     const { hintTargetIndex } = uiState;
     const pathLen = path.length;
@@ -110,8 +114,8 @@ export function renderGrid(cellsElements, gameState, uiState, isAdjacent) {
             if (neighborIdx === null || !isAdjacent(index, neighborIdx)) return;
 
             const diff = neighborIdx - index;
-            if (diff === -GRID_SIZE) cellEl.querySelector('.connector-top').classList.add('visible');
-            if (diff ===  GRID_SIZE) cellEl.querySelector('.connector-bottom').classList.add('visible');
+            if (diff === -gridSize) cellEl.querySelector('.connector-top').classList.add('visible');
+            if (diff ===  gridSize) cellEl.querySelector('.connector-bottom').classList.add('visible');
             if (diff === -1)         cellEl.querySelector('.connector-left').classList.add('visible');
             if (diff ===  1)         cellEl.querySelector('.connector-right').classList.add('visible');
         });

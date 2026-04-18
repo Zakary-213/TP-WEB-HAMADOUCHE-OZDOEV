@@ -11,6 +11,35 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div id="mode-menu-overlay" class="mode-menu-overlay">
+        <div class="mode-menu-card">
+            <div class="mode-menu-logo">NEON ZIP</div>
+            <h1 class="mode-menu-title">Choisis ton mode</h1>
+            <p class="mode-menu-subtitle">Lance une partie classique ou ouvre le concepteur de niveau.</p>
+            <div class="mode-menu-actions">
+                <button id="menu-play-btn" class="btn btn-primary mode-menu-btn" type="button">Jouer</button>
+                <button id="menu-designer-btn" class="btn btn-secondary mode-menu-btn" type="button">Concepteur niveau</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="designer-overlay" class="designer-overlay hidden" aria-hidden="true">
+        <div class="designer-card">
+            <h2>Concepteur niveau</h2>
+            <p id="designer-subtitle">Choisis ta grille pour commencer la creation du niveau.</p>
+            <div class="designer-grid-picker" role="group" aria-label="Choix de la taille de grille">
+                <button class="designer-grid-btn is-active" data-grid-size="4x4" type="button">4x4</button>
+                <button class="designer-grid-btn" data-grid-size="6x6" type="button">6x6</button>
+                <button class="designer-grid-btn" data-grid-size="8x8" type="button">8x8</button>
+                <button class="designer-grid-btn" data-grid-size="10x10" type="button">10x10</button>
+            </div>
+            <div class="designer-actions">
+                <button id="designer-back-btn" class="btn btn-secondary" type="button">Retour au menu</button>
+                <button id="designer-play-btn" class="btn btn-primary" type="button">Ouvrir grille vide</button>
+            </div>
+        </div>
+    </div>
+
     <div class="page-wrapper">
 
         <!-- Header LinkedIn style -->
@@ -81,6 +110,30 @@
         </div>
 
         <p id="hint-text" class="hint-text">Indice: clique pour voir le premier déplacement conseillé.</p>
+
+        <section id="designer-workspace" class="designer-workspace hidden" aria-hidden="true">
+            <div class="designer-workspace-head">
+                <h3>Concepteur niveau</h3>
+                <button id="designer-exit-btn" class="btn btn-secondary" type="button">Quitter le concepteur</button>
+            </div>
+            <p class="designer-workspace-sub">Glisse les chiffres dans les cases de la grille (1 a 10 max).</p>
+            <div class="designer-validate-row">
+                <button id="designer-validate-btn" class="btn btn-primary" type="button" disabled>Valider</button>
+                <span id="designer-validate-status" class="designer-validate-status">Place au moins 2 chiffres pour valider.</span>
+            </div>
+            <div id="designer-number-palette" class="designer-number-palette" role="list" aria-label="Palette des chiffres">
+                <button class="designer-number-chip" type="button" draggable="true" data-value="1" role="listitem">1</button>
+                <button class="designer-number-chip" type="button" draggable="true" data-value="2" role="listitem">2</button>
+                <button class="designer-number-chip" type="button" draggable="true" data-value="3" role="listitem">3</button>
+                <button class="designer-number-chip" type="button" draggable="true" data-value="4" role="listitem">4</button>
+                <button class="designer-number-chip" type="button" draggable="true" data-value="5" role="listitem">5</button>
+                <button class="designer-number-chip" type="button" draggable="true" data-value="6" role="listitem">6</button>
+                <button class="designer-number-chip" type="button" draggable="true" data-value="7" role="listitem">7</button>
+                <button class="designer-number-chip" type="button" draggable="true" data-value="8" role="listitem">8</button>
+                <button class="designer-number-chip" type="button" draggable="true" data-value="9" role="listitem">9</button>
+                <button class="designer-number-chip" type="button" draggable="true" data-value="10" role="listitem">10</button>
+            </div>
+        </section>
 
     </div>
 

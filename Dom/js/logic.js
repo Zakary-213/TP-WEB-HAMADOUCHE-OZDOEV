@@ -2,14 +2,15 @@
  * logic.js – Logique pure du jeu ZIP (sans effets de bord DOM).
  */
 
-import { GRID_SIZE, TOTAL_CELLS } from './config.js';
+import { getGridSize, getTotalCells } from './config.js';
 
 /* ---------- Adjacence ---------- */
 export function isAdjacent(idx1, idx2) {
-    const r1 = Math.floor(idx1 / GRID_SIZE);
-    const c1 = idx1 % GRID_SIZE;
-    const r2 = Math.floor(idx2 / GRID_SIZE);
-    const c2 = idx2 % GRID_SIZE;
+    const gridSize = getGridSize();
+    const r1 = Math.floor(idx1 / gridSize);
+    const c1 = idx1 % gridSize;
+    const r2 = Math.floor(idx2 / gridSize);
+    const c2 = idx2 % gridSize;
     return (Math.abs(r1 - r2) === 1 && c1 === c2) ||
            (Math.abs(c1 - c2) === 1 && r1 === r2);
 }
@@ -38,7 +39,7 @@ function isBlockedCell(obstacles, index) {
 }
 
 function isBlockedEdge(obstacles, fromIdx, toIdx) {
-    return obstacles.some((obstacle) => obstacle.blocksEdge(fromIdx, toIdx, GRID_SIZE));
+    return obstacles.some((obstacle) => obstacle.blocksEdge(fromIdx, toIdx, getGridSize()));
 }
 
 /* ---------- Interaction utilisateur ---------- */
@@ -125,7 +126,7 @@ export function handleCellInteraction(index, gameState, uiState, startTimerIfNee
 
 /* ---------- Condition de victoire ---------- */
 export function hasWon(path) {
-    return path.length === TOTAL_CELLS;
+    return path.length === getTotalCells();
 }
 
 export function hasWonAgainstTarget(path, targetLength) {
