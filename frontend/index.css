@@ -40,26 +40,24 @@
 /*Modale d'authentification */
 
 .authModalOverlay {
+    /* display géré par JS — display:none quand fermée, flex quand ouverte */
+    display: none;
     position: fixed;
     inset: 0;
     z-index: 9999;
-    display: flex;
     align-items: center;
     justify-content: center;
     padding: 32px;
-    background: rgba(0, 0, 0, 0.58);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: transparent;
     opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    transition: opacity 0.35s ease, visibility 0.35s ease;
+    transition: opacity 0.35s ease, background 0.35s ease;
 }
 
 .authModalOverlay.is-open {
     opacity: 1;
-    visibility: visible;
-    pointer-events: auto;
+    background: rgba(0, 0, 0, 0.58);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
 }
 
 .authModalRight {
@@ -1309,7 +1307,7 @@ body {
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     pointer-events: none;
-    z-index: 1;
+    z-index: 6;
 }
 
 /* Dimensions exactes des 4 images */
@@ -1377,22 +1375,31 @@ body {
     color: #ee642a;
 }
 
-.awardsMoreBtn {
-    align-self: flex-end;
+.awardsButtonsRow {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
     margin-top: 40px;
-    width: 350px;
+    width: 595.94px;
+}
+
+.awardsMoreBtn {
+    flex: 1;
     height: 80px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    padding: 0 calc(16px + 14px) 0 24px;
     text-decoration: none;
     font-family: "Nunito", sans-serif;
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 800;
     color: #ffffff;
     background: linear-gradient(90deg, #c1260f 0%, #ee642a 100%);
+    /* diagonale : bas-droit coupe vers l'intérieur */
     clip-path: polygon(0 0, 100% 0, calc(100% - 14px) 100%, 0 100%);
     box-shadow: 0 10px 24px rgba(238, 100, 42, 0.22);
+    z-index: 1;
     transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -1400,6 +1407,33 @@ body {
     transform: translateY(-2px);
     filter: brightness(1.06);
     box-shadow: 0 14px 28px rgba(238, 100, 42, 0.32);
+}
+
+.awardsDetailsBtn {
+    flex: 1;
+    height: 80px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 24px 0 calc(16px + 14px);
+    text-decoration: none;
+    font-family: "Nunito", sans-serif;
+    font-size: 24px;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(238, 100, 42, 0.55);
+    /* diagonale : haut-gauche coupe — s'emboîte avec Jouer via margin négatif */
+    clip-path: polygon(14px 0, 100% 0, 100% 100%, 0 100%);
+    margin-left: -14px;
+    z-index: 2;
+    transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.awardsDetailsBtn:hover {
+    transform: translateY(-2px);
+    background: rgba(238, 100, 42, 0.08);
+    box-shadow: 0 12px 24px rgba(238, 100, 42, 0.16);
 }
 
 /* Animations: switch direction + sequential reveal */
@@ -1431,14 +1465,16 @@ body {
     z-index: 4 !important;
 }
 
-.awardsMoreBtn {
+.awardsMoreBtn,
+.awardsDetailsBtn {
     opacity: 0;
     transform: translateY(8px);
     pointer-events: none;
     transition: opacity 420ms ease, transform 420ms cubic-bezier(.2,.9,.2,1);
 }
 
-.awardsMoreBtn.is-visible {
+.awardsMoreBtn.is-visible,
+.awardsDetailsBtn.is-visible {
     opacity: 1;
     transform: translateY(0);
     pointer-events: auto;
@@ -1470,6 +1506,87 @@ body {
 
 
 
+
+/* Loader modal */
+.authLoadingOverlay {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(8, 8, 8, 0.94);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.authLoadingOverlay.is-active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.authSpinner {
+    width: 54px;
+    height: 54px;
+    border: 3px solid rgba(241, 90, 36, 0.18);
+    border-top-color: #f35b1d;
+    border-radius: 50%;
+    animation: spinnerRotate 0.85s linear infinite;
+}
+
+@keyframes spinnerRotate {
+    to { transform: rotate(360deg); }
+}
+
+.authLoadingText {
+    margin-top: 22px;
+    font-family: "Nunito", sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: rgba(255, 255, 255, 0.68);
+}
+
+/* Navbar connectée */
+.navUserPanel {
+    display: none;
+    align-items: center;
+    gap: 16px;
+}
+
+.navUserText {
+    font-family: "Nunito", sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.88);
+    white-space: nowrap;
+}
+
+.navLogoutButton {
+    height: 32px;
+    min-width: 110px;
+    padding: 0 18px;
+    background: transparent;
+    border: 1px solid rgba(238, 100, 42, 0.55);
+    color: rgba(255, 255, 255, 0.88);
+    font-family: "Nunito", sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.22s ease, border-color 0.22s ease, transform 0.22s ease;
+}
+
+.navLogoutButton:hover {
+    background: rgba(238, 100, 42, 0.1);
+    border-color: rgba(238, 100, 42, 0.8);
+    transform: translateY(-1px);
+}
 
 /* Banners ticker */
 .bannerTicker {

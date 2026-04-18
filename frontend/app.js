@@ -55,28 +55,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const syncAuthUi = () => {
         const loggedIn = isAuthenticated();
+        const username = localStorage.getItem('tpweb_username') || 'Joueur';
 
-        if (logoutBtn) {
-            logoutBtn.style.display = loggedIn ? 'block' : 'none';
-        }
+        const navAuthButtons = document.querySelector('.navAuthButtons');
+        const navUserPanel   = document.getElementById('navUserPanel');
+        const navUserText    = document.getElementById('navUserText');
 
-        /*
-        if (canvasScoreCard) {
-            canvasScoreCard.style.display = loggedIn ? 'block' : 'none';
-        }
-
-        if (gowScoreCard) {
-            gowScoreCard.style.display = loggedIn ? 'block' : 'none';
-        }
-
-        if (!loggedIn && canvasScoreEl) {
-            canvasScoreEl.textContent = '';
-        }
-
-        if (!loggedIn && gowScoreEl) {
-            gowScoreEl.textContent = '';
-        }
-            */
+        if (navAuthButtons) navAuthButtons.style.display = loggedIn ? 'none' : 'flex';
+        if (navUserPanel)   navUserPanel.style.display   = loggedIn ? 'flex' : 'none';
+        if (navUserText)    navUserText.textContent       = `Bonjour, ${username}`;
     };
 
     setGamesLocked(!isAuthenticated());
@@ -363,16 +350,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem(AUTH_STATE_KEY, 'true');
                 localStorage.setItem('tpweb_user_id', data.data.id);
                 localStorage.setItem('tpweb_username', data.data.username);
-                showMessage(`Bienvenue ${data.data.username} ! Connexion réussie.`, 'success');
+                showMessage(`Bienvenue ${data.data.username} !`, 'success');
 
                 loginForm.reset();
                 setGamesLocked(false);
-                syncAuthUi();
-                /*
-                renderCanvasScores();
-                renderGamesOnWebScores();
-                */
-                // Here you could redirect or update UI
+
+                const loadingOverlay = document.getElementById('authLoadingOverlay');
+                if (loadingOverlay) loadingOverlay.classList.add('is-active');
+
+                setTimeout(() => {
+                    if (loadingOverlay) loadingOverlay.classList.remove('is-active');
+                    window.authModalController?.closeModal();
+                    syncAuthUi();
+                }, 3000);
             } else {
                 showMessage(data.message || 'Identifiants invalides', 'error');
             }

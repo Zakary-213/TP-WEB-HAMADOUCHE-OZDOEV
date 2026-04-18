@@ -21,10 +21,10 @@ document.addEventListener('DOMContentLoaded', () => {
         signupForm?.classList.add('active');
         loginForm?.classList.remove('active');
 
-        if (authEyebrow) authEyebrow.textContent = 'ENTER THE ARENA';
-        if (authTitle) authTitle.textContent = 'JOIN THE GAMES';
+        if (authEyebrow) authEyebrow.textContent = 'ENTRE DANS L\'ARÈNE';
+        if (authTitle) authTitle.textContent = 'REJOINS LES JEUX';
         if (authText) {
-            authText.textContent = 'Create your account, track your progress, save your scores and access the full GamesOnWeb experience.';
+            authText.textContent = 'Crée ton compte, suis ta progression, sauvegarde tes scores et accède à l\'expérience GamesOnWeb complète.';
         }
     }
 
@@ -34,16 +34,18 @@ document.addEventListener('DOMContentLoaded', () => {
         loginForm?.classList.add('active');
         signupForm?.classList.remove('active');
 
-        if (authEyebrow) authEyebrow.textContent = 'WELCOME BACK';
-        if (authTitle) authTitle.textContent = 'LOG IN';
+        if (authEyebrow) authEyebrow.textContent = 'BON RETOUR';
+        if (authTitle) authTitle.textContent = 'CONNEXION';
         if (authText) {
-            authText.textContent = 'Access your account, continue your journey and jump back into the GamesOnWeb experience.';
+            authText.textContent = 'Accède à ton compte, continue ton parcours et replonge dans l\'expérience GamesOnWeb.';
         }
     }
 
     function openModal(mode = 'signup') {
         if (!authOverlay) return;
 
+        authOverlay.style.display = 'flex';
+        authOverlay.offsetHeight; // force reflow pour activer la transition
         authOverlay.classList.add('is-open');
         authOverlay.setAttribute('aria-hidden', 'false');
         document.body.style.overflow = 'hidden';
@@ -61,11 +63,26 @@ document.addEventListener('DOMContentLoaded', () => {
         authOverlay.classList.remove('is-open');
         authOverlay.setAttribute('aria-hidden', 'true');
         document.body.style.overflow = '';
+
+        // Retire l'overlay du stacking context après la transition
+        // pour ne plus perturber les événements souris (mouseleave, hover)
+        setTimeout(() => {
+            if (!authOverlay.classList.contains('is-open')) {
+                authOverlay.style.display = 'none';
+            }
+        }, 420);
     }
+
+    const openLoginModalBtn = document.getElementById('openLoginModal');
 
     openSignupModalBtn?.addEventListener('click', (e) => {
         e.preventDefault();
         openModal('signup');
+    });
+
+    openLoginModalBtn?.addEventListener('click', (e) => {
+        e.preventDefault();
+        openModal('login');
     });
 
     openRegisterNowModalBtn?.addEventListener('click', (e) => {

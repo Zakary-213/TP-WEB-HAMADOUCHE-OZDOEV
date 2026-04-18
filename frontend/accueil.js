@@ -4,6 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const grid = document.getElementById("awardsGrid");
     const cards = document.querySelectorAll(".awardCard");
     const button = document.getElementById("awardsMoreBtn");
+    const detailsBtn = document.getElementById("awardsDetailsBtn");
 
     let currentIndex = 0;
     let isTransitioning = false;
@@ -15,10 +16,25 @@ document.addEventListener("DOMContentLoaded", () => {
         ["./assets/images/logo.png","./assets/images/logo.png","./assets/images/logo.png","./assets/images/logo.png"]
     ];
 
-    const gameHrefs = ["/JeuCanvas/index.html", "/GamesOnWeb/index.html", "#"];
+    const gameHrefs    = ["/JeuCanvas/index.html", "/GamesOnWeb/index.html", "#"];
+    const detailsHrefs = ["/canvas.html",          "/gow.html",              "#"];
+
+    function showButtons() {
+        if (button)     button.classList.add("is-visible");
+        if (detailsBtn) detailsBtn.classList.add("is-visible");
+    }
+
+    function hideButtons() {
+        if (button)     button.classList.remove("is-visible");
+        if (detailsBtn) detailsBtn.classList.remove("is-visible");
+    }
+
+    function updateButtonHrefs(index) {
+        if (button)     button.setAttribute("href", gameHrefs[index]    || "#");
+        if (detailsBtn) detailsBtn.setAttribute("href", detailsHrefs[index] || "#");
+    }
 
     function spawnCards(images, onAllLoaded) {
-        // cancel any pending spawns from a previous call
         spawnTimeouts.forEach(id => clearTimeout(id));
         spawnTimeouts = [];
 
@@ -38,7 +54,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     loadedCount++;
                     if (loadedCount >= images.length) {
                         if (typeof onAllLoaded === 'function') onAllLoaded();
-                        else setTimeout(() => button.classList.add("is-visible"), 300);
+                        else setTimeout(showButtons, 300);
                     }
                 };
 
@@ -70,7 +86,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 img.onerror = (e) => {
                     console.error('image error for card', i, withoutDot, e);
                     if (withoutDot !== desired && (!img.src || img.src.endsWith(desired))) {
-                        console.log('trying fallback path', withoutDot);
                         img.src = withoutDot;
                         return;
                     }
@@ -88,28 +103,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function switchGame(newIndex) {
         if (newIndex === currentIndex) return;
-
         if (isTransitioning) return;
         isTransitioning = true;
 
         const direction = newIndex > currentIndex ? "left" : "right";
 
-        button.classList.remove("is-visible");
+        hideButtons();
 
         grid.classList.add(direction === "left" ? "is-left" : "is-right");
 
         setTimeout(() => {
-
-            cards.forEach(card => {
-                card.classList.remove("is-loaded");
-            });
+            cards.forEach(card => card.classList.remove("is-loaded"));
 
             let imagesLoaded = false;
             let transitionDone = false;
 
             const finish = () => {
                 isTransitioning = false;
-                button.classList.add("is-visible");
+                showButtons();
             };
 
             const onAllLoaded = () => {
@@ -135,7 +146,7 @@ document.addEventListener("DOMContentLoaded", () => {
         tabs.forEach(t => t.classList.remove("active"));
         tabs[newIndex].classList.add("active");
 
-        if (button) button.setAttribute("href", gameHrefs[newIndex] || "#");
+        updateButtonHrefs(newIndex);
 
         currentIndex = newIndex;
     }
@@ -144,5 +155,8 @@ document.addEventListener("DOMContentLoaded", () => {
         tab.addEventListener("click", () => switchGame(index));
     });
 
-    spawnCards(gamesData[0], () => button.classList.add('is-visible'));
+    updateButtonHrefs(0);
+    spawnCards(gamesData[0], () => {
+        setTimeout(showButtons, 300);
+    });
 });
