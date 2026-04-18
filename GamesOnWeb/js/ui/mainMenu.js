@@ -10,6 +10,7 @@
     var tiles = menu.querySelectorAll(".menu-tile[data-preview]");
     var tournamentTile = menu.querySelector(".menu-tile[data-preview='tournament']");
     var versusTile = menu.querySelector(".menu-tile[data-preview='versus']");
+    var scoreTile = menu.querySelector(".menu-tile[data-preview='score']");
     var settingsTile = menu.querySelector(".menu-tile--settings");
     var previewFrames = menu.querySelectorAll(".menu-preview-frame");
     var closeButtons = menu.querySelectorAll("[data-menu-action='close']");
@@ -1152,6 +1153,14 @@
     if (versusTile) {
         versusTile.addEventListener("click", function () {
             openVersusControls();
+        });
+    }
+
+    if (scoreTile) {
+        scoreTile.addEventListener("click", function () {
+            if (window.scoreHistory && typeof window.scoreHistory.open === "function") {
+                window.scoreHistory.open();
+            }
         });
     }
 
