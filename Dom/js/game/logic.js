@@ -2,7 +2,7 @@
  * logic.js – Logique pure du jeu ZIP (sans effets de bord DOM).
  */
 
-import { getGridSize, getTotalCells } from './config.js';
+import { getGridSize, getTotalCells } from '../core/config.js';
 
 /* ---------- Adjacence ---------- */
 export function isAdjacent(idx1, idx2) {

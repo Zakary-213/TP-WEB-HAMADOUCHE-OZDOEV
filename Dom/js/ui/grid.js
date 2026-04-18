@@ -2,7 +2,7 @@
  * grid.js – Création et rendu de la grille dans le DOM.
  */
 
-import { getGridSize, getTotalCells } from './config.js';
+import { getGridSize, getTotalCells } from '../core/config.js';
 
 /* ---------- Initialisation ---------- */
 /**
