@@ -8,11 +8,11 @@
 
 Ce dépôt regroupe l'ensemble des projets réalisés dans le cadre du cours **TP-WEB**. Il contient trois jeux distincts développés en JavaScript pur, ainsi qu'une **infrastructure commune** (frontend d'accueil, backend Node.js/Express, base de données MongoDB) permettant l'authentification des joueurs et la persistance des scores.
 
-| Projet | Technologie principale | Lien |
+| Projet | Technologie principale | Présentation |
 |---|---|---|
-| 🌌 **Météorite Canvas** | Canvas HTML5 | [/JeuCanvas](https://tp-web-hamadouche-ozdoev.vercel.app/JeuCanvas/) |
-| ⚽ **GamesOnWeb — Foot 3D** | Babylon.js (3D WebGL) | [/GamesOnWeb](https://tp-web-hamadouche-ozdoev.vercel.app/GamesOnWeb/) |
-| 🔌 **Neon ZIP** | Manipulation du DOM | [/Dom](https://tp-web-hamadouche-ozdoev.vercel.app/Dom/) |
+| 🌌 **Météorite Canvas** | Canvas HTML5 | *à venir* |
+| ⚽ **GamesOnWeb — Foot 3D** | Babylon.js (3D WebGL) | *à venir* |
+| 🔌 **Neon ZIP** | Manipulation du DOM | [📺 Voir la vidéo](https://www.youtube.com/watch?v=2mVYGNk6eOI) |
 
 🌐 **URL du site déployé** : https://tp-web-hamadouche-ozdoev.vercel.app
 
