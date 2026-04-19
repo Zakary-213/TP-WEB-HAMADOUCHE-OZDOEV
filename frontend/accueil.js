@@ -11,9 +11,9 @@ document.addEventListener("DOMContentLoaded", () => {
     let spawnTimeouts = [];
 
     const gamesData = [
-        ["./assets/images/canvas1.png","./assets/images/canvas2.png","./assets/images/canvas3.png","./assets/images/canvas4.png"],
-        ["./assets/images/gow1.png","./assets/images/gow2.png","./assets/images/gow3.png","./assets/images/gow4.png"],
-        ["./assets/images/dom1.png","./assets/images/dom2.png","./assets/images/dom3.png","./assets/images/dom8.png"]
+        ["./assets/images/spread.png","./assets/images/split.png","./assets/images/enemy.png","./assets/images/pierce.png"],
+        ["./assets/images/gowDemi.png","./assets/images/gowPOV.png","./assets/images/gowBroadcast.png","./assets/images/gowFinale.png"],
+        ["./assets/images/partie5Neon1.png","./assets/images/partie5Neon2.png","./assets/images/partie5Neon3.png","./assets/images/partie5Neon4.png"]
     ];
 
     const gameHrefs    = ["/JeuCanvas/index.html", "/GamesOnWeb/index.html", "/Dom/index.html"];
