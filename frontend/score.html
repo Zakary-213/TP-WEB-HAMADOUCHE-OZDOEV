@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classements — GamesOnWeb 2026</title>
+    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="score.css">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="navLogo">
+            <img src="./assets/images/logo.png" alt="Play logo">
+        </div>
+
+        <div class="navLinks">
+            <a href="/canvas.html" class="navLink">Canvas</a>
+            <a href="/gow.html" class="navLink">GamesOnWeb</a>
+            <a href="/dom.html" class="navLink">Dom</a>
+            <a href="/score.html" class="navLink navLink--active">Scores</a>
+        </div>
+
+        <div class="navButtonWrapper">
+            <div class="navAuthButtons">
+                <a href="#" class="navAuthBtn registerButton" id="openSignupModal">S'inscrire</a>
+                <a href="#" class="navAuthBtn loginButton" id="openLoginModal">Se connecter</a>
+            </div>
+
+            <div class="navUserPanel" id="navUserPanel" style="display: none;">
+                <span class="navUserText" id="navUserText">Welcome</span>
+                <button id="logout-btn" class="navLogoutButton" type="button">Se déconnecter</button>
+            </div>
+        </div>
+    </nav>
+
+    <section class="scoreHero">
+        <div class="scoreHeroBg"></div>
+        <div class="scoreHeroInner">
+            <p class="scoreEyebrow">SAISON 2026 · CLASSEMENTS</p>
+            <h1 class="scoreHeroTitle">
+                TES<br>
+                <span class="scoreGradient">SCORES</span>
+            </h1>
+            <p class="scoreHeroSub">
+                Canvas, GamesOnWeb, Dom, toutes tes performances au même endroit.
+            </p>
+        </div>
+    </section>
+
+    <div class="scoreAuthWall" id="scoreAuthWall">
+        <div class="scoreAuthWallInner">
+            <div class="scoreAuthWallGlow"></div>
+            <p class="scoreAuthWallEyebrow">ACCÈS RESTREINT</p>
+            <h2 class="scoreAuthWallTitle">
+                CONNECTE-TOI<br>POUR VOIR<br>TES SCORES
+            </h2>
+            <p class="scoreAuthWallText">
+                Rejoins la compétition et suis ta progression sur les 3 jeux.
+            </p>
+            <div class="scoreAuthWallActions">
+                <button class="scoreAuthBtn scoreAuthBtnPrimary" id="scoreLoginBtn">Se connecter</button>
+                <button class="scoreAuthBtn scoreAuthBtnGhost" id="scoreSignupBtn">S'inscrire</button>
+            </div>
+        </div>
+    </div>
+
+    <main class="scoreMain" id="scoreMain">
+
+        <div class="scoreWelcomeBar">
+            <div class="scoreWelcomeLeft">
+                <span class="scoreWelcomeName" id="scoreWelcomeName">Bonjour, Joueur</span>
+                <span class="scoreWelcomeSep">|</span>
+                <span class="scoreWelcomeText">Voici tes performances</span>
+            </div>
+            <div class="scoreWelcomeRight">
+                <span class="scoreWelcomeBadge">SAISON 2026</span>
+            </div>
+        </div>
+
+        <div class="scoreTabsWrapper">
+            <div class="scoreTabs" role="tablist">
+                <button class="scoreTab active" data-game="canvas" role="tab" aria-selected="true">
+                    <span class="scoreTabDot canvas"></span>
+                    Canvas
+                </button>
+                <button class="scoreTab" data-game="gow" role="tab" aria-selected="false">
+                    <span class="scoreTabDot gow"></span>
+                    GamesOnWeb
+                </button>
+                <button class="scoreTab" data-game="dom" role="tab" aria-selected="false">
+                    <span class="scoreTabDot dom"></span>
+                    Dom
+                </button>
+            </div>
+        </div>
+
+        <section class="scoreSection scoreSection--canvas" id="scoreSection-canvas" role="tabpanel">
+            <div class="scoreSectionHeader">
+                <div class="scoreSectionTitleGroup">
+                    <p class="scoreSectionEyebrow canvas">METEOR RUSH</p>
+                    <h2 class="scoreSectionTitle">Classement Solo</h2>
+                </div>
+                <span class="scoreSectionBadge canvas">Solo · Arcade</span>
+            </div>
+            <div id="canvas-score-list"></div>
+        </section>
+
+        <section class="scoreSection scoreSection--gow" id="scoreSection-gow" role="tabpanel" style="display:none">
+            <div class="scoreSectionHeader">
+                <div class="scoreSectionTitleGroup">
+                    <p class="scoreSectionEyebrow gow">GOW FOOTBALL</p>
+                    <h2 class="scoreSectionTitle">Historique des matchs</h2>
+                </div>
+                <span class="scoreSectionBadge gow">Tous modes</span>
+            </div>
+            <div id="gow-score-list"></div>
+        </section>
+
+        <section class="scoreSection scoreSection--dom" id="scoreSection-dom" role="tabpanel" style="display:none">
+            <div class="scoreSectionHeader">
+                <div class="scoreSectionTitleGroup">
+                    <p class="scoreSectionEyebrow dom">NEON ZIP</p>
+                    <h2 class="scoreSectionTitle">Tes meilleurs runs</h2>
+                </div>
+                <span class="scoreSectionBadge dom">Solo · Temps</span>
+            </div>
+            <div id="dom-score-list"></div>
+        </section>
+
+    </main>
+
+    <footer class="siteFooter">
+        <div class="siteFooterLine"></div>
+        <p class="siteFooterText">© Copyright 2026 — Tous droits réservés par Akramat OZDOEV &amp; Zakary HAMADOUCHE</p>
+    </footer>
+
+    <div class="authModalOverlay" id="authModalOverlay" aria-hidden="true">
+        <div class="authModal" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
+
+            <div class="authLoadingOverlay" id="authLoadingOverlay" aria-hidden="true">
+                <div class="authSpinner"></div>
+                <p class="authLoadingText">Connexion en cours…</p>
+            </div>
+
+            <button class="authCloseButton" id="closeAuthModal" type="button" aria-label="Close">
+                <span>&times;</span>
+            </button>
+
+            <div class="authModalGlow"></div>
+
+            <div class="authModalLeft">
+                <p class="authEyebrow" id="authEyebrow">ENTRE DANS L'ARÈNE</p>
+                <h2 class="authModalTitle" id="authModalTitle">REJOINS LES JEUX</h2>
+                <p class="authModalText" id="authModalText">
+                    Crée ton compte, suis ta progression, sauvegarde tes scores et accède à l'expérience GamesOnWeb complète.
+                </p>
+                <div class="authFeatureList">
+                    <div class="authFeatureItem">Accès sécurisé</div>
+                    <div class="authFeatureItem">Suis tes scores</div>
+                    <div class="authFeatureItem">Débloque tes jeux</div>
+                </div>
+            </div>
+
+            <div class="authModalRight">
+                <div class="form-toggle authTabs">
+                    <button class="toggle-btn active" id="signup-toggle" type="button">S'inscrire</button>
+                    <button class="toggle-btn" id="login-toggle" type="button">Connexion</button>
+                </div>
+
+                <div class="authFormsArea">
+                    <form id="signup-form" class="auth-form active">
+                        <div class="form-group">
+                            <label for="signup-username">Nom d'utilisateur</label>
+                            <input type="text" id="signup-username" placeholder="Ton pseudo" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="signup-email">E-mail</label>
+                            <input type="email" id="signup-email" placeholder="ton@email.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="signup-password">Mot de passe</label>
+                            <input type="password" id="signup-password" placeholder="••••••••" autocomplete="new-password" required minlength="6">
+                        </div>
+                        <button type="submit" class="submit-btn authSubmitBtn" id="signup-submit">Créer un compte</button>
+                    </form>
+
+                    <form id="login-form" class="auth-form">
+                        <div class="form-group">
+                            <label for="login-email">E-mail</label>
+                            <input type="email" id="login-email" placeholder="ton@email.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="login-password">Mot de passe</label>
+                            <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" required>
+                        </div>
+                        <button type="submit" class="submit-btn authSubmitBtn" id="login-submit">Se connecter</button>
+                    </form>
+                </div>
+
+                <div id="message" class="message"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="runtime-config.js"></script>
+    <script src="login.js"></script>
+    <script src="app.js"></script>
+    <script src="score.js"></script>
+</body>
+</html>

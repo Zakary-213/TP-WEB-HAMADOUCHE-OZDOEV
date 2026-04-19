@@ -1,0 +1,958 @@
+/* ========================================================
+   SCORES — PAGE CLASSEMENTS
+   Tricolore néon : Orange (Canvas) · Vert (GOW) · Cyan (Dom)
+   ======================================================== */
+
+:root {
+    --sc-canvas:        #EE642A;
+    --sc-canvas-glow:   rgba(238, 100, 42, 0.22);
+    --sc-gow:           #7cff6b;
+    --sc-gow-glow:      rgba(124, 255, 107, 0.22);
+    --sc-dom:           #22d3ee;
+    --sc-dom-glow:      rgba(34, 211, 238, 0.22);
+    --sc-gold:          #fbbf24;
+    --sc-silver:        #94a3b8;
+    --sc-bronze:        #cd7c2f;
+    --sc-win:           #4ade80;
+    --sc-loss:          #f87171;
+    --sc-draw:          #94a3b8;
+    --sc-bg:            #080c14;
+    --sc-bg-2:          #0d1221;
+    --sc-card:          rgba(255, 255, 255, 0.03);
+    --sc-border:        rgba(255, 255, 255, 0.08);
+    --sc-text:          rgba(255, 255, 255, 0.9);
+    --sc-muted:         rgba(255, 255, 255, 0.42);
+}
+
+/* ──────────────────────────────────────────────────────────
+   BASE
+────────────────────────────────────────────────────────── */
+body {
+    background: var(--sc-bg);
+}
+
+/* ──────────────────────────────────────────────────────────
+   NAVBAR — active link
+────────────────────────────────────────────────────────── */
+.navLink--active {
+    color: #fff !important;
+    opacity: 1 !important;
+}
+
+/* ──────────────────────────────────────────────────────────
+   HERO
+────────────────────────────────────────────────────────── */
+.scoreHero {
+    position: relative;
+    padding: 80px 24px 100px;
+    text-align: center;
+    overflow: hidden;
+}
+
+.scoreHeroBg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse 90% 55% at 50% -5%,  rgba(124, 255, 107, 0.09) 0%, transparent 65%),
+        radial-gradient(ellipse 55% 40% at 5%  100%, rgba(238, 100,  42, 0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 55% 40% at 95% 100%, rgba(34,  211, 238, 0.07) 0%, transparent 60%);
+}
+
+.scoreHeroInner {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+}
+
+.scoreEyebrow {
+    font-family: "Nunito", sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--sc-muted);
+    margin: 0;
+}
+
+.scoreHeroTitle {
+    margin: 0;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: clamp(80px, 13vw, 148px);
+    line-height: 0.86;
+    letter-spacing: 0.02em;
+    color: #fff;
+}
+
+.scoreGradient {
+    background: linear-gradient(90deg, #EE642A 0%, #7cff6b 50%, #22d3ee 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.scoreHeroSub {
+    margin: 0;
+    max-width: 500px;
+    font-family: "Nunito", sans-serif;
+    font-size: 17px;
+    font-weight: 300;
+    line-height: 1.65;
+    color: var(--sc-muted);
+}
+
+/* ──────────────────────────────────────────────────────────
+   AUTH WALL
+────────────────────────────────────────────────────────── */
+.scoreAuthWall {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    min-height: 56vh;
+    padding: 48px 24px;
+}
+
+.scoreAuthWallInner {
+    position: relative;
+    text-align: center;
+    max-width: 580px;
+    padding: 64px 48px;
+    background: var(--sc-card);
+    border: 1px solid var(--sc-border);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    overflow: hidden;
+}
+
+.scoreAuthWallGlow {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(124, 255, 107, 0.08) 0%, transparent 65%);
+}
+
+.scoreAuthWallEyebrow {
+    margin: 0 0 18px;
+    font-family: "Nunito", sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--sc-gow);
+    position: relative;
+}
+
+.scoreAuthWallTitle {
+    margin: 0 0 20px;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: clamp(44px, 7vw, 72px);
+    line-height: 0.9;
+    color: #fff;
+    position: relative;
+}
+
+.scoreAuthWallText {
+    margin: 0 0 36px;
+    font-family: "Nunito", sans-serif;
+    font-size: 15px;
+    font-weight: 300;
+    line-height: 1.65;
+    color: var(--sc-muted);
+    position: relative;
+}
+
+.scoreAuthWallActions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    position: relative;
+}
+
+.scoreAuthBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 34px;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 19px;
+    letter-spacing: 0.1em;
+    border: none;
+    cursor: pointer;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+    text-decoration: none;
+}
+
+.scoreAuthBtn:hover {
+    transform: translateY(-2px);
+}
+
+.scoreAuthBtnPrimary {
+    background: #fff;
+    color: #000;
+    box-shadow: 0 0 24px rgba(255, 255, 255, 0.14);
+}
+
+.scoreAuthBtnPrimary:hover {
+    box-shadow: 0 6px 32px rgba(255, 255, 255, 0.26);
+}
+
+.scoreAuthBtnGhost {
+    background: transparent;
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.scoreAuthBtnGhost:hover {
+    border-color: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+/* ──────────────────────────────────────────────────────────
+   SCORE MAIN
+────────────────────────────────────────────────────────── */
+.scoreMain {
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: 0 24px 120px;
+}
+
+/* ── Welcome bar ── */
+.scoreWelcomeBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 28px;
+    margin-bottom: 40px;
+    border-bottom: 1px solid var(--sc-border);
+    flex-wrap: wrap;
+    margin-top: 60px;
+}
+
+.scoreWelcomeLeft {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.scoreWelcomeName {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 26px;
+    letter-spacing: 0.06em;
+    color: #fff;
+}
+
+.scoreWelcomeSep {
+    font-size: 18px;
+    color: var(--sc-muted);
+}
+
+.scoreWelcomeText {
+    font-family: "Nunito", sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--sc-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+}
+
+.scoreWelcomeBadge {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.22em;
+    color: var(--sc-muted);
+    border: 1px solid var(--sc-border);
+    padding: 5px 14px;
+}
+
+/* ──────────────────────────────────────────────────────────
+   TABS
+────────────────────────────────────────────────────────── */
+.scoreTabsWrapper {
+    margin-bottom: 52px;
+}
+
+.scoreTabs {
+    display: inline-flex;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--sc-border);
+    padding: 4px;
+    gap: 2px;
+}
+
+.scoreTab {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 30px;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 20px;
+    letter-spacing: 0.12em;
+    color: var(--sc-muted);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: color 0.22s ease, background 0.22s ease;
+}
+
+.scoreTab:hover {
+    color: rgba(255, 255, 255, 0.68);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.scoreTab.active {
+    background: rgba(255, 255, 255, 0.07);
+    color: #fff;
+}
+
+.scoreTab.active[data-game="canvas"] { color: var(--sc-canvas); }
+.scoreTab.active[data-game="gow"]    { color: var(--sc-gow); }
+.scoreTab.active[data-game="dom"]    { color: var(--sc-dom); }
+
+.scoreTabDot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    transition: box-shadow 0.22s ease;
+}
+
+.scoreTabDot.canvas { background: var(--sc-canvas); }
+.scoreTabDot.gow    { background: var(--sc-gow); }
+.scoreTabDot.dom    { background: var(--sc-dom); }
+
+.scoreTab.active .scoreTabDot.canvas { box-shadow: 0 0 8px var(--sc-canvas); }
+.scoreTab.active .scoreTabDot.gow    { box-shadow: 0 0 8px var(--sc-gow); }
+.scoreTab.active .scoreTabDot.dom    { box-shadow: 0 0 8px var(--sc-dom); }
+
+/* ──────────────────────────────────────────────────────────
+   SECTION
+────────────────────────────────────────────────────────── */
+.scoreSection {
+    animation: sc-fadeUp 0.32s ease both;
+}
+
+@keyframes sc-fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.scoreSectionHeader {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+}
+
+.scoreSectionEyebrow {
+    margin: 0 0 6px;
+    font-family: "Nunito", sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+}
+
+.scoreSectionEyebrow.canvas { color: var(--sc-canvas); }
+.scoreSectionEyebrow.gow    { color: var(--sc-gow); }
+.scoreSectionEyebrow.dom    { color: var(--sc-dom); }
+
+.scoreSectionTitle {
+    margin: 0;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 52px;
+    line-height: 0.95;
+    letter-spacing: 0.02em;
+    color: #fff;
+}
+
+.scoreSectionBadge {
+    font-family: "Nunito", sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border: 1px solid currentColor;
+    margin-bottom: 4px;
+    flex-shrink: 0;
+}
+
+.scoreSectionBadge.canvas { color: var(--sc-canvas); }
+.scoreSectionBadge.gow    { color: var(--sc-gow); }
+.scoreSectionBadge.dom    { color: var(--sc-dom); }
+
+/* ──────────────────────────────────────────────────────────
+   PERSONAL BEST CARD (Canvas & Dom)
+────────────────────────────────────────────────────────── */
+.scoreBestCard {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    padding: 28px 36px;
+    margin-bottom: 28px;
+    border: 1px solid var(--sc-border);
+    background: var(--sc-card);
+    position: relative;
+    overflow: hidden;
+    flex-wrap: wrap;
+}
+
+.scoreBestCard::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.scoreBestCard--canvas {
+    border-left: 3px solid var(--sc-canvas);
+}
+.scoreBestCard--canvas::before {
+    background: linear-gradient(90deg, var(--sc-canvas-glow) 0%, transparent 50%);
+}
+
+.scoreBestCard--dom {
+    border-left: 3px solid var(--sc-dom);
+}
+.scoreBestCard--dom::before {
+    background: linear-gradient(90deg, var(--sc-dom-glow) 0%, transparent 50%);
+}
+
+.scoreBestLabel {
+    font-family: "Nunito", sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--sc-muted);
+    flex-shrink: 0;
+    position: relative;
+}
+
+.scoreBestValues {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    position: relative;
+    flex-wrap: wrap;
+}
+
+.scoreBestValue {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.scoreBestNum {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 46px;
+    line-height: 1;
+    color: #fff;
+    letter-spacing: 0.03em;
+}
+
+.scoreBestCard--canvas .scoreBestNum { color: var(--sc-canvas); }
+.scoreBestCard--dom    .scoreBestNum { color: var(--sc-dom); }
+
+.scoreBestUnit {
+    font-family: "Nunito", sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--sc-muted);
+}
+
+.scoreBestDivider {
+    width: 1px;
+    height: 44px;
+    background: var(--sc-border);
+    flex-shrink: 0;
+}
+
+/* ──────────────────────────────────────────────────────────
+   LEADERBOARD TABLE (Canvas & Dom)
+────────────────────────────────────────────────────────── */
+.scoreTable {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.scoreRowHeader {
+    display: grid;
+    grid-template-columns: 60px 1fr 130px 140px;
+    gap: 16px;
+    padding: 8px 20px;
+    font-family: "Nunito", sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--sc-muted);
+    border-bottom: 1px solid var(--sc-border);
+    margin-bottom: 6px;
+}
+
+.scoreRow {
+    display: grid;
+    grid-template-columns: 60px 1fr 130px 140px;
+    gap: 16px;
+    align-items: center;
+    padding: 16px 20px;
+    background: var(--sc-card);
+    border: 1px solid var(--sc-border);
+    border-left: 3px solid transparent;
+    transition: background 0.2s ease, transform 0.18s ease, border-left-color 0.2s ease;
+    cursor: default;
+    animation: sc-rowIn 0.35s ease both;
+}
+
+@keyframes sc-rowIn {
+    from { opacity: 0; transform: translateX(-6px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+.scoreSection--canvas .scoreRow:hover {
+    background: rgba(238, 100, 42, 0.06);
+    border-left-color: var(--sc-canvas-glow);
+    transform: translateX(3px);
+}
+
+.scoreSection--dom .scoreRow:hover {
+    background: rgba(34, 211, 238, 0.06);
+    border-left-color: var(--sc-dom-glow);
+    transform: translateX(3px);
+}
+
+.scoreRow--top1 { border-left-color: var(--sc-gold) !important; }
+.scoreRow--top2 { border-left-color: var(--sc-silver) !important; }
+.scoreRow--top3 { border-left-color: var(--sc-bronze) !important; }
+
+.scoreRank {
+    display: flex;
+    align-items: center;
+}
+
+.scoreRankBadge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 16px;
+    letter-spacing: 0;
+    flex-shrink: 0;
+}
+
+.scoreRankBadge.rank-1 {
+    background: var(--sc-gold);
+    color: #000;
+    box-shadow: 0 0 14px rgba(251, 191, 36, 0.45);
+}
+
+.scoreRankBadge.rank-2 {
+    background: var(--sc-silver);
+    color: #000;
+}
+
+.scoreRankBadge.rank-3 {
+    background: var(--sc-bronze);
+    color: #fff;
+}
+
+.scoreRankNum {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 22px;
+    letter-spacing: 0;
+    color: var(--sc-muted);
+}
+
+.scorePseudo {
+    font-family: "Nunito", sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.scoreTime {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 22px;
+    letter-spacing: 0.05em;
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.scoreMeteorites {
+    font-family: "Nunito", sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--sc-muted);
+}
+
+.scoreDiffBadge {
+    font-family: "Nunito", sans-serif;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+.scoreDiffBadge.easy   { background: rgba(74, 222, 128, 0.12); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.28); }
+.scoreDiffBadge.medium { background: rgba(251, 191, 36, 0.12); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.28); }
+.scoreDiffBadge.hard   { background: rgba(248, 113, 113, 0.12); color: #f87171; border: 1px solid rgba(248, 113, 113, 0.28); }
+
+/* ──────────────────────────────────────────────────────────
+   GOW STATS BAR
+────────────────────────────────────────────────────────── */
+.scoreGowStats {
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 32px;
+    padding: 20px 32px;
+    background: var(--sc-card);
+    border: 1px solid var(--sc-border);
+    flex-wrap: wrap;
+    gap: 0;
+}
+
+.scoreGowStat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 0 28px;
+}
+
+.scoreGowStat:first-child {
+    padding-left: 0;
+}
+
+.scoreGowStatNum {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 44px;
+    line-height: 1;
+    color: #fff;
+    letter-spacing: 0.02em;
+}
+
+.scoreGowStatNum--win  { color: var(--sc-win); }
+.scoreGowStatNum--loss { color: var(--sc-loss); }
+.scoreGowStatNum--draw { color: var(--sc-muted); }
+
+.scoreGowStatLabel {
+    font-family: "Nunito", sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--sc-muted);
+}
+
+.scoreGowStatDivider {
+    width: 1px;
+    height: 40px;
+    background: linear-gradient(180deg, transparent, var(--sc-border), transparent);
+    flex-shrink: 0;
+}
+
+/* ──────────────────────────────────────────────────────────
+   MATCH CARDS (GOW)
+────────────────────────────────────────────────────────── */
+.scoreMatchGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+    gap: 14px;
+}
+
+.scoreMatchCard {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    background: var(--sc-card);
+    border: 1px solid var(--sc-border);
+    border-left: 4px solid transparent;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    animation: sc-cardIn 0.35s ease both;
+}
+
+@keyframes sc-cardIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.scoreMatchCard:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+.scoreMatchCard--win  { border-left-color: var(--sc-win); }
+.scoreMatchCard--loss { border-left-color: var(--sc-loss); }
+.scoreMatchCard--draw { border-left-color: var(--sc-draw); }
+
+.scoreMatchCard--win:hover  { box-shadow: 0 12px 40px rgba(74, 222, 128, 0.12); }
+.scoreMatchCard--loss:hover { box-shadow: 0 12px 40px rgba(248, 113, 113, 0.12); }
+
+.scoreMatchTop {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 14px 18px 12px;
+    border-bottom: 1px solid var(--sc-border);
+}
+
+.scoreMatchMode {
+    font-family: "Nunito", sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+}
+
+.scoreMatchCard--win  .scoreMatchMode { color: var(--sc-gow);  background: rgba(124, 255, 107, 0.08);  border: 1px solid rgba(124, 255, 107, 0.22); }
+.scoreMatchCard--loss .scoreMatchMode { color: var(--sc-loss); background: rgba(248, 113, 113, 0.08); border: 1px solid rgba(248, 113, 113, 0.22); }
+.scoreMatchCard--draw .scoreMatchMode { color: var(--sc-muted); background: rgba(255, 255, 255, 0.04); border: 1px solid var(--sc-border); }
+
+.scoreMatchDate {
+    font-family: "Nunito", sans-serif;
+    font-size: 11px;
+    color: var(--sc-muted);
+    flex-shrink: 0;
+}
+
+.scoreMatchScore {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 24px 18px;
+    border-bottom: 1px solid var(--sc-border);
+}
+
+.scoreMatchTeam {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+    text-align: center;
+    min-width: 0;
+}
+
+.scoreMatchTeamName {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.18em;
+    color: rgba(255, 255, 255, 0.55);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.scoreMatchGoals {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 50px;
+    line-height: 1;
+    color: #fff;
+    letter-spacing: -0.02em;
+}
+
+.scoreMatchMinutes {
+    font-family: "Nunito", sans-serif;
+    font-size: 10px;
+    color: var(--sc-muted);
+    line-height: 1.5;
+    word-break: break-all;
+}
+
+.scoreMatchVs {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 15px;
+    letter-spacing: 0.18em;
+    color: var(--sc-muted);
+    flex-shrink: 0;
+}
+
+.scoreMatchBottom {
+    display: flex;
+    justify-content: center;
+    padding: 14px 18px;
+}
+
+.scoreMatchResult {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 16px;
+    letter-spacing: 0.22em;
+    padding: 6px 20px;
+}
+
+.scoreMatchResult--win  { color: var(--sc-win);  background: rgba(74, 222, 128, 0.1);  border: 1px solid rgba(74, 222, 128, 0.24); }
+.scoreMatchResult--loss { color: var(--sc-loss); background: rgba(248, 113, 113, 0.1); border: 1px solid rgba(248, 113, 113, 0.24); }
+.scoreMatchResult--draw { color: var(--sc-muted); background: rgba(255, 255, 255, 0.04); border: 1px solid var(--sc-border); }
+
+/* ──────────────────────────────────────────────────────────
+   LOADING STATE
+────────────────────────────────────────────────────────── */
+.scoreLoading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 70px 20px;
+    font-family: "Nunito", sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--sc-muted);
+}
+
+.scoreSpinner {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-top-color: var(--sc-muted);
+    animation: sc-spin 0.65s linear infinite;
+    flex-shrink: 0;
+}
+
+.scoreSection--canvas .scoreSpinner { border-top-color: var(--sc-canvas); }
+.scoreSection--gow    .scoreSpinner { border-top-color: var(--sc-gow); }
+.scoreSection--dom    .scoreSpinner { border-top-color: var(--sc-dom); }
+
+@keyframes sc-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ──────────────────────────────────────────────────────────
+   EMPTY / ERROR STATES
+────────────────────────────────────────────────────────── */
+.scoreEmpty {
+    padding: 70px 20px;
+    text-align: center;
+    font-family: "Nunito", sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--sc-muted);
+    letter-spacing: 0.06em;
+    margin: 0;
+}
+
+.scoreEmpty--error {
+    color: rgba(248, 113, 113, 0.65);
+}
+
+/* ──────────────────────────────────────────────────────────
+   RESPONSIVE
+────────────────────────────────────────────────────────── */
+@media (max-width: 960px) {
+    .scoreMatchGrid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+
+    .scoreGowStats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    .scoreGowStatDivider {
+        display: none;
+    }
+
+    .scoreGowStat {
+        padding: 0;
+        flex: 1;
+        min-width: 80px;
+    }
+}
+
+@media (max-width: 720px) {
+    .scoreAuthWallInner {
+        padding: 40px 24px;
+    }
+
+    .scoreTabs {
+        display: flex;
+        width: 100%;
+    }
+
+    .scoreTab {
+        flex: 1;
+        justify-content: center;
+        padding: 12px 10px;
+        font-size: 17px;
+        gap: 6px;
+    }
+
+    .scoreTabDot {
+        display: none;
+    }
+
+    .scoreRowHeader,
+    .scoreRow {
+        grid-template-columns: 48px 1fr 90px 90px;
+        gap: 10px;
+        padding: 13px 14px;
+    }
+
+    .scoreSectionTitle {
+        font-size: 38px;
+    }
+
+    .scoreBestCard {
+        padding: 20px 22px;
+        gap: 20px;
+    }
+
+    .scoreBestNum {
+        font-size: 36px;
+    }
+}
+
+@media (max-width: 500px) {
+    .scoreMatchGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .scoreRowHeader .scoreMeteorites,
+    .scoreRow .scoreMeteorites {
+        display: none;
+    }
+
+    .scoreRowHeader,
+    .scoreRow {
+        grid-template-columns: 48px 1fr 90px;
+    }
+
+    .scoreHeroTitle {
+        font-size: clamp(64px, 18vw, 90px);
+    }
+}
