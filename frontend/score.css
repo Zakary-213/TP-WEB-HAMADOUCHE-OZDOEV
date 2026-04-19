@@ -917,6 +917,49 @@ body {
 .scoreDomRow--top2 { border-left-color: var(--sc-silver) !important; }
 .scoreDomRow--top3 { border-left-color: var(--sc-bronze) !important; }
 
+/* ── Dom sub-sections (Solo / Concepteur) ── */
+.scoreDomSubSection {
+    margin-bottom: 52px;
+}
+
+.scoreDomSubSection:last-child {
+    margin-bottom: 0;
+}
+
+.scoreDomSubTitle {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 30px;
+    letter-spacing: 0.1em;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--sc-border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.scoreDomSubTitle::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.scoreDomSubTitle--solo     { color: var(--sc-dom); }
+.scoreDomSubTitle--solo::before { background: var(--sc-dom); box-shadow: 0 0 8px var(--sc-dom); }
+.scoreDomSubTitle--designer { color: var(--sc-gow); }
+.scoreDomSubTitle--designer::before { background: var(--sc-gow); box-shadow: 0 0 8px var(--sc-gow); }
+
+/* ── 5-column variant (no Mode column) ── */
+.scoreDomRowHeader--split {
+    grid-template-columns: 56px 1fr 80px 130px 130px;
+}
+
+.scoreDomRow--split {
+    grid-template-columns: 56px 1fr 80px 130px 130px;
+}
+
 .scoreDomMode {
     font-family: "Nunito", sans-serif;
     font-size: 13px;
@@ -1011,15 +1054,12 @@ body {
     }
 
     .scoreDomRowHeader,
-    .scoreDomRow {
-        grid-template-columns: 48px 100px 1fr 110px 110px;
+    .scoreDomRow,
+    .scoreDomRowHeader--split,
+    .scoreDomRow--split {
+        grid-template-columns: 48px 1fr 80px 110px 110px;
         gap: 10px;
         padding: 13px 14px;
-    }
-
-    .scoreDomRowHeader span:nth-child(4),
-    .scoreDomRow .scoreDomCell:first-of-type {
-        display: none;
     }
 }
 
@@ -1043,15 +1083,18 @@ body {
     }
 
     .scoreDomRowHeader,
-    .scoreDomRow {
-        grid-template-columns: 44px 90px 1fr 100px;
+    .scoreDomRow,
+    .scoreDomRowHeader--split,
+    .scoreDomRow--split {
+        grid-template-columns: 44px 1fr 100px 90px;
         gap: 8px;
         padding: 12px 12px;
     }
 
     .scoreDomRowHeader span:nth-child(3),
-    .scoreDomRowHeader span:nth-child(4),
-    .scoreDomRow .scoreDomCell {
+    .scoreDomRowHeader--split span:nth-child(3),
+    .scoreDomRow .scoreDomCell:last-of-type,
+    .scoreDomRow--split .scoreDomCell:last-of-type {
         display: none;
     }
 }

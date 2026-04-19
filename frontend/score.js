@@ -337,17 +337,91 @@ document.addEventListener('DOMContentLoaded', () => {
         if (d === 'hard'   || d === 'difficile') return { label: 'Difficile', key: 'hard' };
         if (d === 'medium' || d === 'moyen')     return { label: 'Moyen',     key: 'medium' };
         if (d === 'easy'   || d === 'facile')    return { label: 'Facile',    key: 'easy' };
-        return { label: diff || '—', key: '' };
+        return { label: '—', key: '' };
     };
 
     const normalizeMode = (mode) => {
         const m = String(mode || '').toLowerCase();
-        if (m === 'solo')        return { label: 'Solo',        key: 'solo' };
-        if (m === 'concepteur')  return { label: 'Concepteur',  key: 'concepteur' };
-        return { label: mode || '—', key: '' };
+        if (m === 'solo')     return { label: 'Solo',        key: 'solo',     grille: 'Classique' };
+        if (m === 'designer') return { label: 'Concepteur',  key: 'concepteur', grille: 'Personnalisée' };
+        return { label: mode || '—', key: '', grille: '—' };
     };
 
     // ── Dom scores ────────────────────────────────────────────
+    const buildDomSubTable = (data, modeKey) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'scoreDomSubSection';
+
+        const title = document.createElement('div');
+        title.className = `scoreDomSubTitle scoreDomSubTitle--${modeKey}`;
+        title.textContent = modeKey === 'solo' ? 'Solo' : 'Concepteur';
+        wrapper.appendChild(title);
+
+        if (!data.length) {
+            const empty = document.createElement('p');
+            empty.className = 'scoreEmpty';
+            empty.style.padding = '28px 0';
+            empty.textContent = 'Aucune partie enregistrée dans ce mode.';
+            wrapper.appendChild(empty);
+            return wrapper;
+        }
+
+        const best     = data[0];
+        const bestTime = formatTimeMs(best?.totalTime);
+        const bestDiff = normalizeDiff(best?.data?.difficulty);
+
+        const bestCard = document.createElement('div');
+        bestCard.className = 'scoreBestCard scoreBestCard--dom';
+        bestCard.innerHTML = `
+            <span class="scoreBestLabel">MEILLEUR RUN</span>
+            <div class="scoreBestValues">
+                <div class="scoreBestValue">
+                    <span class="scoreBestNum">${bestTime}</span>
+                    <span class="scoreBestUnit">CHRONO</span>
+                </div>
+                ${bestDiff.key ? `
+                <div class="scoreBestDivider"></div>
+                <div class="scoreBestValue">
+                    <span class="scoreBestNum scoreDomDiff--${bestDiff.key}">${bestDiff.label}</span>
+                    <span class="scoreBestUnit">DIFFICULTÉ</span>
+                </div>` : ''}
+            </div>
+        `;
+        wrapper.appendChild(bestCard);
+
+        const table = document.createElement('div');
+        table.className = 'scoreDomTable';
+
+        const header = document.createElement('div');
+        header.className = 'scoreDomRowHeader scoreDomRowHeader--split';
+        header.innerHTML = `<span>#</span><span>Grille</span><span>Taille</span><span>Chrono</span><span>Difficulté</span>`;
+        table.appendChild(header);
+
+        data.forEach((score, i) => {
+            const modeData = normalizeMode(score?.mode || score?.data?.mode);
+            const grille   = modeData.grille;
+            const n        = Number(score?.data?.gridSize);
+            const taille   = n > 0 ? `${n}x${n}` : '—';
+            const chrono   = formatTimeMs(score?.totalTime);
+            const diffData = normalizeDiff(score?.data?.difficulty);
+
+            const row = document.createElement('div');
+            row.className = `scoreDomRow scoreDomRow--split${i < 3 ? ` scoreDomRow--top${i + 1}` : ''}`;
+            row.style.animationDelay = `${i * 28}ms`;
+            row.innerHTML = `
+                <span class="scoreRank">${rankBadge(i + 1)}</span>
+                <span class="scoreDomCell">${grille}</span>
+                <span class="scoreDomCell">${taille}</span>
+                <span class="scoreTime">${chrono}</span>
+                <span class="scoreDomDiff scoreDomDiff--${diffData.key}">${diffData.label}</span>
+            `;
+            table.appendChild(row);
+        });
+
+        wrapper.appendChild(table);
+        return wrapper;
+    };
+
     const renderDomScores = async () => {
         const container = document.getElementById('dom-score-list');
         if (!container) return;
@@ -358,87 +432,27 @@ document.addEventListener('DOMContentLoaded', () => {
         showLoading(container);
 
         try {
-            const domModes = ['solo', 'concepteur'];
-            const allData = (await Promise.all(
-                domModes.map(async mode => {
+            const [soloData, designerData] = await Promise.all(
+                ['solo', 'designer'].map(async mode => {
                     const q = new URLSearchParams({ game: 'dom', mode, limit: '100', userId });
                     const res = await fetch(toApiUrl(`/api/scores/top?${q}`));
                     const json = await res.json();
                     return json.success && Array.isArray(json.data) ? json.data : [];
                 })
-            )).flat();
+            );
 
-            const unique = Array.from(
-                new Map(allData.map(e => [e?._id || `${e?.createdAt}-${e?.totalTime}`, e])).values()
-            ).sort((a, b) => (Number(a?.totalTime) || 0) - (Number(b?.totalTime) || 0));
+            const sortByTime = arr => [...arr].sort((a, b) => (Number(a?.totalTime) || 0) - (Number(b?.totalTime) || 0));
+            const solo     = sortByTime(soloData);
+            const designer = sortByTime(designerData);
 
-            if (!unique.length) {
+            if (!solo.length && !designer.length) {
                 showEmpty(container, 'Aucun score Dom enregistré pour ce compte.');
                 return;
             }
 
             container.innerHTML = '';
-
-            const best     = unique[0];
-            const bestTime = formatTimeMs(best?.totalTime);
-            const bestDiff = normalizeDiff(best?.data?.difficulty || best?.data?.difficulte);
-
-            const bestCard = document.createElement('div');
-            bestCard.className = 'scoreBestCard scoreBestCard--dom';
-            bestCard.innerHTML = `
-                <span class="scoreBestLabel">MEILLEUR RUN</span>
-                <div class="scoreBestValues">
-                    <div class="scoreBestValue">
-                        <span class="scoreBestNum">${bestTime}</span>
-                        <span class="scoreBestUnit">CHRONO</span>
-                    </div>
-                    ${bestDiff.key ? `
-                    <div class="scoreBestDivider"></div>
-                    <div class="scoreBestValue">
-                        <span class="scoreBestNum scoreDomDiff--${bestDiff.key}">${bestDiff.label}</span>
-                        <span class="scoreBestUnit">DIFFICULTÉ</span>
-                    </div>` : ''}
-                </div>
-            `;
-            container.appendChild(bestCard);
-
-            const table = document.createElement('div');
-            table.className = 'scoreDomTable';
-
-            const header = document.createElement('div');
-            header.className = 'scoreDomRowHeader';
-            header.innerHTML = `
-                <span>#</span>
-                <span>Mode</span>
-                <span>Grille</span>
-                <span>Taille</span>
-                <span>Chrono</span>
-                <span>Difficulté</span>
-            `;
-            table.appendChild(header);
-
-            unique.forEach((score, i) => {
-                const modeData = normalizeMode(score?.mode || score?.data?.mode);
-                const grille   = score?.data?.gridType || score?.data?.grille || score?.data?.grid || '—';
-                const taille   = score?.data?.gridSize  || score?.data?.taille || score?.data?.size  || '—';
-                const chrono   = formatTimeMs(score?.totalTime);
-                const diffData = normalizeDiff(score?.data?.difficulty || score?.data?.difficulte);
-
-                const row = document.createElement('div');
-                row.className = `scoreDomRow${i < 3 ? ` scoreDomRow--top${i + 1}` : ''}`;
-                row.style.animationDelay = `${i * 28}ms`;
-                row.innerHTML = `
-                    <span class="scoreRank">${rankBadge(i + 1)}</span>
-                    <span class="scoreDomMode scoreDomMode--${modeData.key}">${modeData.label}</span>
-                    <span class="scoreDomCell">${grille}</span>
-                    <span class="scoreDomCell">${taille}</span>
-                    <span class="scoreTime">${chrono}</span>
-                    <span class="scoreDomDiff scoreDomDiff--${diffData.key}">${diffData.label}</span>
-                `;
-                table.appendChild(row);
-            });
-
-            container.appendChild(table);
+            container.appendChild(buildDomSubTable(solo, 'solo'));
+            container.appendChild(buildDomSubTable(designer, 'designer'));
         } catch {
             showError(container, 'Impossible de charger les scores Dom.');
         }
