@@ -142,7 +142,7 @@ body {
     font-weight: 800;
     letter-spacing: 0.3em;
     text-transform: uppercase;
-    color: var(--sc-gow);
+    color: rgb(182, 43, 43);
     position: relative;
 }
 
