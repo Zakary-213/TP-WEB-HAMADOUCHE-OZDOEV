@@ -331,6 +331,22 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // ── Dom helpers ───────────────────────────────────────────
+    const normalizeDiff = (diff) => {
+        const d = String(diff || '').toLowerCase();
+        if (d === 'hard'   || d === 'difficile') return { label: 'Difficile', key: 'hard' };
+        if (d === 'medium' || d === 'moyen')     return { label: 'Moyen',     key: 'medium' };
+        if (d === 'easy'   || d === 'facile')    return { label: 'Facile',    key: 'easy' };
+        return { label: diff || '—', key: '' };
+    };
+
+    const normalizeMode = (mode) => {
+        const m = String(mode || '').toLowerCase();
+        if (m === 'solo')        return { label: 'Solo',        key: 'solo' };
+        if (m === 'concepteur')  return { label: 'Concepteur',  key: 'concepteur' };
+        return { label: mode || '—', key: '' };
+    };
+
     // ── Dom scores ────────────────────────────────────────────
     const renderDomScores = async () => {
         const container = document.getElementById('dom-score-list');
@@ -342,63 +358,82 @@ document.addEventListener('DOMContentLoaded', () => {
         showLoading(container);
 
         try {
-            const q = new URLSearchParams({ game: 'dom', mode: 'solo', limit: '100', userId });
-            const res = await fetch(toApiUrl(`/api/scores/top?${q}`));
-            const json = await res.json();
+            const domModes = ['solo', 'concepteur'];
+            const allData = (await Promise.all(
+                domModes.map(async mode => {
+                    const q = new URLSearchParams({ game: 'dom', mode, limit: '100', userId });
+                    const res = await fetch(toApiUrl(`/api/scores/top?${q}`));
+                    const json = await res.json();
+                    return json.success && Array.isArray(json.data) ? json.data : [];
+                })
+            )).flat();
 
-            if (!json.success || !json.data?.length) {
+            const unique = Array.from(
+                new Map(allData.map(e => [e?._id || `${e?.createdAt}-${e?.totalTime}`, e])).values()
+            ).sort((a, b) => (Number(a?.totalTime) || 0) - (Number(b?.totalTime) || 0));
+
+            if (!unique.length) {
                 showEmpty(container, 'Aucun score Dom enregistré pour ce compte.');
                 return;
             }
 
-            const data = json.data;
             container.innerHTML = '';
+
+            const best     = unique[0];
+            const bestTime = formatTimeMs(best?.totalTime);
+            const bestDiff = normalizeDiff(best?.data?.difficulty || best?.data?.difficulte);
 
             const bestCard = document.createElement('div');
             bestCard.className = 'scoreBestCard scoreBestCard--dom';
-            const bestTime  = formatTimeMs(data[0]?.totalTime);
-            const bestScore = Number(data[0]?.data?.score || data[0]?.totalMeteorites || 0);
             bestCard.innerHTML = `
                 <span class="scoreBestLabel">MEILLEUR RUN</span>
                 <div class="scoreBestValues">
                     <div class="scoreBestValue">
                         <span class="scoreBestNum">${bestTime}</span>
-                        <span class="scoreBestUnit">TEMPS</span>
+                        <span class="scoreBestUnit">CHRONO</span>
                     </div>
+                    ${bestDiff.key ? `
                     <div class="scoreBestDivider"></div>
                     <div class="scoreBestValue">
-                        <span class="scoreBestNum">${bestScore}</span>
-                        <span class="scoreBestUnit">SCORE</span>
-                    </div>
+                        <span class="scoreBestNum scoreDomDiff--${bestDiff.key}">${bestDiff.label}</span>
+                        <span class="scoreBestUnit">DIFFICULTÉ</span>
+                    </div>` : ''}
                 </div>
             `;
             container.appendChild(bestCard);
 
             const table = document.createElement('div');
-            table.className = 'scoreTable';
+            table.className = 'scoreDomTable';
 
             const header = document.createElement('div');
-            header.className = 'scoreRowHeader';
-            header.innerHTML = `<span>#</span><span>Joueur</span><span>Temps</span><span>Score</span>`;
+            header.className = 'scoreDomRowHeader';
+            header.innerHTML = `
+                <span>#</span>
+                <span>Mode</span>
+                <span>Grille</span>
+                <span>Taille</span>
+                <span>Chrono</span>
+                <span>Difficulté</span>
+            `;
             table.appendChild(header);
 
-            data.forEach((score, i) => {
-                const pseudo = score?.data?.pseudo || score?.user?.username || 'Inconnu';
-                const time   = formatTimeMs(score?.totalTime);
-                const pts    = Number(score?.data?.score || score?.totalMeteorites || 0);
-                const diff   = score?.data?.difficulty || '';
+            unique.forEach((score, i) => {
+                const modeData = normalizeMode(score?.mode || score?.data?.mode);
+                const grille   = score?.data?.gridType || score?.data?.grille || score?.data?.grid || '—';
+                const taille   = score?.data?.gridSize  || score?.data?.taille || score?.data?.size  || '—';
+                const chrono   = formatTimeMs(score?.totalTime);
+                const diffData = normalizeDiff(score?.data?.difficulty || score?.data?.difficulte);
 
                 const row = document.createElement('div');
-                row.className = `scoreRow${i < 3 ? ` scoreRow--top${i + 1}` : ''}`;
+                row.className = `scoreDomRow${i < 3 ? ` scoreDomRow--top${i + 1}` : ''}`;
                 row.style.animationDelay = `${i * 28}ms`;
                 row.innerHTML = `
                     <span class="scoreRank">${rankBadge(i + 1)}</span>
-                    <span class="scorePseudo">
-                        ${pseudo}
-                        ${diff ? `<span class="scoreDiffBadge ${diff.toLowerCase()}">${diff}</span>` : ''}
-                    </span>
-                    <span class="scoreTime">${time}</span>
-                    <span class="scoreMeteorites">${pts}</span>
+                    <span class="scoreDomMode scoreDomMode--${modeData.key}">${modeData.label}</span>
+                    <span class="scoreDomCell">${grille}</span>
+                    <span class="scoreDomCell">${taille}</span>
+                    <span class="scoreTime">${chrono}</span>
+                    <span class="scoreDomDiff scoreDomDiff--${diffData.key}">${diffData.label}</span>
                 `;
                 table.appendChild(row);
             });
